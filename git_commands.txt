@@ -11,3 +11,4 @@ BRANCHES
 make branch from github.com
 git branch - to see all branches
 git checkout <branch_name> - swtich to that branch
+when your testing is complete, pull your branch into the master branch via github.com
