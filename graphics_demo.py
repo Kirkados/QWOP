@@ -3,7 +3,7 @@
 """
 Created on Tue Oct  2 07:47:06 2018
 
-@author: StephaneMagnan
+@author:https://www.youtube.com/watch?v=gszWqF4PKjs
 """
 import numpy as np
 #import matlibplot as plt
@@ -52,11 +52,21 @@ def main():
     poly.setWidth(5)
     poly.draw(win)
     
+    #centre point
     txt = Text(Point(150,150),"Hello World!)
     txt.setTextColor(color_rgb(255,255,255))
     txt.setSize(30)
     txt.setFace('Courier')
     txt.show(win)
+    txt.setText("updated text")
+    
+    #centre point 
+    img = Image(Point(430,367),"apple.gif")
+    img.draw(win)
+    
+    edit_text = Entry(Point(150,150),10)
+    edit_text.draw(win)
+    s = edit_text.getText()
     
     win.getMouse()
     win.close()
