@@ -1,16 +1,13 @@
 """
-Kirk Hovell - April 23, 2018
-PhD Comprehensive Exam
+Kirk Hovell & Stephane Magnan 
+October 2, 2018
 
-Attempts to demonstrate robustness in transfering from simulation to a real environment
-where parameters may be different than used in simulation.
-
-Here, joint friction is considered.
-
-May need to implement D4PG to speed up learning
-Implement tensorflow checkpoints so that trained networks can be loaded in.
+This script repeatedly simulates the game of QWOP and attempts to learn an expert policy.
+The learning algorithm used is Deep Q-Learning, ideal for situations with
+a discrete action space, such as QWOP. 
 """
 
+#%% Importing necessary libraries
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
@@ -18,19 +15,33 @@ from dynamics import Environment
 import time
 import datetime
 import tensorflow as tf
-from actors_and_critics import PolicyNetwork, CriticNetwork, OrnsteinUhlenbeckActionNoise
+from actors_and_critics import PolicyNetwork, CriticNetwork
 from replay_buffer import ReplayBuffer
-#import argparse
 
-
-#def main(args):
 tf.reset_default_graph() # Wipes tensorflow graph clean
 
 
 
 #%% Runtime Parameters
-run_name = 'sparse_rewards' # for animator
-plot_trials = [10,50,100,200,300,400,500,600,700,800,900,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000,11000,12000,13000,14000,15000] # which trials to plot & animate
+run_name = 'QWOP_v1' # for animator
+simulation_length = 40 # [s]
+timestep = 0.1 # [s]
+action_dimension = 2 # number of actions
+state_dimension = 6 # number of states input to the policy
+
+# Training Parameters
+num_iterations = 501
+actor_learning_rate = 0.001 # learning for policy neural network
+target_update_rate = 0.001 # tau
+gamma = 0.99 # amount of Q' network to take for targets
+n_hidden_layers = 2 # number of hidden layers in the neural networks
+n_neurons = 300 # number of neurons in each hidden layer
+hidden_activation = 'relu' # hidden layer nonlinear activation function
+batch_size = 128 # [samples] sampled from replay buffer to train actor and critic
+buffer_size = 800000 # [timesteps] to be included in the replay buffer
+
+# Plotting Parameters
+plot_trials = [10,50,100,200,300,400,500] # which trials to plot & animate
 plot_figs = 0 # 1 = plot; 0 = do not
 animate_motion = 1 # 1 = animate; 0 = do not
 num_frames = 100 # [in animation] total animation length played over this many frames
@@ -41,33 +52,7 @@ test_time_trials = 1 # how many trials to include in the policy testing
 test_time_animate = [0, 1] # which entries of each test to animate
 checkpoint_frequency = 1000 # save a checkpoint every ### iterations
 
-# Environment parameters
-simulation_length = 40 # [s]
-timestep = 0.1 # [s]
-target_reward = 1 # [reward/second] reward for placing end-effector on the target
-torque_reward = -0 # [reward/second] penalty for using torque
-ang_rate_reward = -0 # [reward/second] penalty for having a high angular rate
-reward_shaping = 0 # whether or not to shape the reward towards the goal
-reward_circle_radius = 0.05 # [m] distance within to receive the position reward
-action_dimension = 2 # number of actions
-state_dimension = 6 # number of states input to the policy
-max_ang_rate = 2000 # [rad/s] maximum angular rate of any link before episode is terminated
-randomize = 0 # 0 = consistent initial conditions; 1 = randomized initial conditions and target location
-noise_sigma = 0.04 # Ornstein-Uhlenbeck noise parameter
-
-# Training Parameters
-num_iterations = 15001
-actor_learning_rate = 0.001 # learning for policy neural network
-critic_learning_rate = 0.0001
-target_update_rate = 0.001 # tau
-gamma = 0.99 # amount of Q' network to take for targets
-n_hidden_layers = 2 # number of hidden layers in the neural networks
-n_neurons = 300 # number of neurons in each hidden layer
-hidden_activation = 'relu' # hidden layer nonlinear activation function
-batch_size = 128 # [samples] sampled from replay buffer to train actor and critic
-buffer_size = 800000 # [timesteps] to be included in the replay buffer
-
-# Arm Properties
+# Dynamics Properties (Stephane, do you need these here?)
 min_length = 1. # [m]
 max_length = 1. # [m]
 mass = 10. # [kg]
@@ -75,26 +60,27 @@ friction = 0 # [coefficient of friction in joints]
 torque_limit = 0.1 # [Nm] limits on arm actuators
 
 #%%
-# Set random seeds
+# Set random seeds for consistency
 tf.set_random_seed(seed)
 np.random.seed(seed)
-
-target_location_over_trials = []
 
 timesteps = int(simulation_length/timestep)
 filename = run_name + '-{:%Y-%m-%d %H-%M}'.format(datetime.datetime.now())
 
 #%% Logging Parameters
-log_parameters = {'num_iterations':num_iterations, 'simulation_length':simulation_length,
-            'timestep':timestep,'plot_trials':plot_trials,'animate_motion':animate_motion,'num_frames':num_frames,
-            'target_reward':target_reward,'torque_reward':torque_reward,'ang_rate_reward':ang_rate_reward,
-            'reward_shaping':reward_shaping,'reward_circle_radius':reward_circle_radius,
-            'actor_learning_rate':actor_learning_rate,'critic_learning_rate':critic_learning_rate,'action_dimension':action_dimension,'state_dimension':state_dimension,
-            'gamma':gamma,'buffer_size':buffer_size,'batch_size':batch_size,'seed':seed,'n_neurons':n_neurons,'min_length':min_length,'max_length':max_length,'mass':mass,
-            'n_hiddenlayers':n_hidden_layers,'n_neurons':n_neurons,'target_update_rate':target_update_rate,'torque_limit':torque_limit,
-            'test_time_every_num_iterations':test_time_every_num_iterations,'test_time_trials':test_time_trials,'test_time_animate':test_time_animate,
-            'randomize':randomize,'max_ang_rate':max_ang_rate,'noise_sigma':noise_sigma,'hidden_activation':hidden_activation}
-#%% Starting the rollouts
+
+# NEED TO FIGURE OUT A GOOD WAY TO LOG PARAMETERS (If needed)
+
+#log_parameters = {'num_iterations':num_iterations, 'simulation_length':simulation_length,
+#            'timestep':timestep,'plot_trials':plot_trials,'animate_motion':animate_motion,'num_frames':num_frames,
+#            'target_reward':target_reward,'torque_reward':torque_reward,'ang_rate_reward':ang_rate_reward,
+#            'reward_shaping':reward_shaping,'reward_circle_radius':reward_circle_radius,
+#            'actor_learning_rate':actor_learning_rate,'critic_learning_rate':critic_learning_rate,'action_dimension':action_dimension,'state_dimension':state_dimension,
+#            'gamma':gamma,'buffer_size':buffer_size,'batch_size':batch_size,'seed':seed,'n_neurons':n_neurons,'min_length':min_length,'max_length':max_length,'mass':mass,
+#            'n_hiddenlayers':n_hidden_layers,'n_neurons':n_neurons,'target_update_rate':target_update_rate,'torque_limit':torque_limit,
+#            'test_time_every_num_iterations':test_time_every_num_iterations,'test_time_trials':test_time_trials,'test_time_animate':test_time_animate,
+#            'randomize':randomize,'max_ang_rate':max_ang_rate,'noise_sigma':noise_sigma,'hidden_activation':hidden_activation}
+#%% Starting the episodes
 start_time = time.time()
 with tf.Session() as sess:
     
