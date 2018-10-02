@@ -1,0 +1,6 @@
+git clone /path/to/repository
+git pull - update local director from server
+
+git add <filename>
+git commit -m "Commit message"
+git push <filename> 
