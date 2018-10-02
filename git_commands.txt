@@ -4,3 +4,10 @@ git pull - update local director from server
 git add <filename>
 git commit -m "Commit message"
 git push <filename> 
+
+git status - see what the current situation is
+
+BRANCHES
+make branch from github.com
+git branch - to see all branches
+git checkout <branch_name> - swtich to that branch
