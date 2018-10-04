@@ -60,37 +60,7 @@ def trackMarks(x_cg,f_width,scale):
     return tick_x, tick_lab
 
 
-def defHuman():
-torso = {x: 4, y:5} 
 
-
-
-torso.x = 10
-
-
-torso.cog = 5
-torso.l = 6 
-torso.i = 6
-  
-torso.x = 0
-torso.y = 4
-torso.t = 4
-
-torso.dx = 0
-torso.dy = 4
-torso.dt = 4
-
-torso.ddx = 0
-torso.ddy = 4
-torso.ddt = 4
-    return torso, arm_l, forearm_l, arm_r, forearm_r, 
-
-def drawHuman(x_torso,y_torso,t_torso,l_torso,cog_torso):
-    
-
-
-    
-    return cogs, 
 
 def main():
 
@@ -263,16 +233,190 @@ def main():
 main()
     
 
+def defCog(torso, arm_l, forearm_l, arm_r, forearm_r, thigh_l, calf_l, foot_l,thigh_r, calf_r, foot_r):
+    
+    
+    
+
+def initHuman(joints, cogs, body, arm_l, forearm_l, arm_r, forearm_r, thigh_l, calf_l, foot_l, thigh_r, calf_r, foot_r):
+    #define all points for drawing (store COGs and joints in different places)
+    
+    #origin at cog of H-T - assume distal towards head
+
+    joints.shoulder[0] = 0
+    joints.shoulder[1] = body.l*(1-body.cog)
+    joints.hip[0] = 0
+    joints.hip[1] = -body.l*(body.cog)
+    
+    cogs.body[0] = 0
+    cogs.body[1] = 0    
+    cogs.head[0] = 0
+    cogs.head[1] = joints.shoulder[1]+(body.l_neck+body.d_head)*(1-body.cog_head)
+    
+    #arms are freely hanging
+    joints.arm_l[0] = joints.shoulder[0]
+    joints.arm_l[1] = joints.shoulder[1]-arm_l.l
+    joints.forearm_l[0] = cogs.arm[0]
+    joints.forearm_l[1] = cogs.arm[1]-forearm_l-l
+  
+    cogs.arm_l[0] = joints.shoulder[0]
+    cogs.arm_l[1] = joints.shoulder[1]-arm_l.l*arm_l.cog
+    cogs.forearm_l[0] = joints.forearm_l[0]
+    cogs.forearm_l[1] = joints.forearm_l[1]-forearm_l.l*forearm_l.cog
+    
+    joints.arm_r[0] = cogs.arm_l[0]
+    joints.arm_r[1] = cogs.arm_l[1] 
+    joints.forearm_r[0] = cogs.forearm_l[0]
+    joints.forearm_r[1] = cogs.forearm_l[1]
+    
+    cogs.arm_r[0] = cogs.arm_l[0]
+    cogs.arm_r[1] = cogs.arm_l[1]
+    cogs.forearm_r[0] = cogs.forearm_l[0]
+    cogs.forearm_r[1] = cogs.forearm_l[1]
+
+    #legs are dangling from body
+    joints.knee_l[0] = joints.hip[0]
+    joints.knee_l[1] = joints.hip[1] - thigh_l.l
+    joints.ankle_l[0] = joints.knee_l[0]
+    joints.ankle_l[1] = joints.knee_l[1] - calf_l.l
+    joints.heel_l[0] = joints.ankle_l[0]
+    joints.heel_l[1] = joints.ankle_l[1] - foot_l.l
+    joints.toe_l[0] = joints.heel_l[0] + foot_l.w
+    joints.toe_l[1] = joints.heel_l[1]  
+
+    cogs.knee_l[0] = joints.hip[0]
+    cogs.knee_l[1] = joints.hip[1] - thigh_l.l*thigh_l.cog
+    cogs.calf_l[0] = joints.knee_l[0]
+    cogs.calf_l[1] = joints.knee_l[1] - calf_l.l*calf_l.cog
+    cogs.foot_l[0] = joints.ankle_l[0]+foot_l.w*foot_l.cog
+    cogs.foot_l[1] = joints.ankle_l[1]-foot_l.l*foot_l.cog
+    
+    joints.knee_r[0] = joints.knee_l[0]
+    joints.knee_r[1] = joints.knee_l[1]
+    joints.ankle_r[0] = joints.ankle_l[0]
+    joints.ankle_r[1] = joints.ankle_l[1]
+    joints.heel_r[0] = joints.heel_l[0]
+    joints.heel_r[1] = joints.heel_l[1]
+    joints.toe_r[0] = joints.toe_l[0]
+    joints.toe_r[1] = joints.toe_l[1]    
+
+    cogs.knee_r[0] = cogs.knee_l[0]
+    cogs.knee_r[1] = cogs.knee_l[1]
+    cogs.calf_r[0] = cogs.calf_l[0]
+    cogs.calf_r[1] = cogs.calf_l[1]
+    cogs.foot_r[0] = cogs.foot_l[0]
+    cogs.foot_r[1] = cogs.foot_l[1] 
+
+    #apply rotations to all points
+    
+    
+    #apply global translation
+    
+    return joints, cogs 
+
+def transHuman(thetas,initHuman):
+    #first apply rotations
+    
+    
+    
+    
+    
+    
+
+class COGs():
+    def __init__(self,def_l,def_cog,def_i,init_x,init_y,init_t):
+        self.body = [0,0]
+        self.head = [0,0]
+        
+        self.thigh_l = [0,0]
+        self.thigh_r = [0,0]
+        self.calf_l = [0,0]
+        self.calf_r = [0,0]
+        self.foot_l = [0,0]
+        self.foot_r = [0,0]
+        
+        self.arm_l = [0,0]
+        self.arm_r = [0,0]
+        self.forearm_l = [0,0]
+        self.forearm_r = [0,0]
+        
+        return
+    
+class Joints():
+    def __init__(self,def_l,def_cog,def_i,init_x,init_y,init_t):
+        #x_coord, y_coord
+        self.shoulder = [0,0]
+        self.head = [0,0]
+        self.hip = [0,0]
+        
+        self.knee_l = [0,0]
+        self.knee_r = [0,0]
+        self.ankle_l = [0,0]
+        self.ankle_r = [0,0] 
+        self.heel_l = [0,0]
+        self.heel_r = [0,0]
+        self.toe_l = [0,0]
+        self.toe_r = [0,0]
+        
+        self.elbow_l = [0,0]
+        self.elbow_r = [0,0]
+        self.hand_l = [0,0]
+        self.hand_r = [0,0]
+        
+        return
+    
+    
+
+    
+class Body():
+    #includes head, neck and torso (no arms or legs)
+      def __init__(self,def_l,def_cog,def_i,init_x,init_y,init_t):
+        self.l = def_l
+        self.l_neck = 0
+        self.d_head = 0
+        
+        #H-T cog and i.
+        self.cog = def_cog
+        self.i = def_i
+        self.cog_head = 0
+        
+        self.x = init_x
+        self.y = init_y
+        self.t = init_t
+        
+        self.x_prox = 0
+        self.y_prox = 0
+        self.x_dist = 0
+        self.y_dist = 0  
+ 
+        self.dx = 0
+        self.dy = 0
+        self.dt = 0
+        
+        self.ddx = 0
+        self.ddy = 0
+        self.ddt = 0
+        
+        return
+    
+    def state(self):
+        return self.x, self.y, self.t  
     
 class Segment():
     def __init__(self,def_l,def_cog,def_i,init_x,init_y,init_t):
         self.l = def_l
+        self.h = 0 #height only used for foot
         self.cog = def_cog
         self.i = def_i
         
         self.x = init_x
         self.y = init_y
         self.t = init_t
+        
+        self.x_prox = 0
+        self.y_prox = 0
+        self.x_dist = 0
+        self.y_dist = 0  
  
         self.dx = 0
         self.dy = 0
@@ -286,6 +430,6 @@ class Segment():
     
 #    def X(self, x_state):
 #        self.x = x_state
-
+        
     def state(self):
         return self.x, self.y, self.t
