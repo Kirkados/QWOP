@@ -2,7 +2,7 @@
 This code produces the actor/agent that will execute episodes.
 
 The agent calculates the N-step returns and dumps data into the ReplayBuffer.
-It collects its updated parameters after each episode.
+It collects its updated parameters after each episode. 
 """
 
 import tensorflow as tf

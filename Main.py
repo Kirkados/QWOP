@@ -2,7 +2,7 @@
 Main script that runs the D4PG learning algorithm 
 (https://arxiv.org/pdf/1804.08617)
 
-It features the standard DDPG algorithm with a number 
+It features the standard DDPG algorithm with a number  
 of improvements from other researchers.
 Namely:
     Distributed rollouts           (https://arxiv.org/pdf/1602.01783)
