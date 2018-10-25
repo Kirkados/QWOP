@@ -9,7 +9,7 @@ import random
 from collections import deque
 import numpy as np
 
-from Settings import Settings
+from settings import Settings
 
 
 def ReplayBuffer(prioritized):

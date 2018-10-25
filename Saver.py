@@ -5,7 +5,7 @@ This script saves and loads network parameters
 import os
 import tensorflow as tf
 
-from Settings import Settings
+from settings import Settings
 
 class Saver:
     

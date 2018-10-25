@@ -8,10 +8,10 @@ It collects its updated parameters after each episode.
 import tensorflow as tf
 import numpy as np
 
-from Settings import Settings
+from settings import Settings
 from collections import deque
-from BuildNeuralNetworks import build_actor_network
-from NeuralNetworkUtilities import get_variables, copy_variables
+from build_neural_networks import build_actor_network
+from neural_network_utilities import get_variables, copy_variables
 
 class Agent:
     

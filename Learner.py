@@ -18,10 +18,10 @@ import tensorflow as tf
 import numpy as np
 import time
 
-from Model import build_actor_network, build_Q_network
-from network_utilities import get_variables, copy_variables, l2_regularization
+from build_neural_networks import build_actor_network, build_Q_network
+from neural_network_utilities import get_variables, copy_variables, l2_regularization
 
-from Settings import Settings
+from settings import Settings
 
 class QNetwork:
     

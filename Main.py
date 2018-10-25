@@ -25,14 +25,14 @@ Code started: October 15, 2018
 import threading
 import tensorflow as tf
 
-from Agent import Agent
-from Learner import QNetwork
-from ReplayBuffer import ReplayBuffer
+from agent import Agent
+from learner import QNetwork
+from replay_buffer import ReplayBuffer
 
-import Saver
-import Displayer
+import saver
+import displayer
 
-from Settings import Settings
+from settings import Settings
 
 #%%
 ##########################
