@@ -1,6 +1,9 @@
 git clone /path/to/repository
 git pull - update local director from server
 
+cd Documents/Github/Qwop
+git clone https://github.com/Kirkados/QWOP.git
+
 git add <filename>
 git commit -m "Commit message"
 git push <filename> 
