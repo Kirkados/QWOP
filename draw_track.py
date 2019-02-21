@@ -433,3 +433,89 @@ class Segment():
         
     def state(self):
         return self.x, self.y, self.t
+
+
+
+class Body():
+'body = Segment(play_height,play_mass,hip2shoul_len, hip2shoul_com,should2headc_len,should2headc_com,head_diam,hip2shoul_k,hip2shoul_m, should2headc_k,should2headc_m)
+    def __init__(self,play_height,play_mass,def_leng1,def_beta1,def_leng2,def_beta2,def_diam,def_rad1,def_mass1,def_rad2,def_mass2):
+        
+        'segment height hip-shoulder
+        self.length1 = def_leng1*play_height
+        self.beta1 = def_beta1*self.length1
+        
+                
+        self.radgyr1 = def_rad1*(self.length1)
+        self.mass1 = def_mass1*play_mass
+        self.momin1 = self.mass1*self.radgyr1**2
+        
+        'segment height shoulder-centre of head
+        self.length2 = def_leng2*play_height
+        'head diameter
+        self.diam = def_diam*play_height       
+        'head/neck com based on neck-head centre  length
+        self.beta2 = def_beta2*(self.length2+self.diam/2)/self.length2
+        
+        self.radgyr2 = def_rad2*(self.length2+self.diam/2)
+        self.mass2 = def_mass2*play_mass
+        self.momin2 = self.mass2*self.radgyr2**2
+        
+        'body definitions
+        self.length = (def_leng1+def_leng2+def_diam/2)*play_height
+        self.beta = (self.beta1*self.length1*self.mass1+(self.length1+self.beta2*self.length2*self.mass2))/(self.mass1+self.mass2)/self.length
+        
+        self.momin = self.momin1+self.mass1*(self.beta*self.length-self.beta1*self.length1)**2+self.momin2+self.mass2*(self.length1+self.beta2*self.length2-self.beta*self.length)**2
+        
+        return
+    
+#    def X(self, x_state):
+#        self.x = x_state
+        
+    def state(self):
+        return self.length, self.beta, self.radgyr, self.mass, self.momin 
+    
+
+class Segment():
+'arm_prox = Segment(play_height,play_weight,seg_length,seg_cog,seg_radgry,seg_mass)
+    def __init__(self,play_height, play_mass, def_leng,def_beta,def_rad,def_mass):
+        
+        'segment height
+        self.length = def_leng*play_height
+        self.beta = def_beta 
+        
+        'radius, mass, moment of inertia
+        self.radgyr = def_rad*self.length
+        self.mass = def_mass*play_mass
+        self.momin = self.mass*self.radgyr**2
+        
+        return
+    
+#    def X(self, x_state):
+#        self.x = x_state
+        
+    def state(self):
+        return self.length, self.beta, self.radgyr, self.mass, self.momin 
+    
+    
+class Foot():
+'foot = Foot(play_height,play_weight,foot_height,foot_cog_h,foot_length,foot_cog_l,foot_radgry,foot_mass)
+    def __init__(self,play_height, play_mass,def_leng1,def_beta1,def_leng2,def_beta2,def_rad,def_mass):
+        
+        'foot height
+        self.length1 = def_leng1*play_height
+        self.beta1 = def_beta1
+        'foot length
+        self.length2 = def_leng2*play_height
+        self.beta2 = def_beta2
+        'radius, mass, moment of inertia
+        self.radgyr = def_rad*self.length2
+        self.mass = def_mass*play_mass
+        self.momin = self.mass*self.radgyr**2
+        
+        return
+    
+#    def X(self, x_state):
+#        self.x = x_state
+        
+    def state(self):
+        return self.length1, self.beta1, self.length2, self.beta2, self.radgyr, self.mass, self.momin 
