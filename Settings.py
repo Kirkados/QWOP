@@ -11,12 +11,10 @@ class Settings:
     ##### Run Settings #####
     ########################
     
-    RUN_NAME               = 'LunarLander' # use just the name. If trying to restore from file, use name along with timestamp
-    USE_GYM                = 1 # 0 = use (your own) dynamics; 1 = use openAI's gym (for testing)
-    ENVIRONMENT            = 'LunarLanderContinuous-v2'
-    #ENVIRONMENT            = 'Pendulum-v0'
-    RECORD_VIDEO           = True
-    VIDEO_RECORD_FREQUENCY = 1000 # Multiples of "CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES"
+    RUN_NAME               = 'Testing_Arm' # use just the name. If trying to restore from file, use name along with timestamp
+    ENVIRONMENT            = 'arm'
+    RECORD_VIDEO           = False
+    VIDEO_RECORD_FREQUENCY = 1 # Multiples of "CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES"
     LEARN_FROM_PIXELS      = False # False = learn from state (fully observed); True = learn from pixels (partially observed)
     RESUME_TRAINING        = False # If True, be sure to set "RUN_NAME" to the previous run's filename
     USE_GPU_WHEN_AVAILABLE = True # As of Nov 19, 2018, it appears better to use CPU. Re-evaluate again later
@@ -28,20 +26,20 @@ class Settings:
     #############################
     
     # Hyperparameters
-    NUMBER_OF_ACTORS        = 4
+    NUMBER_OF_ACTORS        = 2
     NUMBER_OF_EPISODES      = 1e5 # that each agent will perform
-    MAX_TRAINING_ITERATIONS = 3e5
-    MAX_NUMBER_OF_TIMESTEPS = 1000 # per episode
+    MAX_TRAINING_ITERATIONS = 3e6
+    MAX_NUMBER_OF_TIMESTEPS = 400 # per episode
     ACTOR_LEARNING_RATE     = 0.0001
     CRITIC_LEARNING_RATE    = 0.0001
     TARGET_NETWORK_TAU      = 0.001
     DISCOUNT_FACTOR         = 0.99
     N_STEP_RETURN           = 5
     NUMBER_OF_BINS          = 51 # Also known as the number of atoms
-    NORMALIZE_STATE         = False
-    REWARD_SCALING          = 100.0 # Amount to scale down the reward signal
-    MIN_Q                   = -4.0
-    MAX_Q                   = 2.0
+    NORMALIZE_STATE         = False # Normalize state on each timestep to avoid vanishing gradients
+    REWARD_SCALING          = 10.0 # Amount to scale down the reward signal
+    MIN_Q                   = -1.0
+    MAX_Q                   = 4.0
     L2_REGULARIZATION       = False # optional for training the critic
     L2_REG_PARAMETER        = 1e-6
     
@@ -50,7 +48,7 @@ class Settings:
     UPDATE_ACTORS_EVERY_NUM_EPISODES                  = 1
     CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES       = 5    
     LOG_TRAINING_PERFORMANCE_EVERY_NUM_ITERATIONS     = 100
-    DISPLAY_TRAINING_PERFORMANCE_EVERY_NUM_ITERATIONS = 25000
+    DISPLAY_TRAINING_PERFORMANCE_EVERY_NUM_ITERATIONS = 100000
     DISPLAY_ACTOR_PERFORMANCE_EVERY_NUM_EPISODES      = 5000
     
     # Buffer settings
@@ -77,7 +75,7 @@ class Settings:
 #%%
     ####################################
     ##### Model Structure Settings #####
-    ####################################
+    ####################################    
     
     # Whether or not to learn from pixels (defined above)
     if LEARN_FROM_PIXELS:
@@ -98,40 +96,21 @@ class Settings:
     ##############################
     #### Environment Settings ####
     ##############################    
-    # Get state & action shapes from environment & action bounds
-    if USE_GYM:
-        import gym
-        test_env_to_get_settings = gym.make(ENVIRONMENT)
-        
-        if LEARN_FROM_PIXELS:
-            STATE_SIZE = [84, 84, 4] # dimension of the pixels that are used as the observation/state
-        else:
-            STATE_SIZE = list(test_env_to_get_settings.observation_space.shape) # dimension of the observation/state space
-            
-        ACTION_SIZE          = test_env_to_get_settings.action_space.shape[0] # dimension of the action space
-        LOWER_ACTION_BOUND   = test_env_to_get_settings.action_space.low # lowest action for each action [action1, action2, action3, etc.]
-        UPPER_ACTION_BOUND   = test_env_to_get_settings.action_space.high # highest action for each action [action1, action2, action3, etc.]
-        UPPER_STATE_BOUND    = test_env_to_get_settings.observation_space.high # highest state we will encounter along each dimension
     
-        del test_env_to_get_settings # getting rid of this test environment
-
-    #########################
-    #### TO BE COMPLETED ####
-    #########################        
-    else: # use your own dynamics
-        from Dynamics import Dynamics
-        
-        if LEARN_FROM_PIXELS:
-            STATE_SIZE     = 0 # INCOMPLETE
-        else:
-            STATE_SIZE     = 0 # INCOMPLETE
-        ACTION_SIZE        = 0 # INCOMPLETE
-        LOWER_ACTION_BOUND = 0 # INCOMPLETE
-        UPPER_ACTION_BOUND = 0 # INCOMPLETE
-        
+    environment_file = __import__('environment_' + ENVIRONMENT)        
+    env = getattr(environment_file, 'Environment')()
+    
+    STATE_SIZE         = env.state_size
+    UPPER_STATE_BOUND  = env.upper_state_bound
+    ACTION_SIZE        = env.action_size 
+    LOWER_ACTION_BOUND = env.lower_action_bound 
+    UPPER_ACTION_BOUND = env.upper_action_bound
+    
+    # Delete the test environment
+    del env
         
     ACTION_RANGE = UPPER_ACTION_BOUND - LOWER_ACTION_BOUND # range for each action
-        
+ 
     #%% 
     #########################
     ##### Save Settings #####
@@ -139,4 +118,4 @@ class Settings:
     
     MODEL_SAVE_DIRECTORY                 = 'Tensorboard/' # where to save all data
     TENSORBOARD_FILE_EXTENSION           = '.tensorboard' # file extension for tensorboard file
-    SAVE_CHECKPOINT_EVERY_NUM_ITERATIONS = 50000 # how often to save the neural network parameters
+    SAVE_CHECKPOINT_EVERY_NUM_ITERATIONS = 100000 # how often to save the neural network parameters

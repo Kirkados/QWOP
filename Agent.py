@@ -9,8 +9,6 @@ used by its neural network by grabbing the most up-to-date ones from the Learner
 import time
 import tensorflow as tf
 import numpy as np
-import gym
-from gym import wrappers
 from collections import deque
 from pyvirtualdisplay import Display # for rendering
 
@@ -31,7 +29,8 @@ class Agent:
         self.learner_policy_parameters = learner_policy_parameters
         
         # Make an instance of the environment
-        self.env = gym.make(Settings.ENVIRONMENT)
+        environment_file = __import__('environment_' + Settings.ENVIRONMENT)        
+        self.env = getattr(environment_file, 'Environment')()
         self.env.seed(Settings.RANDOM_SEED*self.n_agent)
         
         # Record video if desired
@@ -43,11 +42,8 @@ class Agent:
                 display.start()
             except:
                 print("You must run on Linux if you want to record gym videos!")
-                raise SystemExit
-            
-            # Start the gym's Monitor
-            self.env = wrappers.Monitor(self.env, Settings.MODEL_SAVE_DIRECTORY + '/' + filename + '/videos', video_callable=lambda episode_number: episode_number%(Settings.VIDEO_RECORD_FREQUENCY*Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES) == 0, force = True)
-        
+                #raise SystemExit
+                    
         # Build this Agent's actor network
         self.build_actor()
         
@@ -78,7 +74,7 @@ class Agent:
     def build_actor(self):        
         # Generate the actor's policy neural network
         agent_name = 'agent_' + str(self.n_agent) # agent name 'agent_3', for example
-        self.state_placeholder = tf.placeholder(dtype = tf.float32, shape = [None, *Settings.STATE_SIZE], name = 'state_placeholder') # the * lets Settings.STATE_SIZE be not restricted to only a scalar
+        self.state_placeholder = tf.placeholder(dtype = tf.float32, shape = [None, Settings.STATE_SIZE], name = 'state_placeholder') # the * lets Settings.STATE_SIZE be not restricted to only a scalar
                 
         #############################
         #### Generate this Actor ####
@@ -118,8 +114,8 @@ class Agent:
         # Creating the temporary memory space for calculating N-step returns
         self.n_step_memory = deque()
         
-        # For all requested episodes or until user flags for a stop (via Ctrl + C)
-        while episode_number <= Settings.NUMBER_OF_EPISODES and not stop_run_flag.is_set():              
+        # For all requested episodes or until user flags for a stop (via Ctrl + C)        
+        while episode_number <= Settings.NUMBER_OF_EPISODES and not stop_run_flag.is_set(): 
             ####################################
             #### Getting this episode ready ####
             ####################################            
@@ -128,7 +124,8 @@ class Agent:
 
             # Normalizing the state to 1 separately along each dimension
             # to avoid the 'vanishing gradients' problem
-            state = state/Settings.UPPER_STATE_BOUND
+            if Settings.NORMALIZE_STATE:
+                state = state/Settings.UPPER_STATE_BOUND
             
             # Clearing the N-step memory for this episode
             self.n_step_memory.clear()
@@ -142,11 +139,14 @@ class Agent:
             # allows for changing the amount of noise added to the actor during training.
             if test_time:
                 # It's test time! Run this episode without noise to evaluate performance.
-                noise_scale = 0
+                noise_scale = 0            
                 
                 # Additionally, if it's time to render, make a statement to the user
                 if Settings.RECORD_VIDEO and episode_number % (Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES*Settings.VIDEO_RECORD_FREQUENCY) == 0:
                     print("Rendering Actor %i at episode %i" % (self.n_agent, episode_number))
+                    
+                    # Also log the states encountered in this episode because we are going to render them!
+                    state_log = []
                 
             else:
                 # Regular training episode, use noise.
@@ -179,11 +179,11 @@ class Agent:
                 ################################################
                 #### Step the dynamics forward one timestep ####
                 ################################################
-                next_state, reward, done, _ = self.env.step(action)
+                next_state, reward, done = self.env.step(action)
                 
                 # Add reward we just received to running total for this episode
                 episode_reward += reward
-
+                
                 # Normalize the state and scale down reward
                 if Settings.NORMALIZE_STATE:
                     next_state = next_state/Settings.UPPER_STATE_BOUND
@@ -210,15 +210,15 @@ class Agent:
                     # wait until that is done before adding more data to the buffer
                     replay_buffer_dump_flag.wait() # blocks until replay_buffer_dump_flag is True
                     self.replay_buffer.add((state_0, action_0, n_step_reward, next_state, done, discount_factor))
-                    
+                
+                # If this episode is being rendered, log the state for rendering later
+                if self.n_agent == 1 and Settings.RECORD_VIDEO and episode_number % (Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES*Settings.VIDEO_RECORD_FREQUENCY) == 0:                    
+                    state_log.append(state)
+                
                 # End of timestep -> next state becomes current state
                 state = next_state
                 timestep_number += 1
-            
-                # If this episode is being rendered, render this frame!
-                if self.n_agent == 1 and Settings.RECORD_VIDEO and episode_number % (Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES*Settings.VIDEO_RECORD_FREQUENCY) == 0:                    
-                    self.env.render()
-                    
+                                
                 # If this episode is done, drain the N-step buffer, calculate 
                 # returns, and dump in replay buffer unless it is test time.
                 if (done or (timestep_number == Settings.MAX_NUMBER_OF_TIMESTEPS)) and not test_time:                    
@@ -244,7 +244,10 @@ class Agent:
             ################################
             ####### Episode Complete #######
             ################################       
-                 
+            # If this episode is being rendered, render it now.
+            if self.n_agent == 1 and Settings.RECORD_VIDEO and episode_number % (Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES*Settings.VIDEO_RECORD_FREQUENCY) == 0:                    
+                self.env.render(state_log, episode_number, Settings.RUN_NAME)
+                
             # Periodically update the agent with the learner's most recent version of the actor network parameters
             if episode_number % Settings.UPDATE_ACTORS_EVERY_NUM_EPISODES == 0:
                 self.sess.run(self.update_actor_parameters)
@@ -258,7 +261,7 @@ class Agent:
             ######## Log training data to tensorboard #########
             ###################################################
             # Write training data to tensorboard if we just checked the greedy performance of the agent (i.e., if it's test time).
-            if test_time:                
+            if test_time:                  
                 # Write test to tensorboard summary -> reward and number of timesteps
                 feed_dict = {self.episode_reward_placeholder:  episode_reward,
                              self.timestep_number_placeholder: timestep_number}                
@@ -277,6 +280,6 @@ class Agent:
         ##### All episodes complete #####
         #################################
         # Close the environment            
-        self.env.close()
+        del self.env
         # Notify of completion
         print("Actor %i finished after running %i episodes!" % (self.n_agent, episode_number - 1))

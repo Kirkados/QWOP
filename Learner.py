@@ -39,7 +39,7 @@ class Learner:
         
         with tf.variable_scope("Preparing_placeholders"):                
             # Defining placeholders for training
-            self.state_placeholder                       = tf.placeholder(dtype = tf.float32, shape = [Settings.MINI_BATCH_SIZE, *Settings.STATE_SIZE], name = "state_placeholder") # the '*' unpacks the STATE_SIZE list (incase it's pixels of higher dimension)
+            self.state_placeholder                       = tf.placeholder(dtype = tf.float32, shape = [Settings.MINI_BATCH_SIZE, Settings.STATE_SIZE], name = "state_placeholder") # the '*' unpacks the STATE_SIZE list (incase it's pixels of higher dimension)
             self.action_placeholder                      = tf.placeholder(dtype = tf.float32, shape = [Settings.MINI_BATCH_SIZE, Settings.ACTION_SIZE], name = "action_placeholder") # placeholder for actions
             self.target_bins_placeholder                 = tf.placeholder(dtype = tf.float32, shape = [Settings.MINI_BATCH_SIZE, Settings.NUMBER_OF_BINS], name = "target_bins_placeholder") # Bin values of target network with Bellman update applied
             self.target_q_distribution_placeholder       = tf.placeholder(dtype = tf.float32, shape = [Settings.MINI_BATCH_SIZE, Settings.NUMBER_OF_BINS], name = "target_q_distribution_placeholder")  # Future q-distribution from target critic

@@ -130,6 +130,8 @@ writer = tf.summary.FileWriter(Settings.MODEL_SAVE_DIRECTORY + filename, filenam
 
 # Saving a copy of the settings.py file in the 'Settings.MODEL_SAVE_DIRECTORY' directory, for reference
 copyfile('settings.py', Settings.MODEL_SAVE_DIRECTORY + filename + '/settings.py')
+# Saving a copy of the environment file in the 'Settings.MODEL_SAVE_DIRECTORY' directory, for reference (I may be making changes to the dynamics between runs)
+copyfile('environment_' + Settings.ENVIRONMENT + '.py', Settings.MODEL_SAVE_DIRECTORY + filename + '/environment_' + Settings.ENVIRONMENT + '.py')
 
 
 #######################################

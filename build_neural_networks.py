@@ -64,7 +64,7 @@ class BuildActorNetwork:
                                                    units = Settings.ACTION_SIZE,
                                                    activation = tf.nn.tanh,
                                                    name = 'output_layer') 
-            
+
             # Scaling actions to the correct range
             self.action_scaled = tf.multiply(0.5, tf.multiply(self.actions_out_unscaled, Settings.ACTION_RANGE) + Settings.LOWER_ACTION_BOUND + Settings.UPPER_ACTION_BOUND) # for tanh
             
