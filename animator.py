@@ -9,6 +9,9 @@ Created on Thu Feb 21 18:50:29 2019
 import numpy as np
 import pygame
  
+
+
+
 # Define dimensions for background
 
 # Define some colors
@@ -29,7 +32,7 @@ GAMEOVER = (255,50,50)
 
 
 #scale
-hum_scale = 0.2 #pixel/mm
+hum_scale = 100 #pixel/m
 f_width = 800
 f_height = 500
 
@@ -48,12 +51,10 @@ y_l2 = y_l1+np.rint((y_l4-y_l1)/6)
 y_l3 = y_l1+np.rint((y_l4-y_l1)/2)
 
 #define thickness of track lines
-
 t_l1 = 1
 t_l2 = 2
 t_l3 = 3
 t_l4 = 5
-
 
 #define relative positions of text
 b_stats = np.rint(f_width-200)
@@ -78,19 +79,10 @@ x_btn3 = f_width-x_btn2-dx_btn
 x_btn4 =  f_width-x_btn1-dx_btn
 y_btn = np.rint(1*f_height/10)
 
+#define positions of body
+y_0 = (y_l4+y_l3)/2
+x_0 = np.rint(f_width/2)
 
-
-
-
-
-
-#define body dimensions
-l_bod = 75
-a_bod = 0.5
-l_leg1 = 1
-a_leg1 = 0.5
-l_leg2= 1
-a_leg2 = 0.5
 
 #position
 x_0 = np.rint(f_width/2)
@@ -110,10 +102,15 @@ th_leg2 = -30*np.pi/180
 
 
 
+#define body dimensions
+#l_bod = 75
+#a_bod = 0.5
+#l_leg1 = 1
+#a_leg1 = 0.5
+#l_leg2= 1
+#a_leg2 = 0.5
 
     
-
-
 
 
 
@@ -137,7 +134,6 @@ pressed_o = False
 pressed_p = False
 # Used to manage how fast the screen updates
 #clock = pygame.time.Clock()
-
 
 
 # -------- Main Program Loop -----------
@@ -196,7 +192,39 @@ while running:
             
     # --- Logic
 
- 
+
+    l_bod = 1#self.body_length
+    l_leg1 = 1#self.leg1_length
+    l_leg2 = 1#self.leg2_length  
+    
+    a_bod = 0.5
+    a_leg1 = 0.5
+    a_leg2 = 0.5
+    
+    x= 0.00000000e+00
+    y= 2.00000000e+00
+    theta= 0 
+    x1=2.50000000e-01
+    y1=1.06698730e+00
+    theta1=5.23598776e-01 
+    x2=-2.50000000e-01 
+    y2=1.06698730e+00
+    theta2=-5.23598776e-01
+    
+    
+    body_p = np.array([[x-(1-a_bod)*l_bod*np.sin(theta),y+(1-a_bod)*l_bod*np.cos(theta)],[x,y],[x+(a_bod)*l_bod*np.sin(theta),y-(a_bod)*l_bod*np.cos(theta)]])      
+    leg1_p = np.array([[x1-(1-a_leg1)*l_leg1*np.sin(theta+theta1),y1+(1-a_leg1)*l_leg1*np.cos(theta+theta1)],[x1,y1],[x1+(a_leg1)*l_leg1*np.sin(theta+theta1),y1-(a_leg1)*l_leg1*np.cos(theta+theta1)]])
+    leg2_p = np.array([[x2-(1-a_leg2)*l_leg2*np.sin(theta+theta2),y2+(1-a_leg2)*l_leg2*np.cos(theta+theta2)],[x2,y2],[x2+(a_leg2)*l_leg2*np.sin(theta+theta2),y2-(a_leg2)*l_leg2*np.cos(theta+theta2)]])      
+
+    body_p[:,0]=(body_p[:,0]-x)*hum_scale+x_0
+    leg1_p[:,0]=(leg1_p[:,0]-x)*hum_scale+x_0  
+    leg2_p[:,0]=(leg2_p[:,0]-x)*hum_scale+x_0
+    
+    body_p[:,1]=y_0-(body_p[:,1])*hum_scale
+    leg1_p[:,1]=y_0-(leg1_p[:,1])*hum_scale  
+    leg2_p[:,1]=y_0-(leg2_p[:,1])*hum_scale
+
+    
     
     # Determine location of painted lines based on X distance 
     
@@ -302,9 +330,14 @@ while running:
     screen.blit(text_p, [x_btn4+np.rint(dx_btn/2-text_p_w/2), y_btn+np.rint(dy_btn/2-text_p_h/2)])
     
     
+    #Draw body
+    pygame.draw.line(screen, BLACK, body_p[0], body_p[2], 10)
+    pygame.draw.line(screen, BLACK, leg1_p[0], leg1_p[2], 10)
+    pygame.draw.line(screen, BLACK, leg2_p[0], leg2_p[2], 10)
     
-    #Draw 
-    
+    pygame.draw.ellipse(screen, WHITE, [body_p[1][0]-5,body_p[1][1]-5,10,10], 2)
+    pygame.draw.ellipse(screen, WHITE, [leg1_p[1][0]-5,leg1_p[1][1]-5,10,10], 2)
+    pygame.draw.ellipse(screen, WHITE, [leg2_p[1][0]-5,leg2_p[1][1]-5,10,10], 2)
 
     # --- Wrap-up
     # Limit to 60 frames per second

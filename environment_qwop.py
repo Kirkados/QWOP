@@ -172,7 +172,9 @@ class Environment:
             state = x, y, theta, x1, y1, theta1, x2, y2, theta2, xdot, ydot, thetadot, x1dot, y1dot, theta1dot, x2dot, y2dot, theta2dot                
         """
         
-    
+      
+        
+        
         # Stephane's Animating Code #
         print(state_log)
         print(action_log)
