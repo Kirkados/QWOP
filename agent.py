@@ -144,10 +144,7 @@ class Agent:
                 # Additionally, if it's time to render, make a statement to the user
                 if Settings.RECORD_VIDEO and episode_number % (Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES*Settings.VIDEO_RECORD_FREQUENCY) == 0:
                     print("Rendering Actor %i at episode %i" % (self.n_agent, episode_number))
-                    
-                    # Also log the states & actions encountered in this episode because we are going to render them!
-                    state_log = []
-                    action_log = []
+                    state_to_animate = state
                 
             else:
                 # Regular training episode, use noise.
@@ -185,6 +182,14 @@ class Agent:
                 # Add reward we just received to running total for this episode
                 episode_reward += reward
                 
+                # If this episode is being rendered, render it now
+                if self.n_agent == 1 and Settings.RECORD_VIDEO and episode_number % (Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES*Settings.VIDEO_RECORD_FREQUENCY) == 0:                    
+                    # Render this frame
+                    temp_action = 1 
+                    self.env.render(state_to_animate, temp_action, episode_number, Settings.RUN_NAME)    
+                    # will animate this state next time
+                    state_to_animate = next_state 
+                
                 # Normalize the state and scale down reward
                 if Settings.NORMALIZE_STATE:
                     next_state = next_state/Settings.UPPER_STATE_BOUND
@@ -212,11 +217,7 @@ class Agent:
                     replay_buffer_dump_flag.wait() # blocks until replay_buffer_dump_flag is True
                     self.replay_buffer.add((state_0, action_0, n_step_reward, next_state, done, discount_factor))
                 
-                # If this episode is being rendered, log the state for rendering later
-                if self.n_agent == 1 and Settings.RECORD_VIDEO and episode_number % (Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES*Settings.VIDEO_RECORD_FREQUENCY) == 0:                    
-                    state_log.append(state)
-                    #action_log.append(action)
-                    action_log.append(1)
+                
                 
                 # End of timestep -> next state becomes current state
                 state = next_state
@@ -247,10 +248,7 @@ class Agent:
             ################################
             ####### Episode Complete #######
             ################################       
-            # If this episode is being rendered, render it now.
-            if self.n_agent == 1 and Settings.RECORD_VIDEO and episode_number % (Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES*Settings.VIDEO_RECORD_FREQUENCY) == 0:                   
-                self.env.render(np.asarray(state_log), np.asarray(action_log), episode_number, Settings.RUN_NAME)
-                
+
             # Periodically update the agent with the learner's most recent version of the actor network parameters
             if episode_number % Settings.UPDATE_ACTORS_EVERY_NUM_EPISODES == 0:
                 self.sess.run(self.update_actor_parameters)
