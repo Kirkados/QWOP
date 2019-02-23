@@ -196,7 +196,7 @@ class BuildQNetwork:
                 projected_target_distribution = l2_project(target_bins, target_q_distribution, self.bins)  
                 
                 # Calculate the cross entropy loss between the projected distribution and the main q_network!
-                self.loss = tf.nn.softmax_cross_entropy_with_logits_v2(logits=self.q_distribution_logits, labels=tf.stop_gradient(projected_target_distribution))
+                self.loss = tf.nn.softmax_cross_entropy_with_logits_v2(logits = self.q_distribution_logits, labels = tf.stop_gradient(projected_target_distribution))
                 
                 # A loss correction is needed if we use a prioritized replay buffer
                 # to account for the bias introduced by the prioritized sampling.

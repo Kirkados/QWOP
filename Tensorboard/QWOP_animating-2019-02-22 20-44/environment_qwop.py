@@ -163,8 +163,6 @@ class Environment:
         
         Inputs: 
             state_log - a numpy array of shape [# timesteps, # states] containing all the state data
-            action_log - a numpy array of shape [# timesteps] containing all the action data. The action will be an integer corresponding to which action is being performed.
-                    0: No buttons pressed; 1: Q only; 2: QO; 3: QP; 4: W only; 5: WO; 6: WP; 7: O only; 8: P only
             episode_number - Which episode produced these results
             filename - Please save the animation in: 'TensorBoard/' + filename + '/videos/episode_' + str(episode_number)
             
