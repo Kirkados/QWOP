@@ -234,7 +234,7 @@ main()
     
 
 def defCog(torso, arm_l, forearm_l, arm_r, forearm_r, thigh_l, calf_l, foot_l,thigh_r, calf_r, foot_r):
-    
+    print("blah")
     
     
 
@@ -316,7 +316,7 @@ def initHuman(joints, cogs, body, arm_l, forearm_l, arm_r, forearm_r, thigh_l, c
 
 def transHuman(thetas,initHuman):
     #first apply rotations
-    
+    print("blah")
     
     
     
