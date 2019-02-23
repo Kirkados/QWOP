@@ -121,20 +121,12 @@ class Agent:
             ####################################            
             # Resetting the environment for this episode
             state = self.env.reset()
-
-            # Normalizing the state to 1 separately along each dimension
-            # to avoid the 'vanishing gradients' problem
-            if Settings.NORMALIZE_STATE:
-                state = state/Settings.UPPER_STATE_BOUND
-            
-            # Clearing the N-step memory for this episode
-            self.n_step_memory.clear()
             
             # Checking if this is a test time (when we run an agent in a 
             # noise-free environment to see how the training is going).
             # Only agent_1 is used for test time
             test_time = (self.n_agent == 1) and (episode_number % Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES == 0)
-            
+                        
             # Calculating the noise scale for this episode. The noise scale 
             # allows for changing the amount of noise added to the actor during training.
             if test_time:
@@ -145,12 +137,23 @@ class Agent:
                 if Settings.RECORD_VIDEO and episode_number % (Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES*Settings.VIDEO_RECORD_FREQUENCY) == 0:
                     print("Rendering Actor %i at episode %i" % (self.n_agent, episode_number))
                     state_to_animate = state
+                    state_log = []
+                    action_log = []
                 
             else:
                 # Regular training episode, use noise.
                 # Noise is decayed during the training
                 noise_scale = Settings.NOISE_SCALE * Settings.NOISE_SCALE_DECAY ** episode_number
             
+            # Normalizing the state to 1 separately along each dimension
+            # to avoid the 'vanishing gradients' problem
+            if Settings.NORMALIZE_STATE:
+                state = state/Settings.UPPER_STATE_BOUND
+            
+            # Clearing the N-step memory for this episode
+            self.n_step_memory.clear()
+            
+        
             # Resetting items for this episode
             episode_reward = 0
             timestep_number = 0
@@ -182,12 +185,14 @@ class Agent:
                 # Add reward we just received to running total for this episode
                 episode_reward += reward
                 
-                # If this episode is being rendered, render it now
+                # If this episode is being rendered, save the states and actions
                 if self.n_agent == 1 and Settings.RECORD_VIDEO and episode_number % (Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES*Settings.VIDEO_RECORD_FREQUENCY) == 0:                    
                     # Render this frame
-                    temp_action = 1 
-                    self.env.render(state_to_animate, temp_action, episode_number, Settings.RUN_NAME)    
+                    temp_action = 1   
                     # will animate this state next time
+                    
+                    state_log.append(state_to_animate)
+                    action_log.append(temp_action)
                     state_to_animate = next_state 
                 
                 # Normalize the state and scale down reward
@@ -248,6 +253,10 @@ class Agent:
             ################################
             ####### Episode Complete #######
             ################################       
+            # If this episode is being rendered, render it now
+            if self.n_agent == 1 and Settings.RECORD_VIDEO and episode_number % (Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES*Settings.VIDEO_RECORD_FREQUENCY) == 0:                    
+                # Render this episode
+                self.env.render(np.asarray(state_log), np.asarray(action_log), episode_number, Settings.RUN_NAME)  
 
             # Periodically update the agent with the learner's most recent version of the actor network parameters
             if episode_number % Settings.UPDATE_ACTORS_EVERY_NUM_EPISODES == 0:
