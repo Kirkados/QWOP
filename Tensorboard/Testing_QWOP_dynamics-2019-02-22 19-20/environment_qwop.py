@@ -155,32 +155,6 @@ class Environment:
         # The agent is (currently) rewarded for forward velocity.
         reward = self.state[9]        
         return reward
-    
-    def render(self, state_log, episode_number, filename):
-        """
-        This function animates the motion of one episode. It receives the 
-        log of the states encountered during one episode.
-        
-        Inputs: 
-            state_log - a numpy array of shape [# timesteps, # states] containing all the state data
-            episode_number - Which episode produced these results
-            filename - Please save the animation in: 'TensorBoard/' + filename + '/videos/episode_' + str(episode_number)
-            
-        For reference, the state is:
-            state = x, y, theta, x1, y1, theta1, x2, y2, theta2, xdot, ydot, thetadot, x1dot, y1dot, theta1dot, x2dot, y2dot, theta2dot                
-        """
-        
-    
-        # Stephane's Animating Code #
-        print(state_log.shape)
-        
-        #############################
-        
-        
-        
-        
-        
-        
 
 def equations_of_motion(state, t, parameters):
     # From the state, it returns the first derivative of the state

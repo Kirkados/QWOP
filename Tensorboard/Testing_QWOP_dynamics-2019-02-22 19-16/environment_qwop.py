@@ -125,8 +125,8 @@ class Environment:
         K = 100.
         
         # Packing up the parameters the equations of motion need
-        parameters = np.array([self.m, self.m1, self.m2, self.eta, self.eta1, self.eta2, self.gamma1, self.gamma2, self.I, self.I1, self.I2, self.g, fF1, fF2, self.phi1, self.phi2, fN1, fN2, K], dtype = 'float64')
-
+        parameters = [self.m, self.m1, self.m2, self.eta, self.eta1, self.eta2, self.gamma1, self.gamma2, self.I, self.I1, self.I2, self.g, fF1, fF2, self.phi1, self.phi2, fN1, fN2, K]
+        print(parameters)
         # Integrating forward one time step. 
         # Returns initial condition on first row then next timestep on the next row
         ##############################
@@ -155,32 +155,6 @@ class Environment:
         # The agent is (currently) rewarded for forward velocity.
         reward = self.state[9]        
         return reward
-    
-    def render(self, state_log, episode_number, filename):
-        """
-        This function animates the motion of one episode. It receives the 
-        log of the states encountered during one episode.
-        
-        Inputs: 
-            state_log - a numpy array of shape [# timesteps, # states] containing all the state data
-            episode_number - Which episode produced these results
-            filename - Please save the animation in: 'TensorBoard/' + filename + '/videos/episode_' + str(episode_number)
-            
-        For reference, the state is:
-            state = x, y, theta, x1, y1, theta1, x2, y2, theta2, xdot, ydot, thetadot, x1dot, y1dot, theta1dot, x2dot, y2dot, theta2dot                
-        """
-        
-    
-        # Stephane's Animating Code #
-        print(state_log.shape)
-        
-        #############################
-        
-        
-        
-        
-        
-        
 
 def equations_of_motion(state, t, parameters):
     # From the state, it returns the first derivative of the state
@@ -204,6 +178,7 @@ def equations_of_motion(state, t, parameters):
                    [                  -1.,                   0., eta*np.sin(theta) + gamma2*np.sin(theta + theta2),                               0.,                               0.,                            0.,                               1.,                               0., gamma2*np.sin(theta + theta2)],
                    [                   0.,                  -1., eta*np.cos(theta) + gamma2*np.cos(theta + theta2),                               0.,                               0.,                            0.,                               0.,                               1., gamma2*np.cos(theta + theta2)],
                    [                   0.,                   0.,                                                0.,                               0.,                               0.,                            0., m2*gamma2*np.cos(theta + theta2), m2*gamma2*np.sin(theta + theta2),                            I2]])
+    
     
     # C matrix
     C = np.matrix([[fF1 + fF2],

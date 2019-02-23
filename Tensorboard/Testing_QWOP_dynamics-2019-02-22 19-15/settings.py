@@ -11,7 +11,7 @@ class Settings:
     ##### Run Settings #####
     ########################
     
-    RUN_NAME               = 'QWOP_animating' # use just the name. If trying to restore from file, use name along with timestamp
+    RUN_NAME               = 'Testing_QWOP_dynamics' # use just the name. If trying to restore from file, use name along with timestamp
     ENVIRONMENT            = 'qwop'
     RECORD_VIDEO           = True
     VIDEO_RECORD_FREQUENCY = 1 # Multiples of "CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES"
@@ -29,7 +29,7 @@ class Settings:
     NUMBER_OF_ACTORS        = 1
     NUMBER_OF_EPISODES      = 1 # that each agent will perform
     MAX_TRAINING_ITERATIONS = 1
-    MAX_NUMBER_OF_TIMESTEPS = 10 # per episode
+    MAX_NUMBER_OF_TIMESTEPS = 100 # per episode
     ACTOR_LEARNING_RATE     = 0.0001
     CRITIC_LEARNING_RATE    = 0.0001
     TARGET_NETWORK_TAU      = 0.001
@@ -46,7 +46,7 @@ class Settings:
     # Periodic events
     UPDATE_TARGET_NETWORKS_EVERY_NUM_ITERATIONS       = 1 
     UPDATE_ACTORS_EVERY_NUM_EPISODES                  = 1
-    CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES       = 1    
+    CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES       = 5    
     LOG_TRAINING_PERFORMANCE_EVERY_NUM_ITERATIONS     = 100
     DISPLAY_TRAINING_PERFORMANCE_EVERY_NUM_ITERATIONS = 100000
     DISPLAY_ACTOR_PERFORMANCE_EVERY_NUM_EPISODES      = 5000

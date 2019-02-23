@@ -245,8 +245,8 @@ class Agent:
             ####### Episode Complete #######
             ################################       
             # If this episode is being rendered, render it now.
-            if self.n_agent == 1 and Settings.RECORD_VIDEO and episode_number % (Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES*Settings.VIDEO_RECORD_FREQUENCY) == 0:                    
-                self.env.render(state_log, episode_number, Settings.RUN_NAME)
+            if self.n_agent == 1 and Settings.RECORD_VIDEO and episode_number % (Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES*Settings.VIDEO_RECORD_FREQUENCY) == 0:                   
+                self.env.render(np.asarray(state_log), episode_number, Settings.RUN_NAME)
                 
             # Periodically update the agent with the learner's most recent version of the actor network parameters
             if episode_number % Settings.UPDATE_ACTORS_EVERY_NUM_EPISODES == 0:
