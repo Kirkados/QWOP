@@ -139,6 +139,7 @@ class Agent:
                     state_to_animate = state
                     state_log = []
                     action_log = []
+                    time_log = []
                 
             else:
                 # Regular training episode, use noise.
@@ -193,6 +194,7 @@ class Agent:
                     
                     state_log.append(state_to_animate)
                     action_log.append(temp_action)
+                    time_log.append(timestep_number*self.env.timestep)
                     state_to_animate = next_state 
                 
                 # Normalize the state and scale down reward
@@ -256,7 +258,7 @@ class Agent:
             # If this episode is being rendered, render it now
             if self.n_agent == 1 and Settings.RECORD_VIDEO and episode_number % (Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES*Settings.VIDEO_RECORD_FREQUENCY) == 0:                    
                 # Render this episode
-                self.env.render(np.asarray(state_log), np.asarray(action_log), episode_number, Settings.RUN_NAME)  
+                self.env.render(np.asarray(state_log), np.asarray(action_log), np.asarray(time_log), episode_number, Settings.RUN_NAME)  
 
             # Periodically update the agent with the learner's most recent version of the actor network parameters
             if episode_number % Settings.UPDATE_ACTORS_EVERY_NUM_EPISODES == 0:

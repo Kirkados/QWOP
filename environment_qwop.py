@@ -156,7 +156,7 @@ class Environment:
         reward = self.state[9]        
         return reward
     
-    def render(self, state_log, action_log, episode_number, filename):
+    def render(self, state_log, action_log, time_log, episode_number, filename):
         """
         This function animates the motion of one episode. It receives the 
         log of the states encountered during one episode.
@@ -178,6 +178,7 @@ class Environment:
         # Stephane's Animating Code #
         print(state_log)
         print(action_log)
+        print(time_log)
         
         #############################
         
