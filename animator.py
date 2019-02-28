@@ -9,12 +9,22 @@ Created on Thu Feb 21 18:50:29 2019
 import numpy as np
 import pygame
  
-def something(background_surface):
+def something(var):
     # intialize window 
+    width = 800
+    height = 500
     pygame.init()
     pygame.display.set_caption("QWOP")
+    screen = pygame.display.set_mode(size)
     
+    background_surface = animator.drawBackground(width,height)
     screen.blit(background_surface, (0, 0))
+    
+    # Set the height and width of the screen
+    size = [f_width, f_height]
+    screen = pygame.display.set_mode(size)
+    
+    
     pygame.display.update()
     
     # Save every frame
@@ -29,6 +39,7 @@ def drawBackground(width,height):
     #define colors
     DIRT = (58,28,18)
     TRACK = (208,69,40)
+    LINE = (255,255,255)
     GRASS = (100,150,50)
     SKY = (69,99,119)
     SKY2 = (0,102,162)
