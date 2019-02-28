@@ -27,6 +27,8 @@ Inputs:
 @author: Kirk Hovell (khovell@gmail.com)
 """
 import numpy as np
+import animator
+import pygame
 from scipy.integrate import odeint # Numerical integrator
 
 class Environment:
@@ -182,7 +184,40 @@ class Environment:
         
         #############################
         
+                
+        #initialize the pygame window
+        width = 800
+        height = 500
+        size = [width, height]
+        pygame.init()
+        pygame.display.set_caption("QWOP")
+        screen = pygame.display.set_mode(size)
         
+        #prepare background surface
+        background_surface = animator.drawBackground(width,height)
+        screen.blit(background_surface, (0, 0))
+        pygame.display.update()
+        
+        
+        
+        #loop 
+        time_steps = len(state_log)
+        for this_step in range(time_steps): #this loop becomes while not dead for game
+            print(this_step)
+            
+            #get current state (from state or using physics in game)
+            
+            
+            #Prep surface
+            #frame_surface = animator.drawState(background_surface,self, state_log(i), action_log(i), episode_number)
+            #Draw new body
+        
+            #save image
+            pygame.image.save(background_surface,"test.png")
+            
+        pygame.quit()
+        
+        #read images and write video, delete images
         
         
         

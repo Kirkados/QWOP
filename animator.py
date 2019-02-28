@@ -15,13 +15,14 @@ def something(var):
     height = 500
     pygame.init()
     pygame.display.set_caption("QWOP")
+    # Set the height and width of the screen
+    size = [width, height]
     screen = pygame.display.set_mode(size)
     
     background_surface = animator.drawBackground(width,height)
     screen.blit(background_surface, (0, 0))
     
-    # Set the height and width of the screen
-    size = [f_width, f_height]
+
     screen = pygame.display.set_mode(size)
     
     
@@ -58,7 +59,7 @@ def drawBackground(width,height):
     y_l4 = y_sky+y_sky2+y_grass+y_track
     y_l2 = y_l1+np.rint((y_l4-y_l1)/6)
     y_l3 = y_l1+np.rint((y_l4-y_l1)/2)
-    
+    print(y_l3,y_l4)
     #define thickness of track lines
     t_l1 = 1
     t_l2 = 2
@@ -151,41 +152,23 @@ def drawState(state):
     
     #scale
     hum_scale = 100 #pixel/m
-    f_width = 800
-    f_height = 500
+    width = 800
+    height = 500
     
     
-    #define relative positions of text
-    b_stats = np.rint(f_width-200)
-    b_mid = np.rint(f_width/2)
+    #define relative positions of text and buttons    
+    dx_btn = np.rint(height/12)
+    dy_btn = np.rint(height/12)
     
-    h_mid = np.rint(f_height/2)
-    h_record = np.rint(0.05*f_height)
-    h_update = np.rint(0.12*f_height)
-    h_prog = np.rint(0.95*f_height)
-    
-    y_stats1 = np.rint(f_height/10)
-    y_stats2 = np.rint(2*f_height/10)
-    x_stats1 = np.rint(f_width/10)
-    x_stats2 = np.rint(8*f_width/10)
-    
-    dx_btn = np.rint(f_height/12)
-    dy_btn = np.rint(f_height/12)
-    
-    x_btn1 = np.rint(f_width/15)+20
+    x_btn1 = np.rint(width/15)+20
     x_btn2 = x_btn1+dx_btn+20
-    x_btn3 = f_width-x_btn2-dx_btn
-    x_btn4 =  f_width-x_btn1-dx_btn
-    y_btn = np.rint(1*f_height/10)
+    x_btn3 = width-x_btn2-dx_btn
+    x_btn4 =  width-x_btn1-dx_btn
+    y_btn = np.rint(1*height/10)
     
     #define positions of body
-    y_0 = (y_l4+y_l3)/2
-    x_0 = np.rint(f_width/2)
-    
-    
-    #position
-    x_0 = np.rint(f_width/2)
-    y_0 = y_l3+np.rint((y_l4-y_l3)/2)
+    x_0 = np.rint(width/2)
+    y_0 = np.rint(height*9/10)
     
     x_bod = 10
     y_bod = 1.4
@@ -197,23 +180,8 @@ def drawState(state):
     y_bod2 = 0.4
     th_leg2 = -30*np.pi/180
     
-    
-    
-    
-    
-    #define body dimensions
-    #l_bod = 75
-    #a_bod = 0.5
-    #l_leg1 = 1
-    #a_leg1 = 0.5
-    #l_leg2= 1
-    #a_leg2 = 0.5
-    
+
         
-    
-    
-    
-    
     
     # intialize window 
     pygame.init()
@@ -221,9 +189,9 @@ def drawState(state):
     
     
     # Set the height and width of the screen
-    size = [f_width, f_height]
+    size = [width, height]
     screen = pygame.display.set_mode(size)
-     
+    background = drawBackground(width,height)
      
     # Loop until the user clicks the close button.
     running = True
@@ -233,6 +201,10 @@ def drawState(state):
     pressed_p = False
     # Used to manage how fast the screen updates
     #clock = pygame.time.Clock()
+    
+    
+#    myimage = pygame.image.load("background_im.png")
+#    imagerect = myimage.get_rect()
     
     
     # -------- Main Program Loop -----------
@@ -329,9 +301,9 @@ def drawState(state):
         
         # --- Drawing
         # Set the screen background (clears)
-        #screen.fill(BLACK)
-     
-            
+#        screen.fill(BLACK)
+ #       screen.blit(bg_, (0, 0))
+        screen.blit(background,(0,0))   
         #Draw text
         
         # generation                best x (gen)
@@ -358,7 +330,7 @@ def drawState(state):
         text_c_w = text_current.get_rect().width
         text_c_h = text_current.get_rect().height
         
-        screen.blit(text_current, [np.rint(f_width/2-text_c_w/2),y_btn])
+        screen.blit(text_current, [np.rint(width/2-text_c_w/2),y_btn])
         
         
         
