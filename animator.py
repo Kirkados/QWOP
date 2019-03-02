@@ -35,6 +35,14 @@ def something(var):
     pygame.image.save(this_surface, filename)
     return 0
 
+def returnPointCoords(x,y,theta_cum,gamma,eta):
+    
+    pointCoords = np.array([[x-(1-a_bod)*l_bod*np.sin(theta_cum),y+(1-a_bod)*l_bod*np.cos(theta_cum)],[x,y],[x+(a_bod)*l_bod*np.sin(theta_cum),y-(a_bod)*l_bod*np.cos(theta_cum)]])      
+        
+    
+    return pointCoords
+    
+
 def drawBackground(width,height):
     
     #define colors
