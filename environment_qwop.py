@@ -40,7 +40,7 @@ class Environment:
         ##################################
         self.state_size = 18
         self.action_size = 2
-        self.timestep = 0.1 # [s]
+        self.TIMESTEP = 0.1 # [s]
         self.target_reward = 1.
         self.num_frames = 100 # total animation is cut into this many frames
         self.randomize = False # whether or not to randomize the state & target location

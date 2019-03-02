@@ -27,8 +27,8 @@ class Settings:
     
     # Hyperparameters
     NUMBER_OF_ACTORS        = 1
-    NUMBER_OF_EPISODES      = 1 # that each agent will perform
-    MAX_TRAINING_ITERATIONS = 1
+    NUMBER_OF_EPISODES      = 10 # that each agent will perform
+    MAX_TRAINING_ITERATIONS = 20
     MAX_NUMBER_OF_TIMESTEPS = 10 # per episode
     ACTOR_LEARNING_RATE     = 0.0001
     CRITIC_LEARNING_RATE    = 0.0001

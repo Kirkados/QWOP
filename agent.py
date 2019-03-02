@@ -36,6 +36,7 @@ class Agent:
         self.learner_policy_parameters = learner_policy_parameters
         self.agent_to_env = agent_to_env
         self.env_to_agent = env_to_agent
+        self.TIMESTEP = environment_file.Environment().TIMESTEP # [s] getting timestep from environment
         
         # Record video if desired
         if self.n_agent == 1 and Settings.RECORD_VIDEO:
@@ -152,6 +153,7 @@ class Agent:
                     # Also log the states & actions encountered in this episode because we are going to render them!
                     state_log = []
                     action_log = []
+                    time_log = []
                 
             else:
                 # Regular training episode, use noise.
@@ -223,6 +225,7 @@ class Agent:
                 if self.n_agent == 1 and Settings.RECORD_VIDEO and episode_number % (Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES*Settings.VIDEO_RECORD_FREQUENCY) == 0:                    
                     state_log.append(state)
                     action_log.append(action)
+                    time_log.append(timestep_number*self.TIMESTEP)
                 
                 # End of timestep -> next state becomes current state
                 state = next_state
@@ -255,8 +258,7 @@ class Agent:
             ################################       
             # If this episode is being rendered, render it now.
             if self.n_agent == 1 and Settings.RECORD_VIDEO and episode_number % (Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES*Settings.VIDEO_RECORD_FREQUENCY) == 0:                    
-                environment_file.render(np.asarray(state_log), np.asarray(action_log), episode_number, Settings.RUN_NAME)
-                #self.env.render(np.asarray(state_log), np.asarray(action_log), episode_number, Settings.RUN_NAME)
+                environment_file.render(np.asarray(state_log), np.asarray(action_log), time_log, episode_number, Settings.RUN_NAME)
                 
             # Periodically update the agent with the learner's most recent version of the actor network parameters
             if episode_number % Settings.UPDATE_ACTORS_EVERY_NUM_EPISODES == 0:
