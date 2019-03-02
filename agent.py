@@ -1,7 +1,13 @@
 """
-This Agent class generates one agent that will run episodes. The agent collects, processes,
-and dumps data into the ReplayBuffer. It will occasionally update the parameters 
-used by its neural network by grabbing the most up-to-date ones from the Learner. 
+This Agent class generates one agent that will run episodes. The agent collects, 
+processes, and dumps data into the ReplayBuffer. It will occasionally update the 
+parameters used by its neural network by grabbing the most up-to-date ones from 
+the Learner. 
+
+The environment is not contained in this thread because it must be in its own
+process. The agent communicates with the environment through two queues:
+    agent_to_env - the agent passes actions or reset signals to the environment process
+    env_to_agent - the environment returns results to the agent
 
 @author: Kirk Hovell (khovell@gmail.com)
 """
@@ -14,11 +20,12 @@ from pyvirtualdisplay import Display # for rendering
 
 from settings import Settings
 from build_neural_networks import BuildActorNetwork
+environment_file = __import__('environment_' + Settings.ENVIRONMENT) # importing the environment
 
 
 class Agent:
     
-    def __init__(self, sess, n_agent, replay_buffer, writer, filename, learner_policy_parameters):
+    def __init__(self, sess, n_agent, agent_to_env, env_to_agent, replay_buffer, writer, filename, learner_policy_parameters):
         
         print("Initializing agent " + str(n_agent) + "...")
         
@@ -27,11 +34,8 @@ class Agent:
         self.sess = sess
         self.replay_buffer = replay_buffer
         self.learner_policy_parameters = learner_policy_parameters
-        
-        # Make an instance of the environment
-        environment_file = __import__('environment_' + Settings.ENVIRONMENT)        
-        self.env = getattr(environment_file, 'Environment')()
-        self.env.seed(Settings.RANDOM_SEED*self.n_agent)
+        self.agent_to_env = agent_to_env
+        self.env_to_agent = env_to_agent
         
         # Record video if desired
         if self.n_agent == 1 and Settings.RECORD_VIDEO:
@@ -42,7 +46,6 @@ class Agent:
                 display.start()
             except:
                 print("You must run on Linux if you want to record gym videos!")
-                #raise SystemExit
                     
         # Build this Agent's actor network
         self.build_actor()
@@ -119,14 +122,23 @@ class Agent:
             ####################################
             #### Getting this episode ready ####
             ####################################            
-            # Resetting the environment for this episode
-            state = self.env.reset()
+            # Resetting the environment for this episode by sending a boolean
+            self.agent_to_env.put(False)
+            state = self.env_to_agent.get()
+
+            # Normalizing the state to 1 separately along each dimension
+            # to avoid the 'vanishing gradients' problem
+            if Settings.NORMALIZE_STATE:
+                state = state/Settings.UPPER_STATE_BOUND
+            
+            # Clearing the N-step memory for this episode
+            self.n_step_memory.clear()
             
             # Checking if this is a test time (when we run an agent in a 
             # noise-free environment to see how the training is going).
             # Only agent_1 is used for test time
             test_time = (self.n_agent == 1) and (episode_number % Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES == 0)
-                        
+            
             # Calculating the noise scale for this episode. The noise scale 
             # allows for changing the amount of noise added to the actor during training.
             if test_time:
@@ -136,25 +148,16 @@ class Agent:
                 # Additionally, if it's time to render, make a statement to the user
                 if Settings.RECORD_VIDEO and episode_number % (Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES*Settings.VIDEO_RECORD_FREQUENCY) == 0:
                     print("Rendering Actor %i at episode %i" % (self.n_agent, episode_number))
-                    state_to_animate = state
+                    
+                    # Also log the states & actions encountered in this episode because we are going to render them!
                     state_log = []
                     action_log = []
-                    time_log = []
                 
             else:
                 # Regular training episode, use noise.
                 # Noise is decayed during the training
                 noise_scale = Settings.NOISE_SCALE * Settings.NOISE_SCALE_DECAY ** episode_number
             
-            # Normalizing the state to 1 separately along each dimension
-            # to avoid the 'vanishing gradients' problem
-            if Settings.NORMALIZE_STATE:
-                state = state/Settings.UPPER_STATE_BOUND
-            
-            # Clearing the N-step memory for this episode
-            self.n_step_memory.clear()
-            
-        
             # Resetting items for this episode
             episode_reward = 0
             timestep_number = 0
@@ -181,21 +184,13 @@ class Agent:
                 ################################################
                 #### Step the dynamics forward one timestep ####
                 ################################################
-                next_state, reward, done = self.env.step(action)
+                # Send the action to the environment process
+                self.agent_to_env.put(action)                
+                # Receive results from stepped environment
+                next_state, reward, done = self.env_to_agent.get()
                 
                 # Add reward we just received to running total for this episode
                 episode_reward += reward
-                
-                # If this episode is being rendered, save the states and actions
-                if self.n_agent == 1 and Settings.RECORD_VIDEO and episode_number % (Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES*Settings.VIDEO_RECORD_FREQUENCY) == 0:                    
-                    # Render this frame
-                    temp_action = 1   
-                    # will animate this state next time
-                    
-                    state_log.append(state_to_animate)
-                    action_log.append(temp_action)
-                    time_log.append(timestep_number*self.env.timestep)
-                    state_to_animate = next_state 
                 
                 # Normalize the state and scale down reward
                 if Settings.NORMALIZE_STATE:
@@ -224,7 +219,10 @@ class Agent:
                     replay_buffer_dump_flag.wait() # blocks until replay_buffer_dump_flag is True
                     self.replay_buffer.add((state_0, action_0, n_step_reward, next_state, done, discount_factor))
                 
-                
+                # If this episode is being rendered, log the state for rendering later
+                if self.n_agent == 1 and Settings.RECORD_VIDEO and episode_number % (Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES*Settings.VIDEO_RECORD_FREQUENCY) == 0:                    
+                    state_log.append(state)
+                    action_log.append(action)
                 
                 # End of timestep -> next state becomes current state
                 state = next_state
@@ -255,11 +253,11 @@ class Agent:
             ################################
             ####### Episode Complete #######
             ################################       
-            # If this episode is being rendered, render it now
+            # If this episode is being rendered, render it now.
             if self.n_agent == 1 and Settings.RECORD_VIDEO and episode_number % (Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES*Settings.VIDEO_RECORD_FREQUENCY) == 0:                    
-                # Render this episode
-                self.env.render(np.asarray(state_log), np.asarray(action_log), np.asarray(time_log), episode_number, Settings.RUN_NAME)  
-
+                environment_file.render(np.asarray(state_log), np.asarray(action_log), episode_number, Settings.RUN_NAME)
+                #self.env.render(np.asarray(state_log), np.asarray(action_log), episode_number, Settings.RUN_NAME)
+                
             # Periodically update the agent with the learner's most recent version of the actor network parameters
             if episode_number % Settings.UPDATE_ACTORS_EVERY_NUM_EPISODES == 0:
                 self.sess.run(self.update_actor_parameters)
@@ -291,7 +289,5 @@ class Agent:
         #################################
         ##### All episodes complete #####
         #################################
-        # Close the environment            
-        del self.env
         # Notify of completion
         print("Actor %i finished after running %i episodes!" % (self.n_agent, episode_number - 1))

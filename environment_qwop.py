@@ -27,6 +27,7 @@ Inputs:
 @author: Kirk Hovell (khovell@gmail.com)
 """
 import numpy as np
+import multiprocessing
 import animator
 import pygame
 from scipy.integrate import odeint # Numerical integrator
@@ -125,6 +126,13 @@ class Environment:
 #        self.phi2 = -np.pi/6  # [rad]
 
         
+    ###################################
+    ##### Seeding the environment #####
+    ###################################
+    def seed(self, seed):
+        np.random.seed(seed)        
+        
+        
     ######################################
     ##### Resettings the Environment #####
     ######################################    
@@ -200,11 +208,6 @@ class Environment:
         # Return the (state, reward, done)
         return self.state, reward, done
 
-    
-    def seed(self, seed = None):
-        # This method seeds the environment, for reproducability
-        np.random.seed(seed)
-
 
     def reward_function(self, action):
         # Returns the reward for this timestep as a function of the state and action
@@ -213,70 +216,53 @@ class Environment:
         reward = self.state[9]        
         return reward
     
-    def render(self, state_log, action_log, time_log, episode_number, filename):
-        """
-        This function animates the motion of one episode. It receives the 
-        log of the states encountered during one episode.
+    
+    #########################################################################
+    ##### Generating communication links between environment and agents #####
+    #########################################################################
+    def generate_queue(self):
+        # Generate the queues responsible for communicating with the agent
+        self.agent_to_env = multiprocessing.Queue(maxsize = 1)  
+        self.env_to_agent = multiprocessing.Queue(maxsize = 1)  
+        return self.agent_to_env, self.env_to_agent
         
-        Inputs: 
-            state_log - a numpy array of shape [# timesteps, # states] containing all the state data
-            action_log - a numpy array of shape [# timesteps] containing all the action data. The action will be an integer corresponding to which action is being performed.
-                    0: No buttons pressed; 1: Q only; 2: QO; 3: QP; 4: W only; 5: WO; 6: WP; 7: O only; 8: P only
-            episode_number - Which episode produced these results
-            filename - Please save the animation in: 'TensorBoard/' + filename + '/videos/episode_' + str(episode_number)
+    
+
+    ###################################
+    ##### Running the environment #####
+    ###################################    
+    def run(self):
+
+        """
+        This method is called when the environment process is launched by main.py.
+        It is responsible for continually listening for an input action from the
+        agent through a Queue. If an action is received, it is to step the environment
+        and return the results.
+        """
+        # Loop until the process is terminated
+        while True:
+            # Blocks until the agent passes us an action
+            action = self.agent_to_env.get()
             
-        For reference, the state is:
-            state = x, y, theta, x1, y1, theta1, x2, y2, theta2, xdot, ydot, thetadot, x1dot, y1dot, theta1dot, x2dot, y2dot, theta2dot                
-        """
-        
-      
-        
-        
-        # Stephane's Animating Code #
-        print(state_log)
-        print(action_log)
-        print(time_log)
-        
-        #############################
-        
+            if type(action) == bool:                
+                # The signal to reset the environment was received
+                state = self.reset()
+                # Return the results
+                self.env_to_agent.put(state)
+            
+            else:            
+                ################################
+                ##### Step the environment #####
+                ################################
+                next_state, reward, done = self.step(action)
                 
-        #initialize the pygame window
-        width = 800
-        height = 500
-        size = [width, height]
-        pygame.init()
-        pygame.display.set_caption("QWOP")
-        screen = pygame.display.set_mode(size)
+                # Return the results
+                self.env_to_agent.put((next_state, reward, done))
         
-        #prepare background surface
-        background_surface = animator.drawBackground(width,height)
-        screen.blit(background_surface, (0, 0))
-        pygame.display.update()
-        
-        
-        
-        #loop 
-        time_steps = len(state_log)
-        for this_step in range(time_steps): #this loop becomes while not dead for game
-            print(this_step)
-            
-            #get current state (from state or using physics in game)
-            
-            
-            #Prep surface
-            #frame_surface = animator.drawState(background_surface,self, state_log(i), action_log(i), episode_number)
-            #Draw new body
-        
-            #save image
-            pygame.image.save(background_surface,"test.png")
-            
-        pygame.quit()
-        
-        #read images and write video, delete images
-        
-        
-        
-        
+
+
+
+
 
 def equations_of_motion(state, t, parameters):
     # From the state, it returns the first derivative of the state
@@ -362,3 +348,65 @@ def equations_of_motion(state, t, parameters):
 #                   [-thetadot**2*eta*np.cos(theta) - (thetadot + theta2dot)**2*gamma2*np.cos(theta+theta2)],
 #                   [thetadot**2*eta*np.sin(theta) + (thetadot + theta2dot)**2*gamma2*np.sin(theta + theta2)],
 #                   [-g*gamma2*np.sin(theta + theta2) + fN2*(eta2*np.sin(theta + theta2) + gamma2*np.sin(theta + theta2)) + fF2*(eta2*np.cos(theta + theta2) + gamma2*np.cos(theta + theta2)) + K*(phi2 - theta2)]])    
+    
+def render(state_log, action_log, time_log, episode_number, filename):
+        """
+        This function animates the motion of one episode. It receives the 
+        log of the states encountered during one episode.
+        
+        Inputs: 
+            state_log - a numpy array of shape [# timesteps, # states] containing all the state data
+            action_log - a numpy array of shape [# timesteps] containing all the action data. The action will be an integer corresponding to which action is being performed.
+                    0: No buttons pressed; 1: Q only; 2: QO; 3: QP; 4: W only; 5: WO; 6: WP; 7: O only; 8: P only
+            episode_number - Which episode produced these results
+            filename - Please save the animation in: 'TensorBoard/' + filename + '/videos/episode_' + str(episode_number)
+            
+        For reference, the state is:
+            state = x, y, theta, x1, y1, theta1, x2, y2, theta2, xdot, ydot, thetadot, x1dot, y1dot, theta1dot, x2dot, y2dot, theta2dot                
+        """
+        
+      
+        
+        
+        # Stephane's Animating Code #
+        print(state_log)
+        print(action_log)
+        print(time_log)
+        
+        #############################
+        
+                
+        #initialize the pygame window
+        width = 800
+        height = 500
+        size = [width, height]
+        pygame.init()
+        pygame.display.set_caption("QWOP")
+        screen = pygame.display.set_mode(size)
+        
+        #prepare background surface
+        background_surface = animator.drawBackground(width,height)
+        screen.blit(background_surface, (0, 0))
+        pygame.display.update()
+        
+        
+        
+        #loop 
+        time_steps = len(state_log)
+        for this_step in range(time_steps): #this loop becomes while not dead for game
+            print(this_step)
+            
+            #get current state (from state or using physics in game)
+            
+            
+            #Prep surface
+            #frame_surface = animator.drawState(background_surface,self, state_log(i), action_log(i), episode_number)
+            #Draw new body
+        
+            #save image
+            pygame.image.save(background_surface,"test.png")
+            
+        pygame.quit()
+        
+        #read images and write video, delete images
+        

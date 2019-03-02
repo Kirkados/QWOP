@@ -12,11 +12,13 @@ Namely:
 
 This implementation does not use the 
 ApeX framework (https://arxiv.org/abs/1803.00933) as the original authors did.
-Instead, it uses python's 'threading' library.
+Instead, it uses python's 'threading' and 'multiprocessing' library.
+
+Different tasks are contained in different threads. Tensorflow is thread-safe and automatically multi-threaded.
+Each instance of the environment is contained in a different process due to scipy not being thread-safe.
 
 ===== Notes =====
 Need to implement:  
-    - My own dynamics
     - Fix rendering
     - Investigate reward dividing and MIN_Q
     
@@ -26,7 +28,6 @@ Things to remember:
     - CPU is used to run everything as it was noticed to be faster than using the 
        GPU (maybe due to all the copying). This could be re-investigated for a 
        larger mini_batch_size/neuron count (was done with batch = 128, neurons = 40)
-    - If attempting to render episodes using gym, you must run this on Linux or a WSL image!
     - Make sure to update Qmin and Qmax when changing the environment
     
 Temporary Notes:
@@ -51,6 +52,7 @@ from shutil import copyfile
 import os
 import time
 import threading
+import multiprocessing
 import random
 import datetime
 import psutil
@@ -152,8 +154,9 @@ with tf.Session(config = config) as sess:
     else:
         replay_buffer = ReplayBuffer()
     
-    # Initializing thread list
+    # Initializing thread & process list
     threads = []
+    environment_processes = []
     
     # Event()s are used to communicate with threads while they run.
     # In this case, it is used to signal to the threads when it is time to stop gracefully.
@@ -174,13 +177,33 @@ with tf.Session(config = config) as sess:
     # Generating the actors and placing them into their own threads
     for i in range(Settings.NUMBER_OF_ACTORS):
         if Settings.USE_GPU_WHEN_AVAILABLE: 
-            # Allow GPU use when appropriate
-            actor = Agent(sess, i+1, replay_buffer, writer, filename, learner.actor.parameters)
+            # Allow GPU use when appropriate            
+            # Make an instance of the environment which will be placed in its own process
+            environment_file = __import__('environment_' + Settings.ENVIRONMENT)        
+            environment = environment_file.Environment()            
+            # Set the environment seed
+            environment.seed(Settings.RANDOM_SEED*(i+1))
+            # Generate the queue responsible for communicating with the agent
+            agent_to_env, env_to_agent = environment.generate_queue()            
+            # Generate the actor
+            actor = Agent(sess, i+1, agent_to_env, env_to_agent, replay_buffer, writer, filename, learner.actor.parameters)            
+            
         else:            
             with tf.device('/device:CPU:0'):
                 # Forcing to the CPU only
-                actor = Agent(sess, i+1, replay_buffer, writer, filename, learner.actor.parameters)                
+                # Make an instance of the environment which will be placed in its own process
+                environment_file = __import__('environment_' + Settings.ENVIRONMENT)        
+                environment = environment_file.Environment()            
+                # Set the environment seed
+                environment.seed(Settings.RANDOM_SEED*(i+1))
+                # Generate the queue responsible for communicating with the agent
+                agent_to_env, env_to_agent = environment.generate_queue()            
+                # Generate the actor
+                actor = Agent(sess, i+1, agent_to_env, env_to_agent, replay_buffer, writer, filename, learner.actor.parameters)  
+        
+        # Add process and thread to the running total
         threads.append(threading.Thread(target = actor.run, args = (stop_run_flag, replay_buffer_dump_flag, starting_episode_number)))
+        environment_processes.append(multiprocessing.Process(target = environment.run, daemon = True))
     
     # If desired, try to load in partially-trained parameters
     if Settings.RESUME_TRAINING == True:
@@ -195,7 +218,10 @@ with tf.Session(config = config) as sess:
         # Initialize Tensorflow variables
         sess.run(tf.global_variables_initializer())
         
-        
+    
+    # Starting all environments
+    for each_process in environment_processes:
+        each_process.start()
 
     #############################################
     ##### STARTING EXECUTION OF ALL THREADS #####
@@ -235,6 +261,12 @@ with tf.Session(config = config) as sess:
         # Join threads (suspends program until threads finish)
         for each_thread in threads:
             each_thread.join()
+    
+    # Stopping all environment processes
+    for each_process in environment_processes:
+        each_process.terminate()
+        each_process.join()
+        
     print("This run completed in %.3f hours." %((time.time() - start_time)/3600))
     print("Done closing! Goodbye :)")
     
