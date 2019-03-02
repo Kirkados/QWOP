@@ -19,7 +19,7 @@ from collections import deque
 from pyvirtualdisplay import Display # for rendering
 
 from settings import Settings
-from build_neural_networks import BuildActorNetwork
+from build_neural_networks import BuildQNetwork
 environment_file = __import__('environment_' + Settings.ENVIRONMENT) # importing the environment
 
 
@@ -36,7 +36,6 @@ class Agent:
         self.learner_policy_parameters = learner_policy_parameters
         self.agent_to_env = agent_to_env
         self.env_to_agent = env_to_agent
-        self.TIMESTEP = environment_file.Environment().TIMESTEP # [s] getting timestep from environment
         
         # Record video if desired
         if self.n_agent == 1 and Settings.RECORD_VIDEO:
@@ -49,10 +48,10 @@ class Agent:
                 print("You must run on Linux if you want to record gym videos!")
                     
         # Build this Agent's actor network
-        self.build_actor()
+        self.build_q_network()
         
         # Build the operations to update the actor network
-        self.build_actor_update_operation()
+        self.build_q_network_update_operation()
         
         # Establish the summary functions for TensorBoard logging.
         self.create_summary_functions()        
@@ -75,7 +74,7 @@ class Agent:
             self.test_time_episode_summary    = tf.summary.merge([test_time_episode_reward_summary, test_time_timestep_number_summary])
             
             
-    def build_actor(self):        
+    def build_q_network(self):        
         # Generate the actor's policy neural network
         agent_name = 'agent_' + str(self.n_agent) # agent name 'agent_3', for example
         self.state_placeholder = tf.placeholder(dtype = tf.float32, shape = [None, Settings.STATE_SIZE], name = 'state_placeholder') # the * lets Settings.STATE_SIZE be not restricted to only a scalar
@@ -83,7 +82,7 @@ class Agent:
         #############################
         #### Generate this Actor ####
         #############################
-        self.policy = BuildActorNetwork(self.state_placeholder, scope = agent_name)
+        self.policy = BuildQNetwork(self.state_placeholder, scope = agent_name)
 
 
     def build_actor_update_operation(self):
@@ -144,7 +143,7 @@ class Agent:
             # allows for changing the amount of noise added to the actor during training.
             if test_time:
                 # It's test time! Run this episode without noise to evaluate performance.
-                noise_scale = 0            
+                exploration_rate = 0.           
                 
                 # Additionally, if it's time to render, make a statement to the user
                 if Settings.RECORD_VIDEO and episode_number % (Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES*Settings.VIDEO_RECORD_FREQUENCY) == 0:
@@ -158,7 +157,7 @@ class Agent:
             else:
                 # Regular training episode, use noise.
                 # Noise is decayed during the training
-                noise_scale = Settings.NOISE_SCALE * Settings.NOISE_SCALE_DECAY ** episode_number
+                exploration_rate = 0.1
             
             # Resetting items for this episode
             episode_reward = 0
@@ -167,21 +166,22 @@ class Agent:
             
             # Stepping through time until we reach the max time length or until episode completes.
             while timestep_number < Settings.MAX_NUMBER_OF_TIMESTEPS and not done:
-                ##############################
-                ##### Running the Policy #####
-                ##############################
-                action = self.sess.run(self.policy.action_scaled, feed_dict = {self.state_placeholder: np.expand_dims(state,0)})[0] # Expanding the state to be a 1x3 instead of a 3
-
-                # Calculating random action to be added to the noise chosen from the policy to force exploration.
-                if Settings.UNIFORM_OR_GAUSSIAN_NOISE:
-                    # Uniform noise (sampled between -/+ the action range)
-                    exploration_noise = np.random.uniform(low = -Settings.ACTION_RANGE, high = Settings.ACTION_RANGE, size = Settings.ACTION_SIZE)*noise_scale
-                else:                    
-                    # Gaussian noise (standard normal distribution scaled to half the action range)
-                    exploration_noise = np.random.normal(size = Settings.ACTION_SIZE)*Settings.ACTION_RANGE/2.0*noise_scale # random number multiplied by half the range
-
-                # Add exploration noise to original action, and clip it incase we've exceeded the action bounds
-                action = np.clip(action + exploration_noise, Settings.LOWER_ACTION_BOUND, Settings.UPPER_ACTION_BOUND)
+                
+                # Should we try explore on this timestep?
+                if np.random.uniform() < exploration_rate:
+                    # Time to explore! 
+                    action = np.random.randint(low = 0, high = Settings.ACTION_SIZE)
+                else:
+                    # Do what you think is best
+                    ##############################
+                    ##### Running the Policy #####
+                    ##############################
+                    q_distribution = self.sess.run(self.policy.q_distribution, feed_dict = {self.state_placeholder: np.expand_dims(state,0)})[0] # [# actions, # bins]
+                    # Collapsing the distributions into q_values corresponding to each action
+                    q_values = np.sum(self.policy.bins * q_distribution, axis = 1) # [# actions, 1]                    
+                    # Choosing the most lucrative action
+                    action = np.argmax(q_values, axis = 0) # [1]
+                
 
                 ################################################
                 #### Step the dynamics forward one timestep ####
@@ -225,7 +225,7 @@ class Agent:
                 if self.n_agent == 1 and Settings.RECORD_VIDEO and episode_number % (Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES*Settings.VIDEO_RECORD_FREQUENCY) == 0:                    
                     state_log.append(state)
                     action_log.append(action)
-                    time_log.append(timestep_number*self.TIMESTEP)
+                    time_log.append(timestep_number*Settings.TIMESTEP)
                 
                 # End of timestep -> next state becomes current state
                 state = next_state

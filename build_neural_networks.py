@@ -17,82 +17,6 @@ import tensorflow as tf
 from settings import Settings
 
 
-class BuildActorNetwork:
-    
-    def __init__(self, state, scope):
-        """ 
-        The actor receives the state and outputs the action 
-        """
-
-        self.state = state
-        self.scope = scope
-        
-        # Making sure all variables generated here are under the name "scope"
-        with tf.variable_scope(self.scope):
-            
-            # The first layer is the state (input)
-            self.layer = self.state
-            
-            # If learning from pixels include convolutional layers
-            if Settings.LEARN_FROM_PIXELS:
-                
-                # Build convolutional layers
-                for i, conv_layer_settings in enumerate(Settings.CONVOLUTIONAL_LAYERS):
-                    self.layer = tf.layers.conv2d(inputs = self.layer,
-                                             activation = tf.nn.relu,
-                                             name = 'conv_layer' + str(i),
-                                             **conv_layer_settings) 
-                    # ** means that named arguments are being passed to the function.
-                    # The conv2d function is able to accept the keywords.
-                
-                # Flattening image into a column for subsequent fully-connected layers
-                self.layer = tf.layers.flatten(self.layer) 
-            
-            
-            # Building fully-connected layers
-            for i, number_of_neurons in enumerate(Settings.ACTOR_HIDDEN_LAYERS):
-                self.layer = tf.layers.dense(inputs = self.layer,
-                                        units = number_of_neurons,
-                                        activation = tf.nn.relu,
-                                        name = 'fully_connected_layer_' + str(i))
-            
-            # Convolutional layers (optional) have been applied, followed by fully-connected hidden layers
-            # The final layer goes from the output of the last fully-connected layer
-            # to the action size. It is squished with a tanh and then scaled to the action range.
-            # Tanh forces output between -1 and 1, which I need to scale to the action range
-            self.actions_out_unscaled = tf.layers.dense(inputs = self.layer,
-                                                   units = Settings.ACTION_SIZE,
-                                                   activation = tf.nn.tanh,
-                                                   name = 'output_layer') 
-
-            # Scaling actions to the correct range
-            self.action_scaled = tf.multiply(0.5, tf.multiply(self.actions_out_unscaled, Settings.ACTION_RANGE) + Settings.LOWER_ACTION_BOUND + Settings.UPPER_ACTION_BOUND) # for tanh
-            
-            # Grab all the parameters from this neural network
-            self.parameters = tf.trainable_variables(scope = self.scope)
-    
-    def generate_training_function(self, dQ_dAction):
-        # Develop the operation that trains the actor one step.
-        with tf.variable_scope(self.scope):
-            with tf.variable_scope('Training'):
-                # Choosing an AdamOptimizer to perform stochastic gradient descent
-                self.optimizer = tf.train.AdamOptimizer(Settings.ACTOR_LEARNING_RATE)
-                # Calculating the gradients for each parameter. This uses the 
-                # dQ_dAction (action gradients) that are received from the critic.
-                # The actor gradients are the derivative of the reward with respect
-                # to each actor parameter.
-                self.actor_gradients = tf.gradients(self.action_scaled, self.parameters, -dQ_dAction)  
-                
-                # The actor gradients are summed over the batch, so we must divide by 
-                # the batch size to get the mean gradients.
-                self.actor_gradients_scaled = list(map(lambda x: tf.divide(x, Settings.MINI_BATCH_SIZE), self.actor_gradients)) # tf.gradients sums over the batch dimension here, must therefore divide by batch_size to get mean gradients
-                
-                # Apply the gradients to each parameter!
-                actor_training_function = self.optimizer.apply_gradients(zip(self.actor_gradients_scaled, self.parameters))
-                 
-                return actor_training_function
-                  
-            
 class BuildQNetwork:
     
     def __init__(self, state, action, scope):
@@ -114,9 +38,9 @@ class BuildQNetwork:
             self.state_side  = self.state
             self.action_side = self.action
             
-            ######################
-            ##### State Side #####
-            ######################
+            ###########################################
+            ##### (Optional) Convolutional Layers #####
+            ###########################################
             # If learning from pixels (a state-only feature), use convolutional layers
             if Settings.LEARN_FROM_PIXELS:            
                 # Build convolutional layers
@@ -129,60 +53,42 @@ class BuildQNetwork:
                 # Flattening image into a column for subsequent layers 
                 self.state_side = tf.layers.flatten(self.state_side) 
                     
-            # Fully connected layers on state side from the second layer onwards Settings.CRITIC_HIDDEN_LAYERS[1:]
+            ##################################
+            ##### Fully connected layers #####
+            ##################################
             for i, number_of_neurons in enumerate(Settings.CRITIC_HIDDEN_LAYERS):
                 self.state_side = tf.layers.dense(inputs = self.state_side,
                                                   units = number_of_neurons,
-                                                  activation = None,
-                                                  name = 'state_fully_connected_layer_' + str(i))
-                # Perform a relu unless this is the layer that is being added to the action side
-                if i < (len(Settings.CRITIC_HIDDEN_LAYERS) - 1):
-                    self.state_side = tf.nn.relu(self.state_side)
-            
-            #######################
-            ##### Action Side #####
-            #######################
-            # Fully connected layers on action side
-            for i, number_of_neurons in enumerate(Settings.CRITIC_HIDDEN_LAYERS[1:]):
-                self.action_side = tf.layers.dense(inputs = self.action_side,
-                                                   units = number_of_neurons,
-                                                   activation = None,
-                                                   name = 'action_fully_connected_layer_' + str(i))
-                # Perform a relu unless this is the layer that is being added to the action side
-                if i < (len(Settings.CRITIC_HIDDEN_LAYERS) - 2):
-                    self.action_side = tf.nn.relu(self.action_side)
-            
-            ################################################
-            ##### Combining State Side and Action Side #####
-            ################################################            
-            self.layer = tf.add(self.state_side, self.action_side)
-            self.layer = tf.nn.relu(self.layer)
-            
+                                                  activation = tf.nn.relu,
+                                                  name = 'state_fully_connected_layer_' + str(i))            
+           
             #################################################
             ##### Final Layer to get Value Distribution #####
             #################################################
             # Calculating the final layer logits as an intermediate step,
             # since the cross_entropy loss function needs logits.
-            self.q_distribution_logits = tf.layers.dense(inputs = self.layer,
-                                                         units = Settings.NUMBER_OF_BINS,
-                                                         activation = None,
-                                                         name = 'output_layer')
+            q_distribution_logits = []
+            q_distribution = []
+            for i in range(Settings.ACTION_SIZE):
+                
+                q_logits = tf.layers.dense(inputs = self.layer,
+                                           units = Settings.NUMBER_OF_BINS,
+                                           activation = None,
+                                           name = 'output_layer_' + str(i))
+                
+                # Appending the output distribution for each possible action
+                q_distribution_logits.append(q_logits) # logits
+                q_distribution.append(tf.nn.softmax(q_logits)) # probabilities
             
-            # Calculating the softmax of the last layer to convert logits to a probability distribution.
-            # Softmax ensures that all outputs add up to 1, relative to their weights
-            self.q_distribution = tf.nn.softmax(self.q_distribution_logits, name = 'output_probabilities') 
+            # Assembling output into [# actions, # bins]
+            self.q_distribution_logits = tf.stack(q_distribution_logits, axis = 1)
+            self.q_distribution = q_distribution
             
             # The value bins that each probability corresponds to.
             self.bins = tf.lin_space(Settings.MIN_Q, Settings.MAX_Q, Settings.NUMBER_OF_BINS)
             
             # Getting the parameters from the critic
-            self.parameters = tf.trainable_variables(scope=self.scope)
-
-            # Calculating the derivative of the q-distribution with respect to the action input.
-            # It is weighted by the bins to give the derivative of the expected value with respect
-            # to the input actions. This is used in the actor training.
-            self.dQ_dAction = tf.gradients(self.q_distribution, self.action, self.bins) # also known as action gradients
-            
+            self.parameters = tf.trainable_variables(scope=self.scope)            
             
     def generate_training_function(self, target_q_distribution, target_bins, importance_sampling_weights):
         # Create the operation that trains the critic one step.        

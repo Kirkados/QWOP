@@ -105,6 +105,7 @@ class Settings:
     ACTION_SIZE        = env.action_size 
     LOWER_ACTION_BOUND = env.lower_action_bound 
     UPPER_ACTION_BOUND = env.upper_action_bound
+    TIMESTEP           = env.TIMESTEP
     
     # Delete the test environment
     del env
