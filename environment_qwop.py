@@ -50,24 +50,79 @@ class Environment:
         self.lower_state_bound =  np.array([1., 1., 1.])
         self.upper_state_bound =  np.array([1., 1., 1.])
         
-        # Physical Properties
-        self.m = 10.          # [kg]
-        self.m1 = 5.          # [kg]
-        self.m2 = 5.          # [kg]
-        self.eta = 0.5 
-        self.eta1 = 0.5
-        self.eta2 = 0.5
-        self.gamma1 = 0.5
-        self.gamma2 = 0.5
-        self.I = 10.          # [kg m^2]
-        self.I1 = 7.          # [kg m^2]
-        self.I2 = 7.          # [kg m^2]
+        #self.body.segment(0) = 5
+        
         self.g = 9.81         # [m/s^2]
-        self.body_length = 1. # [m]
-        self.leg1_length = 1. # [m]
-        self.leg2_length = 1. # [m]
-        self.phi1 = np.pi/6   # [rad]
-        self.phi2 = -np.pi/6  # [rad]
+
+        # Physical Properties
+        self.segment_mass = list()# [kg]
+        self.segment_mominert = list()# [kg m^2]
+        self.segment_length = list()# [m]
+        self.segment_eta_length = list()# [m]
+        self.segment_gamma_length = list()# [m]
+        self.segment_phi_naught = list()# [rad]
+        
+        # body 0, main body
+        m = 10
+        I = 10
+        L = 1
+        eta = 0.5*L
+        gamma = L-eta
+        phi0 = 0 
+         
+        self.segment_mass.append(m)
+        self.segment_mominert.append(I)
+        self.segment_length.append(L)
+        self.segment_eta_length.append(eta)
+        self.segment_gamma_length.append(gamma)
+        self.segment_phi_naught.append(phi0)
+        
+        # body 1, right leg
+        m = 5
+        I = 7
+        L = 1
+        eta = 0.5*L
+        gamma = L-eta
+        phi0 = np.pi/6 
+         
+        self.segment_mass.append(m)
+        self.segment_mominert.append(I)
+        self.segment_length.append(L)
+        self.segment_eta_length.append(eta)
+        self.segment_gamma_length.append(gamma)
+        self.segment_phi_naught.append(phi0)
+                
+        # body 2, left leg
+        m = 5
+        I = 7
+        L = 1
+        eta = 0.5*L
+        gamma = L-eta
+        phi0 = -np.pi/6 
+         
+        self.segment_mass.append(m)
+        self.segment_mominert.append(I)
+        self.segment_length.append(L)
+        self.segment_eta_length.append(eta)
+        self.segment_gamma_length.append(gamma)
+        self.segment_phi_naught.append(phi0)
+        
+#        self.m = 10.          
+#        self.m1 = 5.          # [kg]
+#        self.m2 = 5.          # [kg]
+#        self.eta = 0.5 
+#        self.eta1 = 0.5
+#        self.eta2 = 0.5
+#        self.gamma1 = 0.5
+#        self.gamma2 = 0.5
+#        self.I = 10.          
+#        self.I1 = 7.          # [kg m^2]
+#        self.I2 = 7.          # [kg m^2]
+#        self.body_length = 1. 
+#        self.leg1_length = 1. # [m]
+#        self.leg2_length = 1. # [m]
+#        self.phi1 = np.pi/6   # [rad]
+#        self.phi2 = -np.pi/6  # [rad]
 
         
     ######################################

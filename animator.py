@@ -181,12 +181,9 @@ def drawState(state):
     th_leg2 = -30*np.pi/180
     
 
-        
-    
     # intialize window 
     pygame.init()
     pygame.display.set_caption("QWOP")
-    
     
     # Set the height and width of the screen
     size = [width, height]
