@@ -55,12 +55,12 @@ class Environment:
         self.g = 9.81         # [m/s^2]
 
         # Physical Properties
-        self.segment_mass = list()# [kg]
-        self.segment_mominert = list()# [kg m^2]
-        self.segment_length = list()# [m]
-        self.segment_eta_length = list()# [m]
-        self.segment_gamma_length = list()# [m]
-        self.segment_phi_naught = list()# [rad]
+        self.SEGMENT_MASS = list()# [kg]
+        self.SEGMENT_MOMINERT = list()# [kg m^2]
+        self.SEGMENT_LENGTH = list()# [m]
+        self.SEGMENT_ETA_LENGTH = list()# [m]
+        self.SEGMENT_GAMMA_LENGTH = list()# [m]
+        self.SEGMENT_PHI_NAUGTH = list()# [rad]
         
         # body 0, main body
         m = 10
@@ -70,12 +70,12 @@ class Environment:
         gamma = L-eta
         phi0 = 0 
          
-        self.segment_mass.append(m)
-        self.segment_mominert.append(I)
-        self.segment_length.append(L)
-        self.segment_eta_length.append(eta)
-        self.segment_gamma_length.append(gamma)
-        self.segment_phi_naught.append(phi0)
+        self.SEGMENT_MASS.append(m)
+        self.SEGMENT_MOMINERT.append(I)
+        self.SEGMENT_LENGTH.append(L)
+        self.SEGMENT_ETA_LENGTH.append(eta)
+        self.SEGMENT_GAMMA_LENGTH.append(gamma)
+        self.SEGMENT_PHI_NAUGTH.append(phi0)
         
         # body 1, right leg
         m = 5
@@ -85,12 +85,12 @@ class Environment:
         gamma = L-eta
         phi0 = np.pi/6 
          
-        self.segment_mass.append(m)
-        self.segment_mominert.append(I)
-        self.segment_length.append(L)
-        self.segment_eta_length.append(eta)
-        self.segment_gamma_length.append(gamma)
-        self.segment_phi_naught.append(phi0)
+        self.SEGMENT_MASS.append(m)
+        self.SEGMENT_MOMINERT.append(I)
+        self.SEGMENT_LENGTH.append(L)
+        self.SEGMENT_ETA_LENGTH.append(eta)
+        self.SEGMENT_GAMMA_LENGTH.append(gamma)
+        self.SEGMENT_PHI_NAUGTH.append(phi0)
                 
         # body 2, left leg
         m = 5
@@ -100,12 +100,12 @@ class Environment:
         gamma = L-eta
         phi0 = -np.pi/6 
          
-        self.segment_mass.append(m)
-        self.segment_mominert.append(I)
-        self.segment_length.append(L)
-        self.segment_eta_length.append(eta)
-        self.segment_gamma_length.append(gamma)
-        self.segment_phi_naught.append(phi0)
+        self.SEGMENT_MASS.append(m)
+        self.SEGMENT_MOMINERT.append(I)
+        self.SEGMENT_LENGTH.append(L)
+        self.SEGMENT_ETA_LENGTH.append(eta)
+        self.SEGMENT_GAMMA_LENGTH.append(gamma)
+        self.SEGMENT_PHI_NAUGTH.append(phi0)
         
 #        self.m = 10.          
 #        self.m1 = 5.          # [kg]
