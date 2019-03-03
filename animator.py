@@ -9,8 +9,14 @@ Created on Thu Feb 21 18:50:29 2019
 import numpy as np
 import pygame
  
-def something(var):
-    # intialize window 
+
+def runCode():
+    runfile('/Users/StephaneMagnan/Documents/GitHub/QWOP/animator.py', wdir='/Users/StephaneMagnan/Documents/GitHub/QWOP')
+    import animator
+    animator.drawState(state)
+    
+def containerTest(var):
+    # intialize window -
     width = 800
     height = 500
     pygame.init()
@@ -19,7 +25,7 @@ def something(var):
     size = [width, height]
     screen = pygame.display.set_mode(size)
     
-    background_surface = animator.drawBackground(width,height)
+    background_surface = drawBackground(width,height)
     screen.blit(background_surface, (0, 0))
     
 
@@ -28,17 +34,19 @@ def something(var):
     
     pygame.display.update()
     
-    # Save every frame
-    file_num = 0
-    this_surface = 0
-    filename = "Snaps/%04d.png" % file_num
-    pygame.image.save(this_surface, filename)
+#    # Save every frame
+#    file_num = 0
+#    this_surface = 0
+#    filename = "Snaps/%04d.png" % file_num
+#    pygame.image.save(this_surface, filename)
     return 0
 
-def returnPointCoords(x,y,theta_cum,gamma,eta):
+def returnPointCoords(x,y,theta_cum,gamma,eta,x_0,y_0,hum_scale):
+    #gamma is "above", eta is "below" CG
+    pointCoords = np.array([[x-gamma*np.sin(theta_cum),y+gamma*np.cos(theta_cum)],[x,y],[x+eta*np.sin(theta_cum),y-eta*np.cos(theta_cum)]])      
     
-    pointCoords = np.array([[x-(1-a_bod)*l_bod*np.sin(theta_cum),y+(1-a_bod)*l_bod*np.cos(theta_cum)],[x,y],[x+(a_bod)*l_bod*np.sin(theta_cum),y-(a_bod)*l_bod*np.cos(theta_cum)]])      
-        
+    pointCoords[:,0]=(pointCoords[:,0]-x)*hum_scale+x_0
+    pointCoords[:,1]=y_0-(pointCoords[:,1])*hum_scale
     
     return pointCoords
     
@@ -133,8 +141,6 @@ def drawBackground(width,height):
     text_p_h = text_p.get_rect().height
     screen.blit(text_p, [x_btn4+np.rint(dx_btn/2-text_p_w/2), y_btn+np.rint(dy_btn/2-text_p_h/2)])
    
-
-     
     return background_surface
 
 
@@ -178,16 +184,32 @@ def drawState(state):
     x_0 = np.rint(width/2)
     y_0 = np.rint(height*9/10)
     
-    x_bod = 10
-    y_bod = 1.4
-    th_bod = 0
-    x_bod1 = 15
-    y_bod1 = 0.4
-    th_leg1 = 30*np.pi/180
-    x_bod2 = 5
-    y_bod2 = 0.4
-    th_leg2 = -30*np.pi/180
+    #define the body
+    segment_count = 3
+    #body_points = 
+
+
+    l = 1#self.body_length
+    l1 = 1#self.leg1_length
+    l2 = 1#self.leg2_length  
     
+    a = 0.5
+    a1 = 0.55
+    a2 = 0.55
+    
+    x= 0.00000000e+00
+    y= 2.00000000e+00
+    theta= 0 
+    x1=2.50000000e-01
+    y1=1.06698730e+00
+    theta1=30*np.pi/180
+    x2=-2.50000000e-01 
+    y2=1.06698730e+00
+    theta2=-30*np.pi/180
+
+  
+    
+
 
     # intialize window 
     pygame.init()
@@ -211,7 +233,7 @@ def drawState(state):
 #    myimage = pygame.image.load("background_im.png")
 #    imagerect = myimage.get_rect()
     
-    
+    print_out = False
     # -------- Main Program Loop -----------
     while running:
         #pygame.event.wait()
@@ -223,92 +245,73 @@ def drawState(state):
                 #print("User pressed a key.")
                 keys = pygame.key.get_pressed()
     
-                pressed_q = False
-                pressed_w = False
-                pressed_o = False
-                pressed_p = False
+                pressed_q = keys[pygame.K_q]
+                pressed_w = keys[pygame.K_w]
+                pressed_o = keys[pygame.K_o]
+                pressed_p = keys[pygame.K_p]
                 
-                if keys[pygame.K_q]:
-                    pressed_q = True
-                    print("Q")
-                if keys[pygame.K_w]:
-                    pressed_w = True
-                    print("W")
-                if keys[pygame.K_o]:
-                    pressed_o = True
-                    print("O")
-                if keys[pygame.K_p]:
-                    pressed_p = True
-                    print("P")
+                if print_out:
+                    if pressed_q:
+                        print("Q")
+                    if pressed_w:
+                        print("W")
+                    if pressed_o:
+                        print("O")
+                    if pressed_p:
+                        print("P")
             elif event.type == pygame.KEYUP:
                 #print("User let go of a key.")
                 keys = pygame.key.get_pressed()
                 
-                if not keys[pygame.K_q]:
-                    pressed_q = False
-                    #print("!Q")
-                if not keys[pygame.K_w]:
-                    pressed_w = False
-                    #print("!W")
-                if not keys[pygame.K_o]:
-                    pressed_o = False
-                    #print("!O")
-                if not keys[pygame.K_p]:
-                    pressed_p = False
-                    #print("!P")
-                
+                if print_out:
+                    if not keys[pygame.K_q]:
+                        if pressed_q:
+                            print("!Q")
+                    if not keys[pygame.K_w]:
+                        if pressed_w:
+                            print("!W")
+                    if not keys[pygame.K_o]:
+                        if pressed_o:
+                            print("!O")
+                    if not keys[pygame.K_p]:
+                        if pressed_p:
+                            print("!P")  
+                    
+                pressed_q = keys[pygame.K_q]
+                pressed_w = keys[pygame.K_w]
+                pressed_o = keys[pygame.K_o]
+                pressed_p = keys[pygame.K_p]        
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                print("User pressed a mouse button")
+                if print_out:
+                     print("User pressed a mouse button")
             elif event.type == pygame.MOUSEMOTION:
-                #print("User moved the mouse")            
-                po = pygame.mouse.get_pos()
-                print(po)
+                if print_out:
+                     print("User moved the mouse")            
+                     po = pygame.mouse.get_pos()
+                     print(po)
             else:
-                print("Other")
+                if print_out:
+                     print("Other")
+                     
+                     
+                     
+                     
+                     
                 
         # --- Logic
-    
-    
-        l_bod = 1#self.body_length
-        l_leg1 = 1#self.leg1_length
-        l_leg2 = 1#self.leg2_length  
         
-        a_bod = 0.5
-        a_leg1 = 0.5
-        a_leg2 = 0.5
-        
-        x= 0.00000000e+00
-        y= 2.00000000e+00
-        theta= 0 
-        x1=2.50000000e-01
-        y1=1.06698730e+00
-        theta1=5.23598776e-01 
-        x2=-2.50000000e-01 
-        y2=1.06698730e+00
-        theta2=-5.23598776e-01
-        
-        
-        body_p = np.array([[x-(1-a_bod)*l_bod*np.sin(theta),y+(1-a_bod)*l_bod*np.cos(theta)],[x,y],[x+(a_bod)*l_bod*np.sin(theta),y-(a_bod)*l_bod*np.cos(theta)]])      
-        leg1_p = np.array([[x1-(1-a_leg1)*l_leg1*np.sin(theta+theta1),y1+(1-a_leg1)*l_leg1*np.cos(theta+theta1)],[x1,y1],[x1+(a_leg1)*l_leg1*np.sin(theta+theta1),y1-(a_leg1)*l_leg1*np.cos(theta+theta1)]])
-        leg2_p = np.array([[x2-(1-a_leg2)*l_leg2*np.sin(theta+theta2),y2+(1-a_leg2)*l_leg2*np.cos(theta+theta2)],[x2,y2],[x2+(a_leg2)*l_leg2*np.sin(theta+theta2),y2-(a_leg2)*l_leg2*np.cos(theta+theta2)]])      
-    
-        body_p[:,0]=(body_p[:,0]-x)*hum_scale+x_0
-        leg1_p[:,0]=(leg1_p[:,0]-x)*hum_scale+x_0  
-        leg2_p[:,0]=(leg2_p[:,0]-x)*hum_scale+x_0
-        
-        body_p[:,1]=y_0-(body_p[:,1])*hum_scale
-        leg1_p[:,1]=y_0-(leg1_p[:,1])*hum_scale  
-        leg2_p[:,1]=y_0-(leg2_p[:,1])*hum_scale
-    
-        
+        body_p = returnPointCoords(x,y,theta,a*l,(1-a)*l,x_0,y_0,hum_scale)
+        leg1_p = returnPointCoords(x1,y1,theta+theta1,a1*l1,(1-a1)*l1,x_0,y_0,hum_scale)
+        leg2_p = returnPointCoords(x2,y2,theta+theta2,a2*l2,(1-a2)*l2,x_0,y_0,hum_scale)
         
         # Determine location of painted lines based on X distance 
         
         # --- Drawing
         # Set the screen background (clears)
-#        screen.fill(BLACK)
- #       screen.blit(bg_, (0, 0))
+        #screen.fill(BLACK)
         screen.blit(background,(0,0))   
+        
+        
         #Draw text
         
         # generation                best x (gen)
@@ -333,14 +336,13 @@ def drawState(state):
         font = pygame.font.SysFont('courier', 30, True, False)
         text_current = font.render("%3.2fm (%i)" %(this_x,n_trial), True, WHITE)
         text_c_w = text_current.get_rect().width
-        text_c_h = text_current.get_rect().height
         
         screen.blit(text_current, [np.rint(width/2-text_c_w/2),y_btn])
         
         
         
         
-        #Draw buttons (coloured or not)
+        #Draw buttons (coloured only, u coloured is background)
         
         # Select the font to use, size, bold, italics
         font = pygame.font.SysFont('courier', 25, True, False)
@@ -351,24 +353,30 @@ def drawState(state):
             text_q_w = text_q.get_rect().width
             text_q_h = text_q.get_rect().height
             screen.blit(text_q, [x_btn1+np.rint(dx_btn/2-text_q_w/2), y_btn+np.rint(dy_btn/2-text_q_h/2)])
+            theta1 = theta1 + 1*np.pi/180
+            theta2 = theta2 - 1*np.pi/180
         if pressed_w:
             pygame.draw.rect(screen, PRESSED, [x_btn2,y_btn,dx_btn,dy_btn])
             text_w = font.render("W", True, TEXT_PRESSED)
             text_w_w = text_w.get_rect().width
             text_w_h = text_w.get_rect().height
             screen.blit(text_w, [x_btn2+np.rint(dx_btn/2-text_w_w/2), y_btn+np.rint(dy_btn/2-text_w_h/2)])
+            theta1 = theta1 - 1*np.pi/180
+            theta2 = theta2 + 1*np.pi/180
         if pressed_o:
             pygame.draw.rect(screen, PRESSED, [x_btn3,y_btn,dx_btn,dy_btn])
             text_o = font.render("O", True, TEXT_PRESSED)
             text_o_w = text_o.get_rect().width
             text_o_h = text_o.get_rect().height
             screen.blit(text_o, [x_btn3+np.rint(dx_btn/2-text_o_w/2), y_btn+np.rint(dy_btn/2-text_o_h/2)])
+            theta = theta + 1*np.pi/180
         if pressed_p:
             pygame.draw.rect(screen, PRESSED, [x_btn4,y_btn,dx_btn,dy_btn]) 
             text_p = font.render("P", True, TEXT_PRESSED)
             text_p_w = text_p.get_rect().width
             text_p_h = text_p.get_rect().height
             screen.blit(text_p, [x_btn4+np.rint(dx_btn/2-text_p_w/2), y_btn+np.rint(dy_btn/2-text_p_h/2)])
+            theta = theta - 1*np.pi/180
         
     
         
