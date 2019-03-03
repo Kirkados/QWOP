@@ -13,7 +13,7 @@ import pygame
 def runCode():
     runfile('/Users/StephaneMagnan/Documents/GitHub/QWOP/animator.py', wdir='/Users/StephaneMagnan/Documents/GitHub/QWOP')
     import animator
-    animator.drawState(state)
+    animator.drawState(0,800,500)
     
 def containerTest(var):
     # intialize window -
@@ -41,11 +41,12 @@ def containerTest(var):
 #    pygame.image.save(this_surface, filename)
     return 0
 
-def returnPointCoords(x,y,theta_cum,gamma,eta,x_0,y_0,hum_scale):
+def returnPointCoords(x,y,theta_cum,gamma,eta,x_c,x_0,y_0,hum_scale):
     #gamma is "above", eta is "below" CG
+    
     pointCoords = np.array([[x-gamma*np.sin(theta_cum),y+gamma*np.cos(theta_cum)],[x,y],[x+eta*np.sin(theta_cum),y-eta*np.cos(theta_cum)]])      
     
-    pointCoords[:,0]=(pointCoords[:,0]-x)*hum_scale+x_0
+    pointCoords[:,0]=(pointCoords[:,0]-x_c)*hum_scale+x_0
     pointCoords[:,1]=y_0-(pointCoords[:,1])*hum_scale
     
     return pointCoords
@@ -144,8 +145,15 @@ def drawBackground(width,height):
     return background_surface
 
 
-def drawState(state):
-    # Define dimensions for background
+def drawState(state,width,height):
+    # intialize window 
+    pygame.init()
+    pygame.display.set_caption("QWOP")
+    
+    # Set the height and width of the screen
+    size = [width, height]
+    screen = pygame.display.set_mode(size)
+    background = drawBackground(width,height)
     
     # Define some colors
     BLACK = (0, 0, 0)
@@ -162,7 +170,28 @@ def drawState(state):
     COG = (200,200,200)
     GAMEOVER = (255,50,50)
     
+    # Define some fonts to use, size, bold, italics
+    font_subtitles = pygame.font.SysFont('courier', 18, True, False)
+    font_distance = pygame.font.SysFont('courier', 30, True, False)
+    font_qwop = pygame.font.SysFont('courier', 25, True, False)
     
+    text_q = font_qwop.render("Q", True, TEXT_PRESSED)
+    text_q_w = text_q.get_rect().width
+    text_qwop_h = text_q.get_rect().height
+    
+    text_w = font_qwop.render("W", True, TEXT_PRESSED)
+    text_w_w = text_q.get_rect().width
+    #text_w_h = text_q.get_rect().height 
+    
+    text_o = font_qwop.render("O", True, TEXT_PRESSED)
+    text_o_w = text_q.get_rect().width
+    #text_o_h = text_q.get_rect().height
+    
+    text_p = font_qwop.render("P", True, TEXT_PRESSED)
+    text_p_w = text_q.get_rect().width
+    #text_p_h = text_q.get_rect().height
+            
+
     
     #scale
     hum_scale = 100 #pixel/m
@@ -180,13 +209,22 @@ def drawState(state):
     x_btn4 =  width-x_btn1-dx_btn
     y_btn = np.rint(1*height/10)
     
+    
+    x_btnq = x_btn1+np.rint(dx_btn/2-text_q_w/2)
+    x_btnw = x_btn2+np.rint(dx_btn/2-text_w_w/2)
+    x_btno = x_btn3+np.rint(dx_btn/2-text_o_w/2)
+    x_btnp = x_btn4+np.rint(dx_btn/2-text_p_w/2)
+    y_btnqwop =  y_btn+np.rint(dy_btn/2-text_qwop_h/2)
+    
+    
+    
     #define positions of body
     x_0 = np.rint(width/2)
     y_0 = np.rint(height*9/10)
     
     #define the body
     segment_count = 3
-    #body_points = 
+    segment_points = np.zeros((segment_count,3,2))
 
 
     l = 1#self.body_length
@@ -207,18 +245,6 @@ def drawState(state):
     y2=1.06698730e+00
     theta2=-30*np.pi/180
 
-  
-    
-
-
-    # intialize window 
-    pygame.init()
-    pygame.display.set_caption("QWOP")
-    
-    # Set the height and width of the screen
-    size = [width, height]
-    screen = pygame.display.set_mode(size)
-    background = drawBackground(width,height)
      
     # Loop until the user clicks the close button.
     running = True
@@ -300,9 +326,11 @@ def drawState(state):
                 
         # --- Logic
         
-        body_p = returnPointCoords(x,y,theta,a*l,(1-a)*l,x_0,y_0,hum_scale)
-        leg1_p = returnPointCoords(x1,y1,theta+theta1,a1*l1,(1-a1)*l1,x_0,y_0,hum_scale)
-        leg2_p = returnPointCoords(x2,y2,theta+theta2,a2*l2,(1-a2)*l2,x_0,y_0,hum_scale)
+        #get point coordinates for each segment
+        print(x,y,x1,y1,x2,y2)
+        segment_points[0,:,:] = returnPointCoords(x,y,theta,a*l,(1-a)*l,x,x_0,y_0,hum_scale)
+        segment_points[1,:,:] = returnPointCoords(x1,y1,theta+theta1,a1*l1,(1-a1)*l1,x,x_0,y_0,hum_scale)
+        segment_points[2,:,:] = returnPointCoords(x2,y2,theta+theta2,a2*l2,(1-a2)*l2,x,x_0,y_0,hum_scale)
         
         # Determine location of painted lines based on X distance 
         
@@ -322,19 +350,17 @@ def drawState(state):
         best_trial = 10
         this_x = 15
         
-        # Select the font to use, size, bold, italics
-        font = pygame.font.SysFont('courier', 18, True, False)
-    
-        text_time = font.render("%3.2fs" %this_time, True, WHITE)
+        # write time and record subtitles
+        text_time = font_subtitles.render("%3.2fs" %this_time, True, WHITE)
         text_t_w = text_time.get_rect().width
-        text_record = font.render("%3.2fm (%i)" % (best_x, best_trial), True, WHITE)
+        text_record = font_subtitles.render("%3.2fm (%i)" % (best_x, best_trial), True, WHITE)
         
         screen.blit(text_record, [x_btn1,y_btn-dy_btn])
         screen.blit(text_time, [x_btn4+dx_btn-text_t_w,y_btn-dy_btn])
         
         
-        font = pygame.font.SysFont('courier', 30, True, False)
-        text_current = font.render("%3.2fm (%i)" %(this_x,n_trial), True, WHITE)
+        # write current score title
+        text_current = font_distance.render("%3.2fm (%i)" %(this_x,n_trial), True, WHITE)
         text_c_w = text_current.get_rect().width
         
         screen.blit(text_current, [np.rint(width/2-text_c_w/2),y_btn])
@@ -350,44 +376,36 @@ def drawState(state):
         if pressed_q:
             pygame.draw.rect(screen, PRESSED, [x_btn1,y_btn,dx_btn,dy_btn])
             text_q = font.render("Q", True, TEXT_PRESSED)
-            text_q_w = text_q.get_rect().width
-            text_q_h = text_q.get_rect().height
-            screen.blit(text_q, [x_btn1+np.rint(dx_btn/2-text_q_w/2), y_btn+np.rint(dy_btn/2-text_q_h/2)])
+            screen.blit(text_q, [x_btnq, y_btnqwop])
             theta1 = theta1 + 1*np.pi/180
             theta2 = theta2 - 1*np.pi/180
         if pressed_w:
             pygame.draw.rect(screen, PRESSED, [x_btn2,y_btn,dx_btn,dy_btn])
             text_w = font.render("W", True, TEXT_PRESSED)
-            text_w_w = text_w.get_rect().width
-            text_w_h = text_w.get_rect().height
-            screen.blit(text_w, [x_btn2+np.rint(dx_btn/2-text_w_w/2), y_btn+np.rint(dy_btn/2-text_w_h/2)])
+            screen.blit(text_w, [x_btnw, y_btnqwop])
             theta1 = theta1 - 1*np.pi/180
             theta2 = theta2 + 1*np.pi/180
         if pressed_o:
             pygame.draw.rect(screen, PRESSED, [x_btn3,y_btn,dx_btn,dy_btn])
             text_o = font.render("O", True, TEXT_PRESSED)
-            text_o_w = text_o.get_rect().width
-            text_o_h = text_o.get_rect().height
-            screen.blit(text_o, [x_btn3+np.rint(dx_btn/2-text_o_w/2), y_btn+np.rint(dy_btn/2-text_o_h/2)])
+            screen.blit(text_o, [x_btno, y_btnqwop])
             theta = theta + 1*np.pi/180
         if pressed_p:
             pygame.draw.rect(screen, PRESSED, [x_btn4,y_btn,dx_btn,dy_btn]) 
             text_p = font.render("P", True, TEXT_PRESSED)
-            text_p_w = text_p.get_rect().width
-            text_p_h = text_p.get_rect().height
-            screen.blit(text_p, [x_btn4+np.rint(dx_btn/2-text_p_w/2), y_btn+np.rint(dy_btn/2-text_p_h/2)])
+            screen.blit(text_p, [x_btnp, y_btnqwop])
             theta = theta - 1*np.pi/180
         
     
         
         #Draw body
-        pygame.draw.line(screen, BODY, body_p[0], body_p[2], 10)
-        pygame.draw.line(screen, BODY, leg1_p[0], leg1_p[2], 10)
-        pygame.draw.line(screen, BODY, leg2_p[0], leg2_p[2], 10)
-        
-        pygame.draw.ellipse(screen, COG, [body_p[1][0]-5,body_p[1][1]-5,10,10], 2)
-        pygame.draw.ellipse(screen, COG, [leg1_p[1][0]-5,leg1_p[1][1]-5,10,10], 2)
-        pygame.draw.ellipse(screen, COG, [leg2_p[1][0]-5,leg2_p[1][1]-5,10,10], 2)
+        for segment_id in range(segment_count):
+            pygame.draw.line(screen, BODY, segment_points[segment_id,0,:], segment_points[segment_id,2,:], 10)
+            pygame.draw.ellipse(screen, COG, [segment_points[segment_id,1,0]-5,segment_points[segment_id,1,1]-5,10,10], 2)
+            pygame.draw.ellipse(screen, BODY, [segment_points[segment_id,0,0]-5,segment_points[segment_id,0,1]-5,10,10], 0)
+            pygame.draw.ellipse(screen, BODY, [segment_points[segment_id,2,0]-5,segment_points[segment_id,2,1]-5,10,10], 0)
+            
+        print(segment_points)
     
         # --- Wrap-up
         # Limit to 60 frames per second
