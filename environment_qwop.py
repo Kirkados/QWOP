@@ -45,6 +45,10 @@ class Environment:
         self.num_frames = 100 # total animation is cut into this many frames
         self.randomize = False # whether or not to randomize the state & target location
         
+        # How much the leg desired angle changes per frame when a button is pressed
+        self.HIP_INCREMENT = 2.*np.pi/180. # [rad/s]
+        self.HIP_SPRING_STIFFNESS = 100 # [Nm/rad]
+        
         # To be removed
         self.lower_action_bound = np.array([-0.1, -0.1]) # [Nm]
         self.upper_action_bound = np.array([ 0.1,  0.1]) # [Nm]
@@ -168,29 +172,71 @@ class Environment:
         # Return the state
         return self.state
         
+    
+    def parse_action(action):
+        #0: No buttons pressed; 1: Q only; 2: QO; 3: QP; 4: W only; 5: WO; 6: WP; 7: O only; 8: P only
+        
+        pressed_q = False
+        pressed_w = False
+        pressed_o = False
+        pressed_p = False
+        
+        if action == 1: 
+            pressed_q = True
+        elif action == 2: 
+            pressed_q = True
+            pressed_o = True
+        elif action == 3: 
+            pressed_q = True
+            pressed_p = True
+        elif action == 4: 
+            pressed_w = True
+        elif action == 5: 
+            pressed_w = True
+            pressed_o = True
+        elif action == 6: 
+            pressed_w = True
+            pressed_p = True
+        elif action == 7:
+            pressed_o = True
+        elif action == 8: 
+            pressed_p = True
+        
+        return pressed_q, pressed_w, pressed_o, pressed_p
+       
+    
     #####################################
     ##### Step the Dynamics forward #####
     #####################################
     def step(self, action):
         
+        # Parsing action number into button presses
+        #0: No buttons pressed; 1: Q only; 2: QO; 3: QP; 4: W only; 5: WO; 6: WP; 7: O only; 8: P only
+        pressed_q, pressed_w, pressed_o, pressed_p = self.parse_action(action)
+        
         # Initializing
         done = False  
-        
-        # Calculating desired leg angles 
-        action = action.reshape(2,1)         
+            
         # Incrementing the desired leg angles
-        self.phi1 += action[0]
-        self.phi2 += action[1]          
+        # Q and W control leg 1 through phi1
+        # O and P control leg 2 through phi2
+        if pressed_q:
+            self.phi1 += self.HIP_INCREMENT
+        if pressed_w:
+            self.phi1 -= self.HIP_INCREMENT
+        if pressed_o:
+            self.phi2 += self.HIP_INCREMENT
+        if pressed_p:
+            self.phi2 -= self.HIP_INCREMENT        
         
         # Choosing friction and normal force
         fF1 = 0.
         fF2 = 0.
         fN1 = 0.
         fN2 = 0.
-        K = 100.
         
         # Packing up the parameters the equations of motion need
-        parameters = np.array([self.m, self.m1, self.m2, self.eta, self.eta1, self.eta2, self.gamma1, self.gamma2, self.I, self.I1, self.I2, self.g, fF1, fF2, self.phi1, self.phi2, fN1, fN2, K], dtype = 'float64')
+        parameters = np.array([self.m, self.m1, self.m2, self.eta, self.eta1, self.eta2, self.gamma1, self.gamma2, self.I, self.I1, self.I2, self.g, fF1, fF2, self.phi1, self.phi2, fN1, fN2, self.HIP_SPRING_STIFFNESS], dtype = 'float64')
 
         # Integrating forward one time step. 
         # Returns initial condition on first row then next timestep on the next row
@@ -271,7 +317,7 @@ def equations_of_motion(state, t, parameters):
     x, y, theta, x1, y1, theta1, x2, y2, theta2, xdot, ydot, thetadot, x1dot, y1dot, theta1dot, x2dot, y2dot, theta2dot = state
     
     # Unpacking parameters
-    m, m1, m2, eta, eta1, eta2, gamma1, gamma2, I, I1, I2, g, fF1, fF2, phi1, phi2, fN1, fN2, K = parameters 
+    m, m1, m2, eta, eta1, eta2, gamma1, gamma2, I, I1, I2, g, fF1, fF2, phi1, phi2, fN1, fN2, HIP_SPRING_STIFFNESS = parameters 
     
     first_derivatives = np.array([xdot, ydot, thetadot, x1dot, y1dot, theta1dot, x2dot, y2dot, theta2dot])
 
@@ -290,13 +336,13 @@ def equations_of_motion(state, t, parameters):
     # C matrix
     C = np.matrix([[fF1 + fF2],
                    [fN1 + fN2 - (m + m1 + m2)*g],
-                   [-K*(phi1 - theta1 + phi2 - theta2) + m*g*np.sin(theta)],
+                   [-HIP_SPRING_STIFFNESS*(phi1 - theta1 + phi2 - theta2) + m*g*np.sin(theta)],
                    [-thetadot**2*eta*np.cos(theta) - (thetadot + theta1dot)**2*gamma1*np.cos(theta + theta1)],
                    [ thetadot**2*eta*np.sin(theta) + (thetadot + theta1dot)**2*gamma1*np.sin(theta + theta1)],
-                   [-g*gamma1*np.sin(theta+theta1) + fN1*(eta1*np.sin(theta+theta1) + gamma1*np.sin(theta+theta1)) + fF1*(eta1*np.cos(theta+theta1) + gamma1*np.cos(theta + theta1)) + K*(phi1 - theta1)],
+                   [-g*gamma1*np.sin(theta+theta1) + fN1*(eta1*np.sin(theta+theta1) + gamma1*np.sin(theta+theta1)) + fF1*(eta1*np.cos(theta+theta1) + gamma1*np.cos(theta + theta1)) + HIP_SPRING_STIFFNESS*(phi1 - theta1)],
                    [-thetadot**2*eta*np.cos(theta) - (thetadot + theta2dot)**2*gamma2*np.cos(theta+theta2)],
                    [thetadot**2*eta*np.sin(theta) + (thetadot + theta2dot)**2*gamma2*np.sin(theta + theta2)],
-                   [-g*gamma2*np.sin(theta + theta2) + fN2*(eta2*np.sin(theta + theta2) + gamma2*np.sin(theta + theta2)) + fF2*(eta2*np.cos(theta + theta2) + gamma2*np.cos(theta + theta2)) + K*(phi2 - theta2)]])    
+                   [-g*gamma2*np.sin(theta + theta2) + fN2*(eta2*np.sin(theta + theta2) + gamma2*np.sin(theta + theta2)) + fF2*(eta2*np.cos(theta + theta2) + gamma2*np.cos(theta + theta2)) + HIP_SPRING_STIFFNESS*(phi2 - theta2)]])    
     
     # Calculating angular rate derivatives
     #x3dx4d = np.array(np.linalg.inv(M)*(action.reshape(2,1) - C - friction*np.matrix([[x3],[x4]]))).squeeze() 
