@@ -8,10 +8,10 @@ Created on Thu Feb 21 18:50:29 2019
 
 import numpy as np
 import pygame
-from environment_qwop import Environment
+#from environment_qwop import Environment
 
 def runCode():
-    runfile('/Users/StephaneMagnan/Documents/GitHub/QWOP/animator.py', wdir='/Users/StephaneMagnan/Documents/GitHub/QWOP')
+    #runfile('/Users/StephaneMagnan/Documents/GitHub/QWOP/animator.py', wdir='/Users/StephaneMagnan/Documents/GitHub/QWOP')
     import animator
     animator.drawState(0,800,500)
     
@@ -76,7 +76,6 @@ def drawBackground(width,height):
     y_l4 = y_sky+y_sky2+y_grass+y_track
     y_l2 = y_l1+np.rint((y_l4-y_l1)/6)
     y_l3 = y_l1+np.rint((y_l4-y_l1)/2)
-    print(y_l3,y_l4)
     #define thickness of track lines
     t_l1 = 1
     t_l2 = 2
@@ -146,81 +145,42 @@ def drawBackground(width,height):
 
 def drawDistLine(width,yl1,yl4,hum_scale,x_c):
     #this function returns a set of points for drawing lines every 5 meters
+    line_points = []
+    
+    #determine number of meters above x_c, and number below x_c
+    half_width = width/2
+    half_x = half_width/hum_scale
+    upper_x = x_c+half_x
+    lower_x = x_c-half_x
     
     
     
-    return 0
+    if not (np.mod(upper_x,5) == np.mod(x_c,5)):
+        #a line must be drawn in the upper half
+        this_x = np.floor_divide(upper_x, 5)   
 
-def parseAction(action):
-    #0: No buttons pressed; 1: Q only; 2: QO; 3: QP; 4: W only; 5: WO; 6: WP; 7: O only; 8: P only
-    
-    pressed_q = False
-    pressed_w = False
-    pressed_o = False
-    pressed_p = False
-    
-    if action == 1: 
-        pressed_q = True
-    elif action == 2: 
-        pressed_q = True
-        pressed_o = True
-    elif action == 3: 
-        pressed_q = True
-        pressed_p = True
-    elif action == 4: 
-        pressed_w = True
-    elif action == 5: 
-        pressed_w = True
-        pressed_o = True
-    elif action == 6: 
-        pressed_w = True
-        pressed_p = True
-    elif action == 7:
-        pressed_o = True
-    elif action == 8: 
-        pressed_p = True
-    else: #action == 0:
-        pressed_q = False
-        pressed_w = False
-        pressed_o = False
-        pressed_p = False
-    
-    return pressed_q,pressed_w,pressed_o,pressed_p
+        #get x location of this_x
+        this_px = half_width-1+(half_width)*(this_x-x_c)/(half_x)
 
-
-def packAction(pressed_q,pressed_w,pressed_o,pressed_p):                 
-    #0: No buttons pressed; 1: Q only; 2: QO; 3: QP; 4: W only; 5: WO; 6: WP; 7: O only; 8: P only
-    action = 0
-    
-    #opposite buttons cannot both be true
-    if pressed_q and pressed_w:
-        pressed_q = False
-        pressed_w = False
-    if pressed_o and pressed_p:
-        pressed_o = False
-        pressed_p = False
         
-    #determine aciton ID    
-    if       pressed_q and not pressed_w and not pressed_o and not pressed_p:
-        action = 1
-    elif     pressed_q and not pressed_w and     pressed_o and not pressed_p:
-        action = 2 
-    elif     pressed_q and not pressed_w and not pressed_o and     pressed_p:
-        action = 3 
-    elif not pressed_q and     pressed_w and not pressed_o and not pressed_p:
-        action = 4 
-    elif not pressed_q and     pressed_w and     pressed_o and not pressed_p:
-        action = 5 
-    elif not pressed_q and     pressed_w and not pressed_o and     pressed_p:
-        action = 6 
-    elif not pressed_q and not pressed_w and     pressed_o and not pressed_p:
-        action = 7 
-    elif not pressed_q and not pressed_w and not pressed_o and     pressed_p:
-        action = 8 
-    else:
-        action = 0
+        #line_points.append([this_px-3,yl4,this_px,yl1])         
+        line_points.append([this_px,yl4,this_px,yl1])         
+                           
+    if not (np.mod(lower_x,5) == np.mod(x_c,5)):
+        #a line must be drawn in the lower half
+        this_x = np.floor_divide(x_c, 5)  
+        
+        #get x location of this_x
+        this_px = 0+(half_width)*(this_x-lower_x)/(half_x)
 
-    return action 
+                 
+        line_points.append([this_px,yl4,this_px,yl1])
+        #line_points.append([this_px-3,yl4,this_px,yl1])   
+         
+        
+    return line_points
+
+        
 
 
 def drawState(state,width,height):
@@ -234,8 +194,8 @@ def drawState(state,width,height):
     background = drawBackground(width,height)
     
     #initialize the environment
-    env = Environment() #create an instance of the environment
-    state = env.reset() #resets the environement and puts the initial condiditons in state
+    #env = Environment() #create an instance of the environment
+    #state = env.reset() #resets the environement and puts the initial condiditons in state
     
     
     # Define some colors
@@ -307,7 +267,9 @@ def drawState(state,width,height):
     x_btnp = x_btn4+np.rint(dx_btn/2-text_p_w/2)
     y_btnqwop =  y_btn+np.rint(dy_btn/2-text_qwop_h/2)
     
-    
+    #define position of painted lines
+    y_l1 = 0.75*height
+    y_l4 = 0.95*height
     
     #define positions of body
     x_0 = np.rint(width/2)
@@ -414,12 +376,27 @@ def drawState(state,width,height):
         
         
         # --- Logic
+
+
+        # Debugging, change angle of bodies
+#        if pressed_q:
+#            theta1 = theta1 + 1*np.pi/180
+#            theta2 = theta2 - 1*np.pi/180
+#        if pressed_w:
+#            theta1 = theta1 - 1*np.pi/180
+#            theta2 = theta2 + 1*np.pi/180
+#        if pressed_o:
+#            theta = theta + 1*np.pi/180
+#        if pressed_p:
+#            theta = theta - 1*np.pi/180
         
         #pack button presses into integer tag
         this_action = packAction(pressed_q,pressed_w,pressed_o,pressed_p)
+        
 
         #Step the dynamics forward one timestep
-        next_state,reward,done = env.step(this_action)
+        #next_state,reward,done = env.step(this_action)
+        done = False
         
         #Get point coordinates for each segment
         segment_points[0,:,:] = returnPointCoords(x,y,theta,a*l,(1-a)*l,x,x_0,y_0,hum_scale)
@@ -427,7 +404,9 @@ def drawState(state,width,height):
         segment_points[2,:,:] = returnPointCoords(x2,y2,theta+theta2,a2*l2,(1-a2)*l2,x,x_0,y_0,hum_scale)
         
         # Determine location of painted lines based on X distance 
+        line_points = drawDistLine(width,y_l1,y_l4,hum_scale,x)
         
+            
         # --- Drawing
         # Set the screen background (clears)
         #screen.fill(BLACK)
@@ -450,33 +429,29 @@ def drawState(state,width,height):
         screen.blit(text_current, [np.rint(width/2-text_c_w/2),y_btn])
 
         #Draw buttons (coloured only, u coloured is background)
-        
-
-     
         if pressed_q:
             pygame.draw.rect(screen, PRESSED, [x_btn1,y_btn,dx_btn,dy_btn])
             text_q = font_qwop.render("Q", True, TEXT_PRESSED)
             screen.blit(text_q, [x_btnq, y_btnqwop])
-            theta1 = theta1 + 1*np.pi/180
-            theta2 = theta2 - 1*np.pi/180
+            x=x+0.01
         if pressed_w:
             pygame.draw.rect(screen, PRESSED, [x_btn2,y_btn,dx_btn,dy_btn])
             text_w = font_qwop.render("W", True, TEXT_PRESSED)
             screen.blit(text_w, [x_btnw, y_btnqwop])
-            theta1 = theta1 - 1*np.pi/180
-            theta2 = theta2 + 1*np.pi/180
+            x=x-0.01
         if pressed_o:
             pygame.draw.rect(screen, PRESSED, [x_btn3,y_btn,dx_btn,dy_btn])
             text_o = font_qwop.render("O", True, TEXT_PRESSED)
             screen.blit(text_o, [x_btno, y_btnqwop])
-            theta = theta + 1*np.pi/180
         if pressed_p:
             pygame.draw.rect(screen, PRESSED, [x_btn4,y_btn,dx_btn,dy_btn]) 
             text_p = font_qwop.render("P", True, TEXT_PRESSED)
             screen.blit(text_p, [x_btnp, y_btnqwop])
-            theta = theta - 1*np.pi/180
         
-    
+        #Draw distance ticks
+        for this_line in range(len(line_points)):
+            pygame.draw.line(screen, LINE, [line_points[this_line][0],line_points[this_line][1]], [line_points[this_line][2],line_points[this_line][3]],3)
+            
         
         #Draw body
         for segment_id in range(segment_count):
@@ -502,3 +477,78 @@ def drawState(state,width,height):
     pygame.quit()
     
     print("quit")
+    
+    
+    
+    
+    
+def parseAction(action):
+    #0: No buttons pressed; 1: Q only; 2: QO; 3: QP; 4: W only; 5: WO; 6: WP; 7: O only; 8: P only
+    
+    pressed_q = False
+    pressed_w = False
+    pressed_o = False
+    pressed_p = False
+    
+    if action == 1: 
+        pressed_q = True
+    elif action == 2: 
+        pressed_q = True
+        pressed_o = True
+    elif action == 3: 
+        pressed_q = True
+        pressed_p = True
+    elif action == 4: 
+        pressed_w = True
+    elif action == 5: 
+        pressed_w = True
+        pressed_o = True
+    elif action == 6: 
+        pressed_w = True
+        pressed_p = True
+    elif action == 7:
+        pressed_o = True
+    elif action == 8: 
+        pressed_p = True
+    else: #action == 0:
+        pressed_q = False
+        pressed_w = False
+        pressed_o = False
+        pressed_p = False
+    
+    return pressed_q,pressed_w,pressed_o,pressed_p
+
+
+def packAction(pressed_q,pressed_w,pressed_o,pressed_p):                 
+    #0: No buttons pressed; 1: Q only; 2: QO; 3: QP; 4: W only; 5: WO; 6: WP; 7: O only; 8: P only
+    action = 0
+    
+    #opposite buttons cannot both be true
+    if pressed_q and pressed_w:
+        pressed_q = False
+        pressed_w = False
+    if pressed_o and pressed_p:
+        pressed_o = False
+        pressed_p = False
+        
+    #determine aciton ID    
+    if       pressed_q and not pressed_w and not pressed_o and not pressed_p:
+        action = 1
+    elif     pressed_q and not pressed_w and     pressed_o and not pressed_p:
+        action = 2 
+    elif     pressed_q and not pressed_w and not pressed_o and     pressed_p:
+        action = 3 
+    elif not pressed_q and     pressed_w and not pressed_o and not pressed_p:
+        action = 4 
+    elif not pressed_q and     pressed_w and     pressed_o and not pressed_p:
+        action = 5 
+    elif not pressed_q and     pressed_w and not pressed_o and     pressed_p:
+        action = 6 
+    elif not pressed_q and not pressed_w and     pressed_o and not pressed_p:
+        action = 7 
+    elif not pressed_q and not pressed_w and not pressed_o and     pressed_p:
+        action = 8 
+    else:
+        action = 0
+
+    return action     
