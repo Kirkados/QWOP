@@ -24,7 +24,7 @@ import tensorflow as tf
 import numpy as np
 import time
 
-from build_neural_networks import BuildActorNetwork, BuildQNetwork
+from build_neural_networks import BuildQNetwork
 from settings import Settings
                     
 class Learner:
@@ -43,17 +43,15 @@ class Learner:
             self.action_placeholder                      = tf.placeholder(dtype = tf.float32, shape = [Settings.MINI_BATCH_SIZE, Settings.ACTION_SIZE], name = "action_placeholder") # placeholder for actions
             self.target_bins_placeholder                 = tf.placeholder(dtype = tf.float32, shape = [Settings.MINI_BATCH_SIZE, Settings.NUMBER_OF_BINS], name = "target_bins_placeholder") # Bin values of target network with Bellman update applied
             self.target_q_distribution_placeholder       = tf.placeholder(dtype = tf.float32, shape = [Settings.MINI_BATCH_SIZE, Settings.NUMBER_OF_BINS], name = "target_q_distribution_placeholder")  # Future q-distribution from target critic
-            self.dQ_dAction_placeholder                  = tf.placeholder(dtype = tf.float32, shape = [Settings.MINI_BATCH_SIZE, Settings.ACTION_SIZE], name = "dQ_dAction_placeholder") # Gradient of critic predicted value with respect to input actions
-            self.importance_sampling_weights_placeholder = tf.placeholder(dtype = tf.float32, shape = Settings.MINI_BATCH_SIZE, name = "importance_sampling_weights_placeholder") # [PRIORITY_REPLAY_BUFFER only] Holds the weights that are used to remove bias from priority sampling
-        
+
         # The reward options that the distributional critic predicts the liklihood of being in
         self.bins = np.linspace(Settings.MIN_Q, Settings.MAX_Q, Settings.NUMBER_OF_BINS, dtype = np.float32) 
         
         ######################################################
         ##### Build the networks and training operations #####
         ######################################################
-        self.build_main_networks()
-        self.build_target_networks()
+        self.build_main_network()
+        self.build_target_network()
         
         # Build the operation to update the target network parameters
         self.build_target_parameter_update_operations()
@@ -75,38 +73,41 @@ class Learner:
             self.iteration_summary = tf.summary.merge([self.iteration_loss_summary])
         
         
-    def build_main_networks(self):        
+    def build_main_network(self):        
         ##################################
         #### Build the learned critic ####
         ##################################
-        self.critic = BuildQNetwork(self.state_placeholder, self.action_placeholder, scope='learner_critic_main')
+        self.critic = BuildQNetwork(self.state_placeholder, scope='learner_critic_main') # q_distribution attribute has shape [batch_size, # actions, # bins]
         
         # Build the critic training function        
-        self.train_critic_one_step = self.critic.generate_training_function(self.target_q_distribution_placeholder, self.target_bins_placeholder, self.importance_sampling_weights_placeholder)
-        
-        #################################
-        #### Build the learned actor ####
-        #################################        
-        self.actor = BuildActorNetwork(self.state_placeholder, scope='learner_actor_main')
-        
-        # Build the actor training function        
-        self.train_actor_one_step = self.actor.generate_training_function(self.dQ_dAction_placeholder)        
-        
-        
-    def build_target_networks(self):        
+        self.train_critic_one_step = self.critic.generate_training_function(self.action_placeholder, self.target_q_distribution_placeholder, self.target_bins_placeholder, self.importance_sampling_weights_placeholder)
+
+
+    def build_target_network(self):        
         ###########################################
         #### Build the target actor and critic ####
         ###########################################
-        self.target_critic = BuildQNetwork(self.state_placeholder, self.action_placeholder, scope='learner_critic_target')
-        self.target_actor  = BuildActorNetwork(self.state_placeholder, scope='learner_actor_target')
+        self.target_critic = BuildQNetwork(self.state_placeholder, scope='learner_critic_target')
+        
+        # Getting the next action from the next state using the target network
+        # action = argmax_a Q(next_state, action)
+        # First, collapse distributions into q-values
+        self.target_q_values = tf.reduce_sum(self.bins, self.target_critic.q_distribution, axis = 2) # [batch_size, # actions]
+        self.target_clean_next_action = tf.argmax(self.target_q_values, axis = 1, output_type = tf.int32) # [batch_size]        
+        # Determining the index that corresponds to the chosen action
+        chosen_action_index = tf.stack((tf.range(Settings.MINI_BATCH_SIZE), self.target_clean_next_action), axis = 1) # [batch_size]
+        
+        # The q-distribution corresponding to the chosen action for each entry in the batch
+        self.target_q_distribution_for_next_action = tf.gather_nd(self.target_critic.q_distribution, chosen_action_index) # [batch_size, # bins]
 
+        
 
     def build_target_parameter_update_operations(self):    
         # Build operations that either 
-            # 1) initialize target networks to be identical to main networks 2) slowly       
+            # 1) initialize target networks to be identical to main networks      
             # 2) slowly copy main network parameters to target networks according to Settings.TARGET_NETWORK_TAU
-        main_parameters = self.actor.parameters + self.critic.parameters
-        target_parameters = self.target_actor.parameters + self.target_critic.parameters
+        main_parameters = self.critic.parameters
+        target_parameters = self.target_critic.parameters
         
         # Build operation that fully copies the main network parameters to the targets [Option 1 above]
         initialize_target_network_parameters = []
@@ -180,11 +181,9 @@ class Learner:
             ###################################
             ##### Prepare Critic Training #####
             ###################################
-            # Get clean next actions by feeding the next states through the target actor
-            clean_next_actions = self.sess.run(self.target_actor.action_scaled, {self.state_placeholder:next_states_batch}) # [batch_size, num_actions]
             
             # Get the next q-distribution by passing the next states and clean next actions through the target critic
-            target_critic_distribution = self.sess.run(self.target_critic.q_distribution, {self.state_placeholder:next_states_batch, self.action_placeholder:clean_next_actions}) # [batch_size, number_of_bins]
+            target_critic_distribution = self.sess.run(self.target_q_distribution_for_next_action, {self.state_placeholder:next_states_batch}) # [batch_size, number_of_bins]
             
             # Create batch of bins
             target_bins = np.repeat(np.expand_dims(self.bins, axis=0), Settings.MINI_BATCH_SIZE, axis=0) # [batch_size, number_of_bins]
@@ -206,22 +205,7 @@ class Learner:
             #####################################
             critic_loss, _ = self.sess.run([self.critic.loss, self.train_critic_one_step], {self.state_placeholder:states_batch, self.action_placeholder:actions_batch, self.target_q_distribution_placeholder:target_critic_distribution, self.target_bins_placeholder:target_bins, self.importance_sampling_weights_placeholder:weights_batch})   
             
-            
-            ##################################
-            ##### Prepare Actor Training #####
-            ##################################
-            # Get clean actions that the main actor would have taken for this batch of states if there were no noise added
-            clean_actions = self.sess.run(self.actor.action_scaled, {self.state_placeholder:states_batch})
-            
-            # Calculate the derivative of the main critic's q-value with respect to these actions
-            dQ_dAction = self.sess.run(self.critic.dQ_dAction, {self.state_placeholder:states_batch, self.action_placeholder:clean_actions}) # also known as action gradients
-
-            ####################################
-            ##### TRAIN THE ACTOR ONE STEP #####
-            ####################################
-            self.sess.run(self.train_actor_one_step, {self.state_placeholder:states_batch, self.dQ_dAction_placeholder:dQ_dAction[0]})
-            
-            
+                        
             # If it's time to update the target networks
             if self.total_training_iterations % Settings.UPDATE_TARGET_NETWORKS_EVERY_NUM_ITERATIONS == 0:
                 # Update target networks according to TAU!

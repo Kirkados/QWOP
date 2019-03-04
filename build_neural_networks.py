@@ -19,10 +19,9 @@ from settings import Settings
 
 class BuildQNetwork:
     
-    def __init__(self, state, action, scope):
+    def __init__(self, state, scope):
         
         self.state = state
-        self.action = action
         self.scope = scope
         """
         Defines a critic network that predicts the q-distribution (expected return)
@@ -36,7 +35,6 @@ class BuildQNetwork:
         with tf.variable_scope(self.scope):
             # Two sides flow through the network independently.
             self.state_side  = self.state
-            self.action_side = self.action
             
             ###########################################
             ##### (Optional) Convolutional Layers #####
@@ -80,9 +78,9 @@ class BuildQNetwork:
                 q_distribution_logits.append(q_logits) # logits
                 q_distribution.append(tf.nn.softmax(q_logits)) # probabilities
             
-            # Assembling output into [# actions, # bins]
+            # Assembling output into [batch_size, # actions, # bins]
             self.q_distribution_logits = tf.stack(q_distribution_logits, axis = 1)
-            self.q_distribution = q_distribution
+            self.q_distribution = tf.stack(q_distribution, axis = 1)
             
             # The value bins that each probability corresponds to.
             self.bins = tf.lin_space(Settings.MIN_Q, Settings.MAX_Q, Settings.NUMBER_OF_BINS)
@@ -90,7 +88,7 @@ class BuildQNetwork:
             # Getting the parameters from the critic
             self.parameters = tf.trainable_variables(scope=self.scope)            
             
-    def generate_training_function(self, target_q_distribution, target_bins, importance_sampling_weights):
+    def generate_training_function(self, action_placeholder, target_q_distribution, target_bins, importance_sampling_weights):
         # Create the operation that trains the critic one step.        
         with tf.variable_scope(self.scope):
             with tf.variable_scope('Training'):
@@ -101,8 +99,14 @@ class BuildQNetwork:
                 # Project the target distribution onto the bounds of the original network
                 projected_target_distribution = l2_project(target_bins, target_q_distribution, self.bins)  
                 
+                # Getting the q-distribution for just the chosen action
+                chosen_action_index = tf.stack((tf.range(Settings.MINI_BATCH_SIZE), action_placeholder), axis = 1)
+                self.q_distribution_logits_for_chosen_action = tf.gather_nd(self.q_distribution_logits, chosen_action_index) # [batch_size, # bins]
+                
+                # This ensures we only train the appropraite distribution (logits) from the q-network that correspondd to the chosen action                
+                
                 # Calculate the cross entropy loss between the projected distribution and the main q_network!
-                self.loss = tf.nn.softmax_cross_entropy_with_logits_v2(logits = self.q_distribution_logits, labels = tf.stop_gradient(projected_target_distribution))
+                self.loss = tf.nn.softmax_cross_entropy_with_logits_v2(logits = self.q_distribution_logits_for_chosen_action, labels = tf.stop_gradient(projected_target_distribution))
                 
                 # A loss correction is needed if we use a prioritized replay buffer
                 # to account for the bias introduced by the prioritized sampling.

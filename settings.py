@@ -12,7 +12,7 @@ class Settings:
     ########################
     
     RUN_NAME               = 'QWOP_animating' # use just the name. If trying to restore from file, use name along with timestamp
-    ENVIRONMENT            = 'qwop'
+    ENVIRONMENT            = 'gym'
     RECORD_VIDEO           = True
     VIDEO_RECORD_FREQUENCY = 1 # Multiples of "CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES"
     LEARN_FROM_PIXELS      = False # False = learn from state (fully observed); True = learn from pixels (partially observed)
@@ -64,13 +64,9 @@ class Settings:
     MINI_BATCH_SIZE                       = 256
         
     # Exploration noise
-    UNIFORM_OR_GAUSSIAN_NOISE = False # True -> Uniform; False -> Gaussian
-    if UNIFORM_OR_GAUSSIAN_NOISE:
-        NOISE_SCALE           = 1 # 1 is best for uniform -> noise scaled to the action range
-    else:
-        NOISE_SCALE           = 0.3 # 0.3 is better for gaussian -> since normal distribution can be large
-        #NOISE_SCALE = 0.
-    NOISE_SCALE_DECAY         = 0.9999 # 1 means the noise does not decay during training
+    INITIAL_EXPLORATION_RATE = 0.3
+    EXPLORATION_RATE_DECAY   = 0.9999 # 1 means the noise does not decay during training
+    
     
 #%%
     ####################################

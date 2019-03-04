@@ -157,7 +157,7 @@ class Agent:
             else:
                 # Regular training episode, use noise.
                 # Noise is decayed during the training
-                exploration_rate = 0.1
+                exploration_rate = Settings.INITIAL_EXPLORATION_RATE * Settings.EXPLORATION_RATE_DECAY ** episode_number
             
             # Resetting items for this episode
             episode_reward = 0
@@ -176,6 +176,7 @@ class Agent:
                     ##############################
                     ##### Running the Policy #####
                     ##############################
+                    # Returns a q-distribution corresponding to each possible action
                     q_distribution = self.sess.run(self.policy.q_distribution, feed_dict = {self.state_placeholder: np.expand_dims(state,0)})[0] # [# actions, # bins]
                     # Collapsing the distributions into q_values corresponding to each action
                     q_values = np.sum(self.policy.bins * q_distribution, axis = 1) # [# actions, 1]                    
