@@ -8,7 +8,7 @@ Created on Thu Feb 21 18:50:29 2019
 
 import numpy as np
 import pygame
- 
+from environment_qwop import Environment
 
 def runCode():
     runfile('/Users/StephaneMagnan/Documents/GitHub/QWOP/animator.py', wdir='/Users/StephaneMagnan/Documents/GitHub/QWOP')
@@ -144,6 +144,84 @@ def drawBackground(width,height):
    
     return background_surface
 
+def drawDistLine(width,yl1,yl4,hum_scale,x_c):
+    #this function returns a set of points for drawing lines every 5 meters
+    
+    
+    
+    return 0
+
+def parseAction(action):
+    #0: No buttons pressed; 1: Q only; 2: QO; 3: QP; 4: W only; 5: WO; 6: WP; 7: O only; 8: P only
+    
+    pressed_q = False
+    pressed_w = False
+    pressed_o = False
+    pressed_p = False
+    
+    if action == 1: 
+        pressed_q = True
+    elif action == 2: 
+        pressed_q = True
+        pressed_o = True
+    elif action == 3: 
+        pressed_q = True
+        pressed_p = True
+    elif action == 4: 
+        pressed_w = True
+    elif action == 5: 
+        pressed_w = True
+        pressed_o = True
+    elif action == 6: 
+        pressed_w = True
+        pressed_p = True
+    elif action == 7:
+        pressed_o = True
+    elif action == 8: 
+        pressed_p = True
+    else: #action == 0:
+        pressed_q = False
+        pressed_w = False
+        pressed_o = False
+        pressed_p = False
+    
+    return pressed_q,pressed_w,pressed_o,pressed_p
+
+
+def packAction(pressed_q,pressed_w,pressed_o,pressed_p):                 
+    #0: No buttons pressed; 1: Q only; 2: QO; 3: QP; 4: W only; 5: WO; 6: WP; 7: O only; 8: P only
+    action = 0
+    
+    #opposite buttons cannot both be true
+    if pressed_q and pressed_w:
+        pressed_q = False
+        pressed_w = False
+    if pressed_o and pressed_p:
+        pressed_o = False
+        pressed_p = False
+        
+    #determine aciton ID    
+    if       pressed_q and not pressed_w and not pressed_o and not pressed_p:
+        action = 1
+    elif     pressed_q and not pressed_w and     pressed_o and not pressed_p:
+        action = 2 
+    elif     pressed_q and not pressed_w and not pressed_o and     pressed_p:
+        action = 3 
+    elif not pressed_q and     pressed_w and not pressed_o and not pressed_p:
+        action = 4 
+    elif not pressed_q and     pressed_w and     pressed_o and not pressed_p:
+        action = 5 
+    elif not pressed_q and     pressed_w and not pressed_o and     pressed_p:
+        action = 6 
+    elif not pressed_q and not pressed_w and     pressed_o and not pressed_p:
+        action = 7 
+    elif not pressed_q and not pressed_w and not pressed_o and     pressed_p:
+        action = 8 
+    else:
+        action = 0
+
+    return action 
+
 
 def drawState(state,width,height):
     # intialize window 
@@ -155,11 +233,16 @@ def drawState(state,width,height):
     screen = pygame.display.set_mode(size)
     background = drawBackground(width,height)
     
+    #initialize the environment
+    env = Environment() #create an instance of the environment
+    state = env.reset() #resets the environement and puts the initial condiditons in state
+    
+    
     # Define some colors
-    BLACK = (0, 0, 0)
-    WHITE = (255, 255, 255)
-    GREEN = (0, 255, 0)
-    RED = (255, 0, 0)
+    #BLACK = (0, 0, 0)
+    #WHITE = (255, 255, 255)
+    #GREEN = (0, 255, 0)
+    #RED = (255, 0, 0)
     
     TEXT = (255, 255, 255)
     TEXT_PRESSED = (200, 200, 200)
@@ -168,7 +251,7 @@ def drawState(state,width,height):
     LINE = (255,255,255)
     BODY = (25, 25, 25)
     COG = (200,200,200)
-    GAMEOVER = (255,50,50)
+    #GAMEOVER = (255,50,50)
     
     # Define some fonts to use, size, bold, italics
     font_subtitles = pygame.font.SysFont('courier', 18, True, False)
@@ -192,6 +275,14 @@ def drawState(state,width,height):
     #text_p_h = text_q.get_rect().height
             
 
+        
+    # generation                best x (gen)
+    # time                      x
+    n_trial = 13
+    this_time = 3.245
+    best_x = 20
+    best_trial = 10
+    this_x = 15
     
     #scale
     hum_scale = 100 #pixel/m
@@ -320,14 +411,17 @@ def drawState(state,width,height):
                      print("Other")
                      
                      
-                     
-                     
-                     
-                
+        
+        
         # --- Logic
         
-        #get point coordinates for each segment
-        print(x,y,x1,y1,x2,y2)
+        #pack button presses into integer tag
+        this_action = packAction(pressed_q,pressed_w,pressed_o,pressed_p)
+
+        #Step the dynamics forward one timestep
+        next_state,reward,done = env.step(this_action)
+        
+        #Get point coordinates for each segment
         segment_points[0,:,:] = returnPointCoords(x,y,theta,a*l,(1-a)*l,x,x_0,y_0,hum_scale)
         segment_points[1,:,:] = returnPointCoords(x1,y1,theta+theta1,a1*l1,(1-a1)*l1,x,x_0,y_0,hum_scale)
         segment_points[2,:,:] = returnPointCoords(x2,y2,theta+theta2,a2*l2,(1-a2)*l2,x,x_0,y_0,hum_scale)
@@ -342,57 +436,43 @@ def drawState(state,width,height):
         
         #Draw text
         
-        # generation                best x (gen)
-        # time                      x
-        n_trial = 13
-        this_time = 3.245
-        best_x = 20
-        best_trial = 10
-        this_x = 15
-        
         # write time and record subtitles
-        text_time = font_subtitles.render("%3.2fs" %this_time, True, WHITE)
+        text_time = font_subtitles.render("%3.2fs" %this_time, True, TEXT)
         text_t_w = text_time.get_rect().width
-        text_record = font_subtitles.render("%3.2fm (%i)" % (best_x, best_trial), True, WHITE)
-        
-        screen.blit(text_record, [x_btn1,y_btn-dy_btn])
         screen.blit(text_time, [x_btn4+dx_btn-text_t_w,y_btn-dy_btn])
         
-        
+        text_record = font_subtitles.render("%3.2fm (%i)" % (best_x, best_trial), True, TEXT)
+        screen.blit(text_record, [x_btn1,y_btn-dy_btn])
+
         # write current score title
-        text_current = font_distance.render("%3.2fm (%i)" %(this_x,n_trial), True, WHITE)
+        text_current = font_distance.render("%3.2fm (%i)" %(this_x,n_trial), True, TEXT)
         text_c_w = text_current.get_rect().width
-        
         screen.blit(text_current, [np.rint(width/2-text_c_w/2),y_btn])
-        
-        
-        
-        
+
         #Draw buttons (coloured only, u coloured is background)
         
-        # Select the font to use, size, bold, italics
-        font = pygame.font.SysFont('courier', 25, True, False)
+
      
         if pressed_q:
             pygame.draw.rect(screen, PRESSED, [x_btn1,y_btn,dx_btn,dy_btn])
-            text_q = font.render("Q", True, TEXT_PRESSED)
+            text_q = font_qwop.render("Q", True, TEXT_PRESSED)
             screen.blit(text_q, [x_btnq, y_btnqwop])
             theta1 = theta1 + 1*np.pi/180
             theta2 = theta2 - 1*np.pi/180
         if pressed_w:
             pygame.draw.rect(screen, PRESSED, [x_btn2,y_btn,dx_btn,dy_btn])
-            text_w = font.render("W", True, TEXT_PRESSED)
+            text_w = font_qwop.render("W", True, TEXT_PRESSED)
             screen.blit(text_w, [x_btnw, y_btnqwop])
             theta1 = theta1 - 1*np.pi/180
             theta2 = theta2 + 1*np.pi/180
         if pressed_o:
             pygame.draw.rect(screen, PRESSED, [x_btn3,y_btn,dx_btn,dy_btn])
-            text_o = font.render("O", True, TEXT_PRESSED)
+            text_o = font_qwop.render("O", True, TEXT_PRESSED)
             screen.blit(text_o, [x_btno, y_btnqwop])
             theta = theta + 1*np.pi/180
         if pressed_p:
             pygame.draw.rect(screen, PRESSED, [x_btn4,y_btn,dx_btn,dy_btn]) 
-            text_p = font.render("P", True, TEXT_PRESSED)
+            text_p = font_qwop.render("P", True, TEXT_PRESSED)
             screen.blit(text_p, [x_btnp, y_btnqwop])
             theta = theta - 1*np.pi/180
         
@@ -402,10 +482,10 @@ def drawState(state,width,height):
         for segment_id in range(segment_count):
             pygame.draw.line(screen, BODY, segment_points[segment_id,0,:], segment_points[segment_id,2,:], 10)
             pygame.draw.ellipse(screen, COG, [segment_points[segment_id,1,0]-5,segment_points[segment_id,1,1]-5,10,10], 2)
-            pygame.draw.ellipse(screen, BODY, [segment_points[segment_id,0,0]-5,segment_points[segment_id,0,1]-5,10,10], 0)
-            pygame.draw.ellipse(screen, BODY, [segment_points[segment_id,2,0]-5,segment_points[segment_id,2,1]-5,10,10], 0)
+            pygame.draw.ellipse(screen, BODY, [segment_points[segment_id,0,0]-6,segment_points[segment_id,0,1]-6,12,12], 0)
+            pygame.draw.ellipse(screen, BODY, [segment_points[segment_id,2,0]-6,segment_points[segment_id,2,1]-6,12,12], 0)
             
-        print(segment_points)
+            
     
         # --- Wrap-up
         # Limit to 60 frames per second
@@ -414,7 +494,10 @@ def drawState(state,width,height):
         # Go ahead and update the screen with what we've drawn.
         pygame.display.flip() # more efficient: update(rectangle_list) https://www.pygame.org/docs/ref/display.html
         
-     
+        #Check if the dynamics are complete
+        if done:
+            break
+        
     # Close everything down
     pygame.quit()
     
