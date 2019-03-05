@@ -455,11 +455,18 @@ def drawState(state,width,height):
         next_state,reward,done = env.step(this_action)
         #done = False
         
-        print(next_state)
+        #print(next_state)
         
         
-        
-        
+        x = next_state[0]
+        y = next_state[1]
+        theta = next_state[2]
+        x1 = next_state[3]
+        y1 = next_state[4]
+        theta1 = next_state[5]
+        x2 = next_state[6]
+        y2 = next_state[7]
+        theta2 = next_state[8]
         
         #Get point coordinates for each segment
         segment_points[0,:,:] = returnPointCoords(x,y,theta,a*l,(1-a)*l,x,x_0,y_0,hum_scale)
@@ -498,33 +505,33 @@ def drawState(state,width,height):
             text_q = font_qwop.render("Q", True, TEXT_PRESSED)
             screen.blit(text_q, [x_btnq, y_btnqwop])
             if print_out:
-                x=x+0.01
-                x1=x1+0.01
-                x2=x2+0.01
+                x+=0.01
+                x1+=0.01
+                x2+=0.01
         if pressed_w:
             pygame.draw.rect(screen, PRESSED, [x_btn2,y_btn,dx_btn,dy_btn])
             text_w = font_qwop.render("W", True, TEXT_PRESSED)
             screen.blit(text_w, [x_btnw, y_btnqwop])
             if print_out:
-                x=x-0.01
-                x1=x1-0.01
-                x2=x2-0.01
+                x-=0.01
+                x1-=0.01
+                x2-=0.01
         if pressed_o:
             pygame.draw.rect(screen, PRESSED, [x_btn3,y_btn,dx_btn,dy_btn])
             text_o = font_qwop.render("O", True, TEXT_PRESSED)
             screen.blit(text_o, [x_btno, y_btnqwop])
             if print_out:
-                x=x+0.05
-                x1=x1+0.05
-                x2=x2+0.05
+                x+=0.05
+                x1+=0.05
+                x2+=0.05
         if pressed_p:
             pygame.draw.rect(screen, PRESSED, [x_btn4,y_btn,dx_btn,dy_btn]) 
             text_p = font_qwop.render("P", True, TEXT_PRESSED)
             screen.blit(text_p, [x_btnp, y_btnqwop])
             if print_out:
-                x=x-0.05
-                x1=x1-0.05
-                x2=x2-0.05
+                x-=0.05
+                x1-=0.05
+                x2-=0.05
             
             
         #Draw distance ticks

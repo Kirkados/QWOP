@@ -48,6 +48,9 @@ class Environment:
         # How much the leg desired angle changes per frame when a button is pressed
         self.HIP_INCREMENT = 2.*np.pi/180. # [rad/s]
         self.HIP_SPRING_STIFFNESS = 100 # [Nm/rad]
+        self.phi1 = 30*np.pi/180
+        self.phi2 = -30*np.pi/180
+        
         
         # To be removed
         self.lower_action_bound = np.array([-0.1, -0.1]) # [Nm]
@@ -157,10 +160,10 @@ class Environment:
             initial_torso_height = 2. # [m] above ground
             
             # Calculating leg initial positions
-            initial_x1 = self.body_length * self.eta * np.sin(initial_body_angle) + self.leg1_length * self.eta1 * np.sin(initial_body_angle + initial_leg1_angle)
-            initial_y1 = initial_torso_height - self.body_length * self.eta * np.cos(initial_body_angle) - self.leg1_length * self.eta1 * np.cos(initial_body_angle + initial_leg1_angle)
-            initial_x2 = self.body_length * self.eta * np.sin(initial_body_angle) + self.leg2_length * self.eta2 * np.sin(initial_body_angle + initial_leg2_angle)
-            initial_y2 = initial_torso_height - self.body_length * self.eta * np.cos(initial_body_angle) - self.leg2_length * self.eta2 * np.cos(initial_body_angle + initial_leg2_angle)
+            initial_x1 = self.SEGMENT_ETA_LENGTH[0] * np.sin(initial_body_angle) + self.SEGMENT_GAMMA_LENGTH[1] * np.sin(initial_body_angle + initial_leg1_angle)
+            initial_y1 = initial_torso_height - self.SEGMENT_ETA_LENGTH[0] * np.cos(initial_body_angle) - self.SEGMENT_GAMMA_LENGTH[1] * np.cos(initial_body_angle + initial_leg1_angle)
+            initial_x2 = self.SEGMENT_ETA_LENGTH[0] * np.sin(initial_body_angle) + self.SEGMENT_GAMMA_LENGTH[2] * np.sin(initial_body_angle + initial_leg2_angle)
+            initial_y2 = initial_torso_height - self.SEGMENT_ETA_LENGTH[0] * np.cos(initial_body_angle) - self.SEGMENT_GAMMA_LENGTH[2] * np.cos(initial_body_angle + initial_leg2_angle)
             
             # Assembling into the state
             # Note: state = [x, y, theta, x1, y1, theta1, x2, y2, theta2, xdot, ydot, thetadot, x1dot, y1dot, theta1dot, x2dot, y2dot, theta2dot]
@@ -173,7 +176,7 @@ class Environment:
         return self.state
         
     
-    def parse_action(action):
+    def parse_action(self,action):
         #0: No buttons pressed; 1: Q only; 2: QO; 3: QP; 4: W only; 5: WO; 6: WP; 7: O only; 8: P only
         
         pressed_q = False
@@ -236,19 +239,19 @@ class Environment:
         fN2 = 0.
         
         # Packing up the parameters the equations of motion need
-        parameters = np.array([self.m, self.m1, self.m2, self.eta, self.eta1, self.eta2, self.gamma1, self.gamma2, self.I, self.I1, self.I2, self.g, fF1, fF2, self.phi1, self.phi2, fN1, fN2, self.HIP_SPRING_STIFFNESS], dtype = 'float64')
+        parameters = np.array([self.SEGMENT_MASS[0],self.SEGMENT_MASS[1],self.SEGMENT_MASS[2], self.SEGMENT_ETA_LENGTH[0],self.SEGMENT_ETA_LENGTH[1],self.SEGMENT_ETA_LENGTH[2], self.SEGMENT_GAMMA_LENGTH[0],self.SEGMENT_GAMMA_LENGTH[1],self.SEGMENT_GAMMA_LENGTH[2], self.SEGMENT_MOMINERT[0], self.SEGMENT_MOMINERT[1], self.SEGMENT_MOMINERT[2], self.g, fF1, fF2, self.phi1, self.phi2, fN1, fN2, self.HIP_SPRING_STIFFNESS], dtype = 'float64')
 
         # Integrating forward one time step. 
         # Returns initial condition on first row then next timestep on the next row
         ##############################
         ##### PROPAGATE DYNAMICS #####
         ##############################
-        next_states = odeint(equations_of_motion, self.state, [self.time, self.time + self.timestep], args = (parameters,), full_output = 0)
+        next_states = odeint(equations_of_motion, self.state, [self.time, self.time + self.TIMESTEP], args = (parameters,), full_output = 0)
         
         reward = self.reward_function(action) 
         
         self.state = next_states[1,:] # remembering the current state
-        self.time += self.timestep # updating the stored time
+        self.time += self.TIMESTEP # updating the stored time
         
 
         # Return the (state, reward, done)
@@ -317,7 +320,7 @@ def equations_of_motion(state, t, parameters):
     x, y, theta, x1, y1, theta1, x2, y2, theta2, xdot, ydot, thetadot, x1dot, y1dot, theta1dot, x2dot, y2dot, theta2dot = state
     
     # Unpacking parameters
-    m, m1, m2, eta, eta1, eta2, gamma1, gamma2, I, I1, I2, g, fF1, fF2, phi1, phi2, fN1, fN2, HIP_SPRING_STIFFNESS = parameters 
+    m, m1, m2, eta, eta1, eta2, gamma, gamma1, gamma2, I, I1, I2, g, fF1, fF2, phi1, phi2, fN1, fN2, HIP_SPRING_STIFFNESS = parameters 
     
     first_derivatives = np.array([xdot, ydot, thetadot, x1dot, y1dot, theta1dot, x2dot, y2dot, theta2dot])
 
