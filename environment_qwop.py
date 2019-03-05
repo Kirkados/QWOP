@@ -28,7 +28,7 @@ Inputs:
 """
 import numpy as np
 import multiprocessing
-import animator
+#import animator
 import pygame
 from scipy.integrate import odeint # Numerical integrator
 

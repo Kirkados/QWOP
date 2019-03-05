@@ -8,7 +8,7 @@ Created on Thu Feb 21 18:50:29 2019
 
 import numpy as np
 import pygame
-#from environment_qwop import Environment
+from environment_qwop import Environment
 
 def runCode():
     #runfile('/Users/StephaneMagnan/Documents/GitHub/QWOP/animator.py', wdir='/Users/StephaneMagnan/Documents/GitHub/QWOP')
@@ -252,8 +252,8 @@ def drawState(state,width,height):
     background = drawBackground(width,height)
     
     #initialize the environment
-    #env = Environment() #create an instance of the environment
-    #state = env.reset() #resets the environement and puts the initial condiditons in state
+    env = Environment() #create an instance of the environment
+    state = env.reset() #resets the environement and puts the initial condiditons in state
     
     
     # Define some colors
@@ -298,7 +298,6 @@ def drawState(state,width,height):
     # generation                best x (gen)
     # time                      x
     n_trial = 1
-    this_time = 3.245
     best_x = 20
     best_trial = 10
     
@@ -372,6 +371,7 @@ def drawState(state,width,height):
 #    imagerect = myimage.get_rect()
     
     print_out = False
+    
     # -------- Main Program Loop -----------
     while running:
         #pygame.event.wait()
@@ -431,9 +431,7 @@ def drawState(state,width,height):
                 if print_out:
                      print("Other")
                      
-                     
-        
-        
+
         # --- Logic
 
 
@@ -454,8 +452,14 @@ def drawState(state,width,height):
         
 
         #Step the dynamics forward one timestep
-        #next_state,reward,done = env.step(this_action)
-        done = False
+        next_state,reward,done = env.step(this_action)
+        #done = False
+        
+        print(next_state)
+        
+        
+        
+        
         
         #Get point coordinates for each segment
         segment_points[0,:,:] = returnPointCoords(x,y,theta,a*l,(1-a)*l,x,x_0,y_0,hum_scale)
@@ -493,21 +497,36 @@ def drawState(state,width,height):
             pygame.draw.rect(screen, PRESSED, [x_btn1,y_btn,dx_btn,dy_btn])
             text_q = font_qwop.render("Q", True, TEXT_PRESSED)
             screen.blit(text_q, [x_btnq, y_btnqwop])
-            x=x+0.01
+            if print_out:
+                x=x+0.01
+                x1=x1+0.01
+                x2=x2+0.01
         if pressed_w:
             pygame.draw.rect(screen, PRESSED, [x_btn2,y_btn,dx_btn,dy_btn])
             text_w = font_qwop.render("W", True, TEXT_PRESSED)
             screen.blit(text_w, [x_btnw, y_btnqwop])
-            x=x-0.01
+            if print_out:
+                x=x-0.01
+                x1=x1-0.01
+                x2=x2-0.01
         if pressed_o:
             pygame.draw.rect(screen, PRESSED, [x_btn3,y_btn,dx_btn,dy_btn])
             text_o = font_qwop.render("O", True, TEXT_PRESSED)
             screen.blit(text_o, [x_btno, y_btnqwop])
+            if print_out:
+                x=x+0.05
+                x1=x1+0.05
+                x2=x2+0.05
         if pressed_p:
             pygame.draw.rect(screen, PRESSED, [x_btn4,y_btn,dx_btn,dy_btn]) 
             text_p = font_qwop.render("P", True, TEXT_PRESSED)
             screen.blit(text_p, [x_btnp, y_btnqwop])
-        
+            if print_out:
+                x=x-0.05
+                x1=x1-0.05
+                x2=x2-0.05
+            
+            
         #Draw distance ticks
         for this_line in range(len(line_points)):
             pygame.draw.line(screen, LINE, [line_points[this_line][0],y_l1], [line_points[this_line][0],y_l4],3)
