@@ -51,6 +51,79 @@ def returnPointCoords(x,y,theta_cum,gamma,eta,x_c,x_0,y_0,hum_scale):
     
     return pointCoords
     
+   
+    
+def parseAction(action):
+    #0: No buttons pressed; 1: Q only; 2: QO; 3: QP; 4: W only; 5: WO; 6: WP; 7: O only; 8: P only
+    
+    pressed_q = False
+    pressed_w = False
+    pressed_o = False
+    pressed_p = False
+    
+    if action == 1: 
+        pressed_q = True
+    elif action == 2: 
+        pressed_q = True
+        pressed_o = True
+    elif action == 3: 
+        pressed_q = True
+        pressed_p = True
+    elif action == 4: 
+        pressed_w = True
+    elif action == 5: 
+        pressed_w = True
+        pressed_o = True
+    elif action == 6: 
+        pressed_w = True
+        pressed_p = True
+    elif action == 7:
+        pressed_o = True
+    elif action == 8: 
+        pressed_p = True
+    else: #action == 0:
+        pressed_q = False
+        pressed_w = False
+        pressed_o = False
+        pressed_p = False
+    
+    return pressed_q,pressed_w,pressed_o,pressed_p
+
+
+def packAction(pressed_q,pressed_w,pressed_o,pressed_p):                 
+    #0: No buttons pressed; 1: Q only; 2: QO; 3: QP; 4: W only; 5: WO; 6: WP; 7: O only; 8: P only
+    action = 0
+    
+    #opposite buttons cannot both be true
+    if pressed_q and pressed_w:
+        pressed_q = False
+        pressed_w = False
+    if pressed_o and pressed_p:
+        pressed_o = False
+        pressed_p = False
+        
+    #determine aciton ID    
+    if       pressed_q and not pressed_w and not pressed_o and not pressed_p:
+        action = 1
+    elif     pressed_q and not pressed_w and     pressed_o and not pressed_p:
+        action = 2 
+    elif     pressed_q and not pressed_w and not pressed_o and     pressed_p:
+        action = 3 
+    elif not pressed_q and     pressed_w and not pressed_o and not pressed_p:
+        action = 4 
+    elif not pressed_q and     pressed_w and     pressed_o and not pressed_p:
+        action = 5 
+    elif not pressed_q and     pressed_w and not pressed_o and     pressed_p:
+        action = 6 
+    elif not pressed_q and not pressed_w and     pressed_o and not pressed_p:
+        action = 7 
+    elif not pressed_q and not pressed_w and not pressed_o and     pressed_p:
+        action = 8 
+    else:
+        action = 0
+
+    return action     
+
 
 def drawBackground(width,height):
     
@@ -143,41 +216,26 @@ def drawBackground(width,height):
    
     return background_surface
 
-def drawDistLine(width,yl1,yl4,hum_scale,x_c):
+def drawDistLine(width,hum_scale,x):
     #this function returns a set of points for drawing lines every 5 meters
     line_points = []
-    
+
     #determine number of meters above x_c, and number below x_c
-    half_width = width/2
-    half_x = half_width/hum_scale
-    upper_x = x_c+half_x
-    lower_x = x_c-half_x
+    half_width = width/2    
     
+    #determine distance above and below to next multiple of 5
+    offset_x = np.mod(x,5)
+    low_x = -offset_x
+    high_x = +(5-offset_x)
     
+    #convert to pixels offset from centre
+    low_px = half_width+low_x*hum_scale
+    high_px = half_width+high_x*hum_scale
     
-    if not (np.mod(upper_x,5) == np.mod(x_c,5)):
-        #a line must be drawn in the upper half
-        this_x = np.floor_divide(upper_x, 5)   
-
-        #get x location of this_x
-        this_px = half_width-1+(half_width)*(this_x-x_c)/(half_x)
-
-        
-        #line_points.append([this_px-3,yl4,this_px,yl1])         
-        line_points.append([this_px,yl4,this_px,yl1])         
-                           
-    if not (np.mod(lower_x,5) == np.mod(x_c,5)):
-        #a line must be drawn in the lower half
-        this_x = np.floor_divide(x_c, 5)  
-        
-        #get x location of this_x
-        this_px = 0+(half_width)*(this_x-lower_x)/(half_x)
-
-                 
-        line_points.append([this_px,yl4,this_px,yl1])
-        #line_points.append([this_px-3,yl4,this_px,yl1])   
-         
-        
+    #save the points to file include px and x 
+    line_points.append([low_px,x+low_x]) 
+    line_points.append([high_px,x+high_x]) 
+    
     return line_points
 
         
@@ -216,6 +274,7 @@ def drawState(state,width,height):
     # Define some fonts to use, size, bold, italics
     font_subtitles = pygame.font.SysFont('courier', 18, True, False)
     font_distance = pygame.font.SysFont('courier', 30, True, False)
+    font_ticks = pygame.font.SysFont('courier', 12, True, False)
     font_qwop = pygame.font.SysFont('courier', 25, True, False)
     
     text_q = font_qwop.render("Q", True, TEXT_PRESSED)
@@ -238,11 +297,10 @@ def drawState(state,width,height):
         
     # generation                best x (gen)
     # time                      x
-    n_trial = 13
+    n_trial = 1
     this_time = 3.245
     best_x = 20
     best_trial = 10
-    this_x = 15
     
     #scale
     hum_scale = 100 #pixel/m
@@ -270,6 +328,7 @@ def drawState(state,width,height):
     #define position of painted lines
     y_l1 = 0.75*height
     y_l4 = 0.95*height
+    y_lx = 0.97*height
     
     #define positions of body
     x_0 = np.rint(width/2)
@@ -306,8 +365,8 @@ def drawState(state,width,height):
     pressed_o = False
     pressed_p = False
     # Used to manage how fast the screen updates
-    #clock = pygame.time.Clock()
-    
+    clock = pygame.time.Clock()
+    start_time = pygame.time.get_ticks()
     
 #    myimage = pygame.image.load("background_im.png")
 #    imagerect = myimage.get_rect()
@@ -404,7 +463,7 @@ def drawState(state,width,height):
         segment_points[2,:,:] = returnPointCoords(x2,y2,theta+theta2,a2*l2,(1-a2)*l2,x,x_0,y_0,hum_scale)
         
         # Determine location of painted lines based on X distance 
-        line_points = drawDistLine(width,y_l1,y_l4,hum_scale,x)
+        line_points = drawDistLine(width,hum_scale,x)
         
             
         # --- Drawing
@@ -416,6 +475,7 @@ def drawState(state,width,height):
         #Draw text
         
         # write time and record subtitles
+        this_time = (pygame.time.get_ticks() - start_time)/1000
         text_time = font_subtitles.render("%3.2fs" %this_time, True, TEXT)
         text_t_w = text_time.get_rect().width
         screen.blit(text_time, [x_btn4+dx_btn-text_t_w,y_btn-dy_btn])
@@ -424,7 +484,7 @@ def drawState(state,width,height):
         screen.blit(text_record, [x_btn1,y_btn-dy_btn])
 
         # write current score title
-        text_current = font_distance.render("%3.2fm (%i)" %(this_x,n_trial), True, TEXT)
+        text_current = font_distance.render("%3.2fm (%i)" %(x,n_trial), True, TEXT)
         text_c_w = text_current.get_rect().width
         screen.blit(text_current, [np.rint(width/2-text_c_w/2),y_btn])
 
@@ -450,8 +510,11 @@ def drawState(state,width,height):
         
         #Draw distance ticks
         for this_line in range(len(line_points)):
-            pygame.draw.line(screen, LINE, [line_points[this_line][0],line_points[this_line][1]], [line_points[this_line][2],line_points[this_line][3]],3)
-            
+            pygame.draw.line(screen, LINE, [line_points[this_line][0],y_l1], [line_points[this_line][0],y_l4],3)
+            text_tick = font_ticks.render(str(int(line_points[this_line][1])), True, TEXT)
+            text_tick_w = text_tick.get_rect().width
+            screen.blit(text_tick, [line_points[this_line][0]-np.rint(text_tick_w/2), y_lx])
+        
         
         #Draw body
         for segment_id in range(segment_count):
@@ -464,7 +527,7 @@ def drawState(state,width,height):
     
         # --- Wrap-up
         # Limit to 60 frames per second
-        #clock.tick(60)
+        clock.tick(60)
      
         # Go ahead and update the screen with what we've drawn.
         pygame.display.flip() # more efficient: update(rectangle_list) https://www.pygame.org/docs/ref/display.html
@@ -480,75 +543,4 @@ def drawState(state,width,height):
     
     
     
-    
-    
-def parseAction(action):
-    #0: No buttons pressed; 1: Q only; 2: QO; 3: QP; 4: W only; 5: WO; 6: WP; 7: O only; 8: P only
-    
-    pressed_q = False
-    pressed_w = False
-    pressed_o = False
-    pressed_p = False
-    
-    if action == 1: 
-        pressed_q = True
-    elif action == 2: 
-        pressed_q = True
-        pressed_o = True
-    elif action == 3: 
-        pressed_q = True
-        pressed_p = True
-    elif action == 4: 
-        pressed_w = True
-    elif action == 5: 
-        pressed_w = True
-        pressed_o = True
-    elif action == 6: 
-        pressed_w = True
-        pressed_p = True
-    elif action == 7:
-        pressed_o = True
-    elif action == 8: 
-        pressed_p = True
-    else: #action == 0:
-        pressed_q = False
-        pressed_w = False
-        pressed_o = False
-        pressed_p = False
-    
-    return pressed_q,pressed_w,pressed_o,pressed_p
-
-
-def packAction(pressed_q,pressed_w,pressed_o,pressed_p):                 
-    #0: No buttons pressed; 1: Q only; 2: QO; 3: QP; 4: W only; 5: WO; 6: WP; 7: O only; 8: P only
-    action = 0
-    
-    #opposite buttons cannot both be true
-    if pressed_q and pressed_w:
-        pressed_q = False
-        pressed_w = False
-    if pressed_o and pressed_p:
-        pressed_o = False
-        pressed_p = False
-        
-    #determine aciton ID    
-    if       pressed_q and not pressed_w and not pressed_o and not pressed_p:
-        action = 1
-    elif     pressed_q and not pressed_w and     pressed_o and not pressed_p:
-        action = 2 
-    elif     pressed_q and not pressed_w and not pressed_o and     pressed_p:
-        action = 3 
-    elif not pressed_q and     pressed_w and not pressed_o and not pressed_p:
-        action = 4 
-    elif not pressed_q and     pressed_w and     pressed_o and not pressed_p:
-        action = 5 
-    elif not pressed_q and     pressed_w and not pressed_o and     pressed_p:
-        action = 6 
-    elif not pressed_q and not pressed_w and     pressed_o and not pressed_p:
-        action = 7 
-    elif not pressed_q and not pressed_w and not pressed_o and     pressed_p:
-        action = 8 
-    else:
-        action = 0
-
-    return action     
+ 
