@@ -381,6 +381,18 @@ def drawState(var,width,height):
     theta2 = state[8]
     print(-1," ",y,y1,y2)
     
+    l=env.SEGMENT_LENGTH[0]
+    l1=env.SEGMENT_LENGTH[1]
+    l2=env.SEGMENT_LENGTH[2]
+    gamma=env.SEGMENT_GAMMA_LENGTH[0]
+    gamma1=env.SEGMENT_GAMMA_LENGTH[1]
+    gamma2=env.SEGMENT_GAMMA_LENGTH[2]
+    eta=env.SEGMENT_ETA_LENGTH[0]
+    eta1=env.SEGMENT_ETA_LENGTH[1]
+    eta2=env.SEGMENT_ETA_LENGTH[2]
+    
+    
+    
     print_out = False
     frame = 0
     max_frame = 25
@@ -483,10 +495,12 @@ def drawState(var,width,height):
         print(frame," ",y,y1,y2)
         
         
+        
+        
         #Get point coordinates for each segment
-        segment_points[0,:,:] = returnPointCoords(x,y,theta,a*l,(1-a)*l,x,x_0,y_0,hum_scale)
-        segment_points[1,:,:] = returnPointCoords(x1,y1,theta+theta1,a1*l1,(1-a1)*l1,x,x_0,y_0,hum_scale)
-        segment_points[2,:,:] = returnPointCoords(x2,y2,theta+theta2,a2*l2,(1-a2)*l2,x,x_0,y_0,hum_scale)
+        segment_points[0,:,:] = returnPointCoords(x,y,theta,gamma,eta,x,x_0,y_0,hum_scale)
+        segment_points[1,:,:] = returnPointCoords(x1,y1,theta+theta1,gamma1,eta1,x,x_0,y_0,hum_scale)
+        segment_points[2,:,:] = returnPointCoords(x2,y2,theta+theta2,gamma2,eta2,x,x_0,y_0,hum_scale)
         
         # Determine location of painted lines based on X distance 
         line_points = drawDistLine(width,hum_scale,x)
