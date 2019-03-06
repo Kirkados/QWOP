@@ -241,7 +241,7 @@ def drawDistLine(width,hum_scale,x):
         
 
 
-def drawState(state,width,height):
+def drawState(var,width,height):
     # intialize window 
     pygame.init()
     pygame.display.set_caption("QWOP")
@@ -370,7 +370,20 @@ def drawState(state,width,height):
 #    myimage = pygame.image.load("background_im.png")
 #    imagerect = myimage.get_rect()
     
+    x = state[0]
+    y = state[1]
+    theta = state[2]
+    x1 = state[3]
+    y1 = state[4]
+    theta1 = state[5]
+    x2 = state[6]
+    y2 = state[7]
+    theta2 = state[8]
+    print(-1," ",y,y1,y2)
+    
     print_out = False
+    frame = 0
+    max_frame = 25
     
     # -------- Main Program Loop -----------
     while running:
@@ -467,6 +480,8 @@ def drawState(state,width,height):
         x2 = next_state[6]
         y2 = next_state[7]
         theta2 = next_state[8]
+        print(frame," ",y,y1,y2)
+        
         
         #Get point coordinates for each segment
         segment_points[0,:,:] = returnPointCoords(x,y,theta,a*l,(1-a)*l,x,x_0,y_0,hum_scale)
@@ -543,12 +558,13 @@ def drawState(state,width,height):
         
         
         #Draw body
+        #print(frame)
         for segment_id in range(segment_count):
             pygame.draw.line(screen, BODY, segment_points[segment_id,0,:], segment_points[segment_id,2,:], 10)
             pygame.draw.ellipse(screen, COG, [segment_points[segment_id,1,0]-5,segment_points[segment_id,1,1]-5,10,10], 2)
-            pygame.draw.ellipse(screen, BODY, [segment_points[segment_id,0,0]-6,segment_points[segment_id,0,1]-6,12,12], 0)
-            pygame.draw.ellipse(screen, BODY, [segment_points[segment_id,2,0]-6,segment_points[segment_id,2,1]-6,12,12], 0)
-            
+            #pygame.draw.ellipse(screen, BODY, [segment_points[segment_id,0,0]-6,segment_points[segment_id,0,1]-6,12,12], 0)
+            #pygame.draw.ellipse(screen, BODY, [segment_points[segment_id,2,0]-6,segment_points[segment_id,2,1]-6,12,12], 0)
+            #print(" ", segment_points[segment_id,0,:],segment_points[segment_id,2,:])
             
     
         # --- Wrap-up
@@ -558,10 +574,26 @@ def drawState(state,width,height):
         # Go ahead and update the screen with what we've drawn.
         pygame.display.flip() # more efficient: update(rectangle_list) https://www.pygame.org/docs/ref/display.html
         
+        
+        #save frame to file
+        im_name = "frames/frame_%05i.png" %frame
+        pygame.image.save(screen,im_name)
+        
+        
+        
+        
         #Check if the dynamics are complete
         if done:
             break
         
+        #check if too many iterations have occured
+        frame+=1
+        if frame >=max_frame:
+            break
+        
+    #save to video
+    #avconv -f image2 -i figMatplotlib%d.png -r 76 -s 800x500 foo.avi
+    
     # Close everything down
     pygame.quit()
     
