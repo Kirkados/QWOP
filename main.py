@@ -20,6 +20,7 @@ Each instance of the environment is contained in a different process due to scip
 Need to implement:  
     - Gym rendering
     - Investigate reward dividing and MIN_Q
+    - Move MIN_Q and MAX_Q into environment
     
 Things to remember:
     - Seed is set but it does not fully work. Results are similar but not identical.

@@ -29,7 +29,7 @@ class Settings:
     NUMBER_OF_ACTORS        = 10
     NUMBER_OF_EPISODES      = 1e5 # that each agent will perform
     MAX_TRAINING_ITERATIONS = 3e5
-    MAX_NUMBER_OF_TIMESTEPS = 10000 # per episode
+    MAX_NUMBER_OF_TIMESTEPS = 1200 # per episode
     ACTOR_LEARNING_RATE     = 0.0001
     CRITIC_LEARNING_RATE    = 0.0001
     TARGET_NETWORK_TAU      = 0.001
@@ -38,8 +38,8 @@ class Settings:
     NUMBER_OF_BINS          = 51 # Also known as the number of atoms
     NORMALIZE_STATE         = False # Normalize state on each timestep to avoid vanishing gradients
     REWARD_SCALING          = 100.0 # Amount to scale down the reward signal
-    MIN_Q                   = -8.0
-    MAX_Q                   = 3.0
+    MIN_Q                   = -6.0
+    MAX_Q                   = 5.0
     L2_REGULARIZATION       = False # optional for training the critic
     L2_REG_PARAMETER        = 1e-6
     
