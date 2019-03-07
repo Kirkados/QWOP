@@ -1,12 +1,11 @@
 """
-Main script that runs the D4PG learning algorithm 
-(https://arxiv.org/pdf/1804.08617)
+Main script that runs the C51 learning algorithm 
+(https://arxiv.org/pdf/1707.06887)
 
-It features the standard DDPG algorithm with a number 
+It features the standard C51 algorithm with a number 
 of improvements from other researchers.
 Namely:
     Distributed rollouts           (https://arxiv.org/pdf/1602.01783)
-    A distributional learner        (http://arxiv.org/abs/1707.06887)
     N-step returns                 (https://arxiv.org/pdf/1602.01783)
     Prioritized experience replay  (http://arxiv.org/abs/1511.05952)
 
@@ -19,7 +18,7 @@ Each instance of the environment is contained in a different process due to scip
 
 ===== Notes =====
 Need to implement:  
-    - Fix rendering
+    - Gym rendering
     - Investigate reward dividing and MIN_Q
     
 Things to remember:
@@ -43,7 +42,7 @@ Special thanks to:
     - OpenAI   (https://github.com/openai)
     for publishing their codes! The open-source attitude of AI research is wonderful.
 
-Code started: October 15, 2018
+Code started: February 18, 2019
 """
 
 # Importing libraries & other classes
