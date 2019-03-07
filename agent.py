@@ -46,7 +46,10 @@ class Agent:
                 display.start()
             except:
                 print("You must run on Linux if you want to record gym videos!")
-                    
+        
+        # Generating distribution's value bins
+        self.bins = np.linspace(Settings.MIN_Q, Settings.MAX_Q, Settings.NUMBER_OF_BINS, dtype = np.float32) 
+        
         # Build this Agent's actor network
         self.build_q_network()
         
@@ -85,7 +88,7 @@ class Agent:
         self.policy = BuildQNetwork(self.state_placeholder, scope = agent_name)
 
 
-    def build_actor_update_operation(self):
+    def build_q_network_update_operation(self):
         # Update agent's policy network parameters from the most up-to-date version from the learner
         update_operations = []
         source_variables = self.learner_policy_parameters
@@ -179,7 +182,7 @@ class Agent:
                     # Returns a q-distribution corresponding to each possible action
                     q_distribution = self.sess.run(self.policy.q_distribution, feed_dict = {self.state_placeholder: np.expand_dims(state,0)})[0] # [# actions, # bins]
                     # Collapsing the distributions into q_values corresponding to each action
-                    q_values = np.sum(self.policy.bins * q_distribution, axis = 1) # [# actions, 1]                    
+                    q_values = np.sum(self.bins * q_distribution, axis = 1) # [# actions, 1]                    
                     # Choosing the most lucrative action
                     action = np.argmax(q_values, axis = 0) # [1]
                 
@@ -191,7 +194,7 @@ class Agent:
                 self.agent_to_env.put(action)                
                 # Receive results from stepped environment
                 next_state, reward, done = self.env_to_agent.get()
-                
+
                 # Add reward we just received to running total for this episode
                 episode_reward += reward
                 
@@ -288,7 +291,7 @@ class Agent:
             
             # Increment the episode counter
             episode_number += 1
-        
+            
         #################################
         ##### All episodes complete #####
         #################################

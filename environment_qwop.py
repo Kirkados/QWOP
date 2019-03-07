@@ -28,6 +28,7 @@ Inputs:
 """
 import numpy as np
 import multiprocessing
+import signal
 #import animator
 import pygame
 from scipy.integrate import odeint # Numerical integrator
@@ -38,12 +39,13 @@ class Environment:
         ##################################
         ##### Environment Properties #####
         ##################################
-        self.state_size = 18
-        self.action_size = 2
+        self.STATE_SIZE = 18
+        self.ACTION_SIZE = 2
         self.TIMESTEP = 0.01 # [s]
-        self.target_reward = 1.
-        self.num_frames = 100 # total animation is cut into this many frames
-        self.randomize = False # whether or not to randomize the state & target location
+        self.TARGET_REWARD = 1.
+        self.NUM_FRAMES = 100 # total animation is cut into this many frames
+        self.RANDOMIZE = False # whether or not to randomize the state & target location
+        self.UPPER_STATE_BOUND =  np.array([1., 1., 1.])
         
         # How much the leg desired angle changes per frame when a button is pressed
         self.HIP_INCREMENT = 2.*np.pi/180. # [rad/s]
@@ -55,11 +57,6 @@ class Environment:
         self.FLOOR_MU = 0.3
         self.FLOOR_SPRING_STIFFNESS = 1000 #[N/m]
         
-        # To be removed
-        self.lower_action_bound = np.array([-0.1, -0.1]) # [Nm]
-        self.upper_action_bound = np.array([ 0.1,  0.1]) # [Nm]
-        self.lower_state_bound =  np.array([1., 1., 1.])
-        self.upper_state_bound =  np.array([1., 1., 1.])
         
         #self.body.segment(0) = 5
         
@@ -150,7 +147,7 @@ class Environment:
         # This method resets the state and returns it
         
         # If we are randomizing the initial consitions and state
-        if self.randomize: 
+        if self.RANDOMIZE: 
             # Randomizing initial conditions 
             pass # to be completed later
             
@@ -291,6 +288,10 @@ class Environment:
         agent through a Queue. If an action is received, it is to step the environment
         and return the results.
         """
+        # Instructing this process to treat Ctrl+C events (called SIGINT) by going SIG_IGN (ignore).
+        # This permits the process to continue upon a Ctrl+C event to allow for graceful quitting.
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+        
         # Loop until the process is terminated
         while True:
             # Blocks until the agent passes us an action

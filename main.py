@@ -186,7 +186,7 @@ with tf.Session(config = config) as sess:
             # Generate the queue responsible for communicating with the agent
             agent_to_env, env_to_agent = environment.generate_queue()            
             # Generate the actor
-            actor = Agent(sess, i+1, agent_to_env, env_to_agent, replay_buffer, writer, filename, learner.actor.parameters)            
+            actor = Agent(sess, i+1, agent_to_env, env_to_agent, replay_buffer, writer, filename, learner.critic.parameters)            
             
         else:            
             with tf.device('/device:CPU:0'):
@@ -199,7 +199,7 @@ with tf.Session(config = config) as sess:
                 # Generate the queue responsible for communicating with the agent
                 agent_to_env, env_to_agent = environment.generate_queue()            
                 # Generate the actor
-                actor = Agent(sess, i+1, agent_to_env, env_to_agent, replay_buffer, writer, filename, learner.actor.parameters)  
+                actor = Agent(sess, i+1, agent_to_env, env_to_agent, replay_buffer, writer, filename, learner.critic.parameters)  
         
         # Add process and thread to the running total
         threads.append(threading.Thread(target = actor.run, args = (stop_run_flag, replay_buffer_dump_flag, starting_episode_number)))
@@ -261,11 +261,6 @@ with tf.Session(config = config) as sess:
         # Join threads (suspends program until threads finish)
         for each_thread in threads:
             each_thread.join()
-    
-    # Stopping all environment processes
-    for each_process in environment_processes:
-        each_process.terminate()
-        each_process.join()
         
     print("This run completed in %.3f hours." %((time.time() - start_time)/3600))
     print("Done closing! Goodbye :)")

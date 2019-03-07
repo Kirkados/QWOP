@@ -11,9 +11,9 @@ class Settings:
     ##### Run Settings #####
     ########################
     
-    RUN_NAME               = 'QWOP_animating' # use just the name. If trying to restore from file, use name along with timestamp
+    RUN_NAME               = 'C51_gym' # use just the name. If trying to restore from file, use name along with timestamp
     ENVIRONMENT            = 'gym'
-    RECORD_VIDEO           = True
+    RECORD_VIDEO           = False
     VIDEO_RECORD_FREQUENCY = 1 # Multiples of "CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES"
     LEARN_FROM_PIXELS      = False # False = learn from state (fully observed); True = learn from pixels (partially observed)
     RESUME_TRAINING        = False # If True, be sure to set "RUN_NAME" to the previous run's filename
@@ -26,10 +26,10 @@ class Settings:
     #############################
     
     # Hyperparameters
-    NUMBER_OF_ACTORS        = 1
-    NUMBER_OF_EPISODES      = 10 # that each agent will perform
-    MAX_TRAINING_ITERATIONS = 20
-    MAX_NUMBER_OF_TIMESTEPS = 10 # per episode
+    NUMBER_OF_ACTORS        = 10
+    NUMBER_OF_EPISODES      = 1e5 # that each agent will perform
+    MAX_TRAINING_ITERATIONS = 3e5
+    MAX_NUMBER_OF_TIMESTEPS = 400 # per episode
     ACTOR_LEARNING_RATE     = 0.0001
     CRITIC_LEARNING_RATE    = 0.0001
     TARGET_NETWORK_TAU      = 0.001
@@ -37,9 +37,9 @@ class Settings:
     N_STEP_RETURN           = 5
     NUMBER_OF_BINS          = 51 # Also known as the number of atoms
     NORMALIZE_STATE         = False # Normalize state on each timestep to avoid vanishing gradients
-    REWARD_SCALING          = 10.0 # Amount to scale down the reward signal
-    MIN_Q                   = -1.0
-    MAX_Q                   = 4.0
+    REWARD_SCALING          = 100.0 # Amount to scale down the reward signal
+    MIN_Q                   = -2.0
+    MAX_Q                   = 5.0
     L2_REGULARIZATION       = False # optional for training the critic
     L2_REG_PARAMETER        = 1e-6
     
@@ -48,8 +48,8 @@ class Settings:
     UPDATE_ACTORS_EVERY_NUM_EPISODES                  = 1
     CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES       = 1    
     LOG_TRAINING_PERFORMANCE_EVERY_NUM_ITERATIONS     = 100
-    DISPLAY_TRAINING_PERFORMANCE_EVERY_NUM_ITERATIONS = 100000
-    DISPLAY_ACTOR_PERFORMANCE_EVERY_NUM_EPISODES      = 5000
+    DISPLAY_TRAINING_PERFORMANCE_EVERY_NUM_ITERATIONS = 50000
+    DISPLAY_ACTOR_PERFORMANCE_EVERY_NUM_EPISODES      = 2500
     
     # Buffer settings
     PRIORITY_REPLAY_BUFFER = False
@@ -96,17 +96,13 @@ class Settings:
     environment_file = __import__('environment_' + ENVIRONMENT)        
     env = getattr(environment_file, 'Environment')()
     
-    STATE_SIZE         = env.state_size
-    UPPER_STATE_BOUND  = env.upper_state_bound
-    ACTION_SIZE        = env.action_size 
-    LOWER_ACTION_BOUND = env.lower_action_bound 
-    UPPER_ACTION_BOUND = env.upper_action_bound
+    STATE_SIZE         = env.STATE_SIZE
+    UPPER_STATE_BOUND  = env.UPPER_STATE_BOUND
+    ACTION_SIZE        = env.ACTION_SIZE 
     TIMESTEP           = env.TIMESTEP
     
     # Delete the test environment
     del env
-        
-    ACTION_RANGE = UPPER_ACTION_BOUND - LOWER_ACTION_BOUND # range for each action
  
     #%% 
     #########################

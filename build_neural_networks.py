@@ -34,7 +34,7 @@ class BuildQNetwork:
         """
         with tf.variable_scope(self.scope):
             # Two sides flow through the network independently.
-            self.state_side  = self.state
+            self.layer  = self.state
             
             ###########################################
             ##### (Optional) Convolutional Layers #####
@@ -43,19 +43,19 @@ class BuildQNetwork:
             if Settings.LEARN_FROM_PIXELS:            
                 # Build convolutional layers
                 for i, conv_layer_settings in enumerate(Settings.CONVOLUTIONAL_LAYERS):
-                    self.state_side = tf.layers.conv2d(inputs = self.state_side,
+                    self.layer = tf.layers.conv2d(inputs = self.layer,
                                                        activation = tf.nn.relu,
                                                        name = 'state_conv_layer' + str(i),
                                                        **conv_layer_settings) # the "**" allows the passing of keyworded arguments
                 
                 # Flattening image into a column for subsequent layers 
-                self.state_side = tf.layers.flatten(self.state_side) 
+                self.layer = tf.layers.flatten(self.layer) 
                     
             ##################################
             ##### Fully connected layers #####
             ##################################
             for i, number_of_neurons in enumerate(Settings.CRITIC_HIDDEN_LAYERS):
-                self.state_side = tf.layers.dense(inputs = self.state_side,
+                self.layer = tf.layers.dense(inputs = self.layer,
                                                   units = number_of_neurons,
                                                   activation = tf.nn.relu,
                                                   name = 'state_fully_connected_layer_' + str(i))            

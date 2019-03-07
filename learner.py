@@ -40,9 +40,11 @@ class Learner:
         with tf.variable_scope("Preparing_placeholders"):                
             # Defining placeholders for training
             self.state_placeholder                       = tf.placeholder(dtype = tf.float32, shape = [Settings.MINI_BATCH_SIZE, Settings.STATE_SIZE], name = "state_placeholder") # the '*' unpacks the STATE_SIZE list (incase it's pixels of higher dimension)
-            self.action_placeholder                      = tf.placeholder(dtype = tf.float32, shape = [Settings.MINI_BATCH_SIZE, Settings.ACTION_SIZE], name = "action_placeholder") # placeholder for actions
+            self.action_placeholder                      = tf.placeholder(dtype = tf.int32,   shape = [Settings.MINI_BATCH_SIZE],                      name = "action_placeholder") # placeholder for actions
             self.target_bins_placeholder                 = tf.placeholder(dtype = tf.float32, shape = [Settings.MINI_BATCH_SIZE, Settings.NUMBER_OF_BINS], name = "target_bins_placeholder") # Bin values of target network with Bellman update applied
             self.target_q_distribution_placeholder       = tf.placeholder(dtype = tf.float32, shape = [Settings.MINI_BATCH_SIZE, Settings.NUMBER_OF_BINS], name = "target_q_distribution_placeholder")  # Future q-distribution from target critic
+            self.importance_sampling_weights_placeholder = tf.placeholder(dtype = tf.float32, shape = Settings.MINI_BATCH_SIZE, name = "importance_sampling_weights_placeholder") # [PRIORITY_REPLAY_BUFFER only] Holds the weights that are used to remove bias from priority sampling
+        
 
         # The reward options that the distributional critic predicts the liklihood of being in
         self.bins = np.linspace(Settings.MIN_Q, Settings.MAX_Q, Settings.NUMBER_OF_BINS, dtype = np.float32) 
@@ -92,7 +94,7 @@ class Learner:
         # Getting the next action from the next state using the target network
         # action = argmax_a Q(next_state, action)
         # First, collapse distributions into q-values
-        self.target_q_values = tf.reduce_sum(self.bins, self.target_critic.q_distribution, axis = 2) # [batch_size, # actions]
+        self.target_q_values = tf.reduce_sum(self.bins * self.target_critic.q_distribution, axis = 2) # [batch_size, # actions]
         self.target_clean_next_action = tf.argmax(self.target_q_values, axis = 1, output_type = tf.int32) # [batch_size]        
         # Determining the index that corresponds to the chosen action
         chosen_action_index = tf.stack((tf.range(Settings.MINI_BATCH_SIZE), self.target_clean_next_action), axis = 1) # [batch_size]
@@ -161,7 +163,7 @@ class Learner:
             # If we don't have enough data yet to train OR we want to wait before we start to train
             if (self.replay_buffer.how_filled() < Settings.MINI_BATCH_SIZE) or (self.replay_buffer.how_filled() < Settings.REPLAY_BUFFER_START_TRAINING_FULLNESS):                
                 continue # Skip this training iteration. Wait for more training data.
-         
+
             # Sample a mini-batch of data from the replay_buffer
             if Settings.PRIORITY_REPLAY_BUFFER:
                 sampled_batch = self.replay_buffer.sample(priority_beta)
