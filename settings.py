@@ -11,10 +11,10 @@ class Settings:
     ##### Run Settings #####
     ########################
     
-    RUN_NAME               = 'C51_gym' # use just the name. If trying to restore from file, use name along with timestamp
+    RUN_NAME               = 'C51_LunarLander_video' # use just the name. If trying to restore from file, use name along with timestamp
     ENVIRONMENT            = 'gym'
-    RECORD_VIDEO           = False
-    VIDEO_RECORD_FREQUENCY = 1 # Multiples of "CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES"
+    RECORD_VIDEO           = True
+    VIDEO_RECORD_FREQUENCY = 40 # Multiples of "CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES"
     LEARN_FROM_PIXELS      = False # False = learn from state (fully observed); True = learn from pixels (partially observed)
     RESUME_TRAINING        = False # If True, be sure to set "RUN_NAME" to the previous run's filename
     USE_GPU_WHEN_AVAILABLE = True # As of Nov 19, 2018, it appears better to use CPU. Re-evaluate again later
@@ -29,24 +29,18 @@ class Settings:
     NUMBER_OF_ACTORS        = 10
     NUMBER_OF_EPISODES      = 1e5 # that each agent will perform
     MAX_TRAINING_ITERATIONS = 3e5
-    MAX_NUMBER_OF_TIMESTEPS = 1200 # per episode
-    ACTOR_LEARNING_RATE     = 0.0001
     CRITIC_LEARNING_RATE    = 0.0001
     TARGET_NETWORK_TAU      = 0.001
     DISCOUNT_FACTOR         = 0.99
     N_STEP_RETURN           = 5
     NUMBER_OF_BINS          = 51 # Also known as the number of atoms
-    NORMALIZE_STATE         = False # Normalize state on each timestep to avoid vanishing gradients
-    REWARD_SCALING          = 100.0 # Amount to scale down the reward signal
-    MIN_Q                   = -6.0
-    MAX_Q                   = 5.0
     L2_REGULARIZATION       = False # optional for training the critic
     L2_REG_PARAMETER        = 1e-6
     
     # Periodic events
     UPDATE_TARGET_NETWORKS_EVERY_NUM_ITERATIONS       = 1 
     UPDATE_ACTORS_EVERY_NUM_EPISODES                  = 1
-    CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES       = 1    
+    CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES       = 5    
     LOG_TRAINING_PERFORMANCE_EVERY_NUM_ITERATIONS     = 100
     DISPLAY_TRAINING_PERFORMANCE_EVERY_NUM_ITERATIONS = 50000
     DISPLAY_ACTOR_PERFORMANCE_EVERY_NUM_EPISODES      = 2500
@@ -87,23 +81,7 @@ class Settings:
     # Fully connected layers follow the (optional) convolutional layers        
     ACTOR_HIDDEN_LAYERS  = [400, 300] # number of hidden neurons in each layer
     CRITIC_HIDDEN_LAYERS = [400, 300] # number of hidden neurons in each layer
-
-    #%%     
-    ##############################
-    #### Environment Settings ####
-    ##############################    
     
-    environment_file = __import__('environment_' + ENVIRONMENT)        
-    env = getattr(environment_file, 'Environment')()
-    
-    STATE_SIZE         = env.STATE_SIZE
-    UPPER_STATE_BOUND  = env.UPPER_STATE_BOUND
-    ACTION_SIZE        = env.ACTION_SIZE 
-    TIMESTEP           = env.TIMESTEP
-    
-    # Delete the test environment
-    del env
- 
     #%% 
     #########################
     ##### Save Settings #####
@@ -112,3 +90,29 @@ class Settings:
     MODEL_SAVE_DIRECTORY                 = 'Tensorboard/' # where to save all data
     TENSORBOARD_FILE_EXTENSION           = '.tensorboard' # file extension for tensorboard file
     SAVE_CHECKPOINT_EVERY_NUM_ITERATIONS = 100000 # how often to save the neural network parameters
+    
+    #%%     
+    ##############################
+    #### Environment Settings ####
+    ##############################    
+    
+    environment_file = __import__('environment_' + ENVIRONMENT)        
+    if ENVIRONMENT == 'gym':
+        env = environment_file.Environment('Temporary environment', 0, CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES, VIDEO_RECORD_FREQUENCY, MODEL_SAVE_DIRECTORY) # Additional parameters needed for gym         
+    else:
+        env = environment_file.Environment()
+    
+    STATE_SIZE              = env.STATE_SIZE
+    UPPER_STATE_BOUND       = env.UPPER_STATE_BOUND
+    ACTION_SIZE             = env.ACTION_SIZE 
+    NORMALIZE_STATE         = env.NORMALIZE_STATE # Normalize state on each timestep to avoid vanishing gradients    
+    REWARD_SCALING          = env.REWARD_SCALING # Amount to scale down the reward signal
+    MIN_Q                   = env.MIN_Q
+    MAX_Q                   = env.MAX_Q
+    TIMESTEP                = env.TIMESTEP
+    MAX_NUMBER_OF_TIMESTEPS = env.MAX_NUMBER_OF_TIMESTEPS # per episode
+    
+    
+    # Delete the test environment
+    del env
+ 

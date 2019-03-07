@@ -28,20 +28,35 @@ import numpy as np
 import signal
 import multiprocessing
 import gym
+from gym import wrappers
+from pyvirtualdisplay import Display
 
 class Environment:
     
-    def __init__(self): 
+    def __init__(self, filename, n_agent, CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES, VIDEO_RECORD_FREQUENCY, MODEL_SAVE_DIRECTORY): 
         ##################################
         ##### Environment Properties #####
         ##################################
         self.ENVIRONMENT = 'LunarLander-v2'        
         self.env = gym.make(self.ENVIRONMENT)
         
-        self.STATE_SIZE           = list(self.env.observation_space.shape)[0] # dimension of the observation/state space            
-        self.ACTION_SIZE          = self.env.action_space.n # dimension of the action space
-        self.UPPER_STATE_BOUND    = self.env.observation_space.high # highest state we will encounter along each dimension
-        self.TIMESTEP = 0.1
+        self.STATE_SIZE              = list(self.env.observation_space.shape)[0] # dimension of the observation/state space            
+        self.ACTION_SIZE             = self.env.action_space.n # dimension of the action space
+        self.UPPER_STATE_BOUND       = self.env.observation_space.high # highest state we will encounter along each dimension
+        self.TIMESTEP                = 1
+        self.MAX_NUMBER_OF_TIMESTEPS = 1200 # per episode
+        self.NORMALIZE_STATE         = False # Normalize state on each timestep to avoid vanishing gradients
+        self.REWARD_SCALING          = 100.0 # Amount to scale down the reward signal
+        self.MIN_Q                   = -6.0
+        self.MAX_Q                   = 5.0
+        
+        # If we're the environment for the first agent, start a display and set the rendering
+        if n_agent == 1:
+            display = Display(visible = 0, size = (1400,900))
+            display.start()
+            
+            # Start the gym's Monitor. It will automatically record videos at the specified episode frequency
+            self.env = wrappers.Monitor(self.env, MODEL_SAVE_DIRECTORY + '/' + filename + '/videos',  video_callable=lambda episode_number: (episode_number+1)%(VIDEO_RECORD_FREQUENCY*CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES) == 0, force = True)
         
         
     ###################################

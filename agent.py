@@ -126,7 +126,7 @@ class Agent:
             #### Getting this episode ready ####
             ####################################            
             # Resetting the environment for this episode by sending a boolean
-            self.agent_to_env.put(False)
+            self.agent_to_env.put(True)
             state = self.env_to_agent.get()
 
             # Normalizing the state to 1 separately along each dimension
@@ -150,8 +150,7 @@ class Agent:
                 
                 # Additionally, if it's time to render, make a statement to the user
                 if Settings.RECORD_VIDEO and episode_number % (Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES*Settings.VIDEO_RECORD_FREQUENCY) == 0:
-                    print("Rendering Actor %i at episode %i" % (self.n_agent, episode_number))
-                    
+                    print("Rendering Actor %i at episode %i" % (self.n_agent, episode_number))                    
                     # Also log the states & actions encountered in this episode because we are going to render them!
                     state_log = []
                     action_log = []
@@ -226,7 +225,7 @@ class Agent:
                     self.replay_buffer.add((state_0, action_0, n_step_reward, next_state, done, discount_factor))
                 
                 # If this episode is being rendered, log the state for rendering later
-                if self.n_agent == 1 and Settings.RECORD_VIDEO and episode_number % (Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES*Settings.VIDEO_RECORD_FREQUENCY) == 0:                    
+                if self.n_agent == 1 and Settings.RECORD_VIDEO and episode_number % (Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES*Settings.VIDEO_RECORD_FREQUENCY) == 0 and not Settings.ENVIRONMENT == 'gym':                    
                     state_log.append(state)
                     action_log.append(action)
                     time_log.append(timestep_number*Settings.TIMESTEP)
@@ -261,7 +260,7 @@ class Agent:
             ####### Episode Complete #######
             ################################       
             # If this episode is being rendered, render it now.
-            if self.n_agent == 1 and Settings.RECORD_VIDEO and episode_number % (Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES*Settings.VIDEO_RECORD_FREQUENCY) == 0:                    
+            if self.n_agent == 1 and Settings.RECORD_VIDEO and episode_number % (Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES*Settings.VIDEO_RECORD_FREQUENCY) == 0 and not Settings.ENVIRONMENT == 'gym':                    
                 environment_file.render(np.asarray(state_log), np.asarray(action_log), time_log, episode_number, Settings.RUN_NAME)
                 
             # Periodically update the agent with the learner's most recent version of the actor network parameters

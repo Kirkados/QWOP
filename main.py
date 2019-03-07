@@ -18,9 +18,7 @@ Each instance of the environment is contained in a different process due to scip
 
 ===== Notes =====
 Need to implement:  
-    - Gym rendering
     - Investigate reward dividing and MIN_Q
-    - Move MIN_Q and MAX_Q into environment
     
 Things to remember:
     - Seed is set but it does not fully work. Results are similar but not identical.
@@ -180,7 +178,10 @@ with tf.Session(config = config) as sess:
             # Allow GPU use when appropriate            
             # Make an instance of the environment which will be placed in its own process
             environment_file = __import__('environment_' + Settings.ENVIRONMENT)        
-            environment = environment_file.Environment()            
+            if Settings.ENVIRONMENT == 'gym':
+                environment = environment_file.Environment(filename, i+1, Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES, Settings.VIDEO_RECORD_FREQUENCY, Settings.MODEL_SAVE_DIRECTORY) # Additional parameters needed for gym         
+            else:
+                environment = environment_file.Environment()          
             # Set the environment seed
             environment.seed(Settings.RANDOM_SEED*(i+1))
             # Generate the queue responsible for communicating with the agent
@@ -193,7 +194,10 @@ with tf.Session(config = config) as sess:
                 # Forcing to the CPU only
                 # Make an instance of the environment which will be placed in its own process
                 environment_file = __import__('environment_' + Settings.ENVIRONMENT)        
-                environment = environment_file.Environment()            
+                if Settings.ENVIRONMENT == 'gym':
+                    environment = environment_file.Environment(filename, i+1, Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES, Settings.VIDEO_RECORD_FREQUENCY, Settings.MODEL_SAVE_DIRECTORY) # Additional parameters needed for gym         
+                else:
+                    environment = environment_file.Environment()           
                 # Set the environment seed
                 environment.seed(Settings.RANDOM_SEED*(i+1))
                 # Generate the queue responsible for communicating with the agent

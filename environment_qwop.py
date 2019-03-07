@@ -39,22 +39,27 @@ class Environment:
         ##################################
         ##### Environment Properties #####
         ##################################
-        self.STATE_SIZE = 18
-        self.ACTION_SIZE = 2
-        self.TIMESTEP = 0.01 # [s]
-        self.TARGET_REWARD = 1.
-        self.NUM_FRAMES = 100 # total animation is cut into this many frames
-        self.RANDOMIZE = False # whether or not to randomize the state & target location
-        self.UPPER_STATE_BOUND =  np.array([1., 1., 1.])
+        self.STATE_SIZE              = 18
+        self.ACTION_SIZE             = 2
+        self.TIMESTEP                = 0.01 # [s]        
+        self.MAX_NUMBER_OF_TIMESTEPS = 1200 # per episode
+        self.TARGET_REWARD           = 1.
+        self.NUM_FRAMES              = 100 # total animation is cut into this many frames
+        self.RANDOMIZE               = False # whether or not to randomize the state & target location
+        self.UPPER_STATE_BOUND       =  np.array([1., 1., 1.])
+        self.NORMALIZE_STATE         = False # Normalize state on each timestep to avoid vanishing gradients
+        self.REWARD_SCALING          = 100.0 # Amount to scale down the reward signal
+        self.MIN_Q                   = -6.0
+        self.MAX_Q                   = 5.0
         
         # How much the leg desired angle changes per frame when a button is pressed
-        self.HIP_INCREMENT = 2.*np.pi/180. # [rad/s]
+        self.HIP_INCREMENT        = 2.*np.pi/180. # [rad/s]
         self.HIP_SPRING_STIFFNESS = 1000 # [Nm/rad]
-        self.phi1 = 30*np.pi/180
-        self.phi2 = -30*np.pi/180
+        self.phi1                 = 30*np.pi/180
+        self.phi2                 = -30*np.pi/180
         
         #friction properties
-        self.FLOOR_MU = 0.3
+        self.FLOOR_MU               = 0.3
         self.FLOOR_SPRING_STIFFNESS = 10000 #[N/m]
         
         
