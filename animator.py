@@ -302,7 +302,7 @@ def drawState(var,width,height):
     best_trial = 10
     
     #scale
-    hum_scale = 100 #pixel/m
+    hum_scale = 150 #pixel/m
     width = 800
     height = 500
     
@@ -379,7 +379,7 @@ def drawState(var,width,height):
     x2 = state[6]
     y2 = state[7]
     theta2 = state[8]
-    print(-1," ",y,y1,y2)
+    
     
     l=env.SEGMENT_LENGTH[0]
     l1=env.SEGMENT_LENGTH[1]
@@ -395,8 +395,9 @@ def drawState(var,width,height):
     
     print_out = False
     frame = 0
-    max_frame = 1250
+    max_frame = 2000
     save_frame = False
+    begin = False
     
     # -------- Main Program Loop -----------
     while running:
@@ -423,6 +424,9 @@ def drawState(var,width,height):
                         print("O")
                     if pressed_p:
                         print("P")
+                        
+                if keys[pygame.K_SPACE]:
+                    begin = True
             elif event.type == pygame.KEYUP:
                 #print("User let go of a key.")
                 keys = pygame.key.get_pressed()
@@ -457,155 +461,149 @@ def drawState(var,width,height):
                 if print_out:
                      print("Other")
                      
-
-        # --- Logic
-
-
-        # Debugging, change angle of bodies
-#        if pressed_q:
-#            theta1 = theta1 + 1*np.pi/180
-#            theta2 = theta2 - 1*np.pi/180
-#        if pressed_w:
-#            theta1 = theta1 - 1*np.pi/180
-#            theta2 = theta2 + 1*np.pi/180
-#        if pressed_o:
-#            theta = theta + 1*np.pi/180
-#        if pressed_p:
-#            theta = theta - 1*np.pi/180
-        
-        #pack button presses into integer tag
-        this_action = packAction(pressed_q,pressed_w,pressed_o,pressed_p)
-        
-
-        #Step the dynamics forward one timestep
-        next_state,reward,done = env.step(this_action)
-        #done = False
-        
-        #print(next_state)
-        
-        
-        x = next_state[0]
-        y = next_state[1]
-        theta = next_state[2]
-        x1 = next_state[3]
-        y1 = next_state[4]
-        theta1 = next_state[5]
-        x2 = next_state[6]
-        y2 = next_state[7]
-        theta2 = next_state[8]
-        print(frame," ",y,y1,y2)
-        
-        
-        
-        
-        #Get point coordinates for each segment
-        segment_points[0,:,:] = returnPointCoords(x,y,theta,gamma,eta,x,x_0,y_0,hum_scale)
-        segment_points[1,:,:] = returnPointCoords(x1,y1,theta+theta1,gamma1,eta1,x,x_0,y_0,hum_scale)
-        segment_points[2,:,:] = returnPointCoords(x2,y2,theta+theta2,gamma2,eta2,x,x_0,y_0,hum_scale)
-        
-        # Determine location of painted lines based on X distance 
-        line_points = drawDistLine(width,hum_scale,x)
-        
+        if begin:             
+            # --- Logic
+    
+    
+            # Debugging, change angle of bodies
+    #        if pressed_q:
+    #            theta1 = theta1 + 1*np.pi/180
+    #            theta2 = theta2 - 1*np.pi/180
+    #        if pressed_w:
+    #            theta1 = theta1 - 1*np.pi/180
+    #            theta2 = theta2 + 1*np.pi/180
+    #        if pressed_o:
+    #            theta = theta + 1*np.pi/180
+    #        if pressed_p:
+    #            theta = theta - 1*np.pi/180
             
-        # --- Drawing
-        # Set the screen background (clears)
-        #screen.fill(BLACK)
-        screen.blit(background,(0,0))   
-        
-        
-        #Draw text
-        
-        # write time and record subtitles
-        this_time = (pygame.time.get_ticks() - start_time)/1000
-        text_time = font_subtitles.render("%3.2fs" %this_time, True, TEXT)
-        text_t_w = text_time.get_rect().width
-        screen.blit(text_time, [x_btn4+dx_btn-text_t_w,y_btn-dy_btn])
-        
-        text_record = font_subtitles.render("%3.2fm (%i)" % (best_x, best_trial), True, TEXT)
-        screen.blit(text_record, [x_btn1,y_btn-dy_btn])
-
-        # write current score title
-        text_current = font_distance.render("%3.2fm (%i)" %(x,n_trial), True, TEXT)
-        text_c_w = text_current.get_rect().width
-        screen.blit(text_current, [np.rint(width/2-text_c_w/2),y_btn])
-
-        #Draw buttons (coloured only, u coloured is background)
-        if pressed_q:
-            pygame.draw.rect(screen, PRESSED, [x_btn1,y_btn,dx_btn,dy_btn])
-            text_q = font_qwop.render("Q", True, TEXT_PRESSED)
-            screen.blit(text_q, [x_btnq, y_btnqwop])
-            if print_out:
-                x+=0.01
-                x1+=0.01
-                x2+=0.01
-        if pressed_w:
-            pygame.draw.rect(screen, PRESSED, [x_btn2,y_btn,dx_btn,dy_btn])
-            text_w = font_qwop.render("W", True, TEXT_PRESSED)
-            screen.blit(text_w, [x_btnw, y_btnqwop])
-            if print_out:
-                x-=0.01
-                x1-=0.01
-                x2-=0.01
-        if pressed_o:
-            pygame.draw.rect(screen, PRESSED, [x_btn3,y_btn,dx_btn,dy_btn])
-            text_o = font_qwop.render("O", True, TEXT_PRESSED)
-            screen.blit(text_o, [x_btno, y_btnqwop])
-            if print_out:
-                x+=0.05
-                x1+=0.05
-                x2+=0.05
-        if pressed_p:
-            pygame.draw.rect(screen, PRESSED, [x_btn4,y_btn,dx_btn,dy_btn]) 
-            text_p = font_qwop.render("P", True, TEXT_PRESSED)
-            screen.blit(text_p, [x_btnp, y_btnqwop])
-            if print_out:
-                x-=0.05
-                x1-=0.05
-                x2-=0.05
-            
-            
-        #Draw distance ticks
-        for this_line in range(len(line_points)):
-            pygame.draw.line(screen, LINE, [line_points[this_line][0],y_l1], [line_points[this_line][0],y_l4],3)
-            text_tick = font_ticks.render(str(int(line_points[this_line][1])), True, TEXT)
-            text_tick_w = text_tick.get_rect().width
-            screen.blit(text_tick, [line_points[this_line][0]-np.rint(text_tick_w/2), y_lx])
-        
-        
-        #Draw body
-        #print(frame)
-        for segment_id in range(segment_count):
-            pygame.draw.line(screen, BODY, segment_points[segment_id,0,:], segment_points[segment_id,2,:], 10)
-            pygame.draw.ellipse(screen, COG, [segment_points[segment_id,1,0]-5,segment_points[segment_id,1,1]-5,10,10], 2)
-            #pygame.draw.ellipse(screen, BODY, [segment_points[segment_id,0,0]-6,segment_points[segment_id,0,1]-6,12,12], 0)
-            #pygame.draw.ellipse(screen, BODY, [segment_points[segment_id,2,0]-6,segment_points[segment_id,2,1]-6,12,12], 0)
-            #print(" ", segment_points[segment_id,0,:],segment_points[segment_id,2,:])
+            #pack button presses into integer tag
+            this_action = packAction(pressed_q,pressed_w,pressed_o,pressed_p)
             
     
-        # --- Wrap-up
-        # Limit to 60 frames per second
-        clock.tick(60)
-     
-        # Go ahead and update the screen with what we've drawn.
-        pygame.display.flip() # more efficient: update(rectangle_list) https://www.pygame.org/docs/ref/display.html
+            #Step the dynamics forward one timestep
+            next_state,reward,done = env.step(this_action)
+            #done = False
+            
+            #unpack state
+            x = next_state[0]
+            y = next_state[1]
+            theta = next_state[2]
+            x1 = next_state[3]
+            y1 = next_state[4]
+            theta1 = next_state[5]
+            x2 = next_state[6]
+            y2 = next_state[7]
+            theta2 = next_state[8]
+            
+            #Get point coordinates for each segment
+            segment_points[0,:,:] = returnPointCoords(x,y,theta,gamma,eta,x,x_0,y_0,hum_scale)
+            segment_points[1,:,:] = returnPointCoords(x1,y1,theta+theta1,gamma1,eta1,x,x_0,y_0,hum_scale)
+            segment_points[2,:,:] = returnPointCoords(x2,y2,theta+theta2,gamma2,eta2,x,x_0,y_0,hum_scale)
+            
+            # Determine location of painted lines based on X distance 
+            line_points = drawDistLine(width,hum_scale,x)
+            
+                
+            # --- Drawing
+            # Set the screen background (clears)
+            #screen.fill(BLACK)
+            screen.blit(background,(0,0))   
+            
+            
+            #Draw text
+            
+            # write time and record subtitles
+            this_time = (pygame.time.get_ticks() - start_time)/1000
+            text_time = font_subtitles.render("%3.2fs" %this_time, True, TEXT)
+            text_t_w = text_time.get_rect().width
+            screen.blit(text_time, [x_btn4+dx_btn-text_t_w,y_btn-dy_btn])
+            
+            text_record = font_subtitles.render("%3.2fm (%i)" % (best_x, best_trial), True, TEXT)
+            screen.blit(text_record, [x_btn1,y_btn-dy_btn])
+    
+            # write current score title
+            text_current = font_distance.render("%3.2fm (%i)" %(x,n_trial), True, TEXT)
+            text_c_w = text_current.get_rect().width
+            screen.blit(text_current, [np.rint(width/2-text_c_w/2),y_btn])
+    
+            #Draw buttons (coloured only, u coloured is background)
+            if pressed_q:
+                pygame.draw.rect(screen, PRESSED, [x_btn1,y_btn,dx_btn,dy_btn])
+                text_q = font_qwop.render("Q", True, TEXT_PRESSED)
+                screen.blit(text_q, [x_btnq, y_btnqwop])
+                if print_out:
+                    x+=0.01
+                    x1+=0.01
+                    x2+=0.01
+            if pressed_w:
+                pygame.draw.rect(screen, PRESSED, [x_btn2,y_btn,dx_btn,dy_btn])
+                text_w = font_qwop.render("W", True, TEXT_PRESSED)
+                screen.blit(text_w, [x_btnw, y_btnqwop])
+                if print_out:
+                    x-=0.01
+                    x1-=0.01
+                    x2-=0.01
+            if pressed_o:
+                pygame.draw.rect(screen, PRESSED, [x_btn3,y_btn,dx_btn,dy_btn])
+                text_o = font_qwop.render("O", True, TEXT_PRESSED)
+                screen.blit(text_o, [x_btno, y_btnqwop])
+                if print_out:
+                    x+=0.05
+                    x1+=0.05
+                    x2+=0.05
+            if pressed_p:
+                pygame.draw.rect(screen, PRESSED, [x_btn4,y_btn,dx_btn,dy_btn]) 
+                text_p = font_qwop.render("P", True, TEXT_PRESSED)
+                screen.blit(text_p, [x_btnp, y_btnqwop])
+                if print_out:
+                    x-=0.05
+                    x1-=0.05
+                    x2-=0.05
+                
+                
+            #Draw distance ticks
+            for this_line in range(len(line_points)):
+                pygame.draw.line(screen, LINE, [line_points[this_line][0],y_l1], [line_points[this_line][0],y_l4],3)
+                text_tick = font_ticks.render(str(int(line_points[this_line][1])), True, TEXT)
+                text_tick_w = text_tick.get_rect().width
+                screen.blit(text_tick, [line_points[this_line][0]-np.rint(text_tick_w/2), y_lx])
+            
+            
+            #Draw body
+            #print(frame)
+            for segment_id in range(segment_count):
+                pygame.draw.line(screen, BODY, segment_points[segment_id,0,:], segment_points[segment_id,2,:], 10)
+                pygame.draw.ellipse(screen, COG, [segment_points[segment_id,1,0]-5,segment_points[segment_id,1,1]-5,10,10], 2)
+                pygame.draw.ellipse(screen, BODY, [segment_points[segment_id,0,0]-6,segment_points[segment_id,0,1]-6,12,12], 0)
+                pygame.draw.ellipse(screen, BODY, [segment_points[segment_id,2,0]-6,segment_points[segment_id,2,1]-6,12,12], 0)
+                #print(" ", segment_points[segment_id,0,:],segment_points[segment_id,2,:])
+                
         
-        
-        #save frame to file
-        if save_frame:
-            im_name = "frames/frame_%05i.png" %frame
-            pygame.image.save(screen,im_name)
-        
-        
-        
-        
-        #Check if the dynamics are complete
-        if done:
-            break
-        
-        #check if too many iterations have occured
-        frame+=1
-        if frame >=max_frame:
-            break
+            # --- Wrap-up
+            # Limit to 60 frames per second
+            clock.tick(60)
+         
+            # Go ahead and update the screen with what we've drawn.
+            pygame.display.flip() # more efficient: update(rectangle_list) https://www.pygame.org/docs/ref/display.html
+            
+            
+            #save frame to file
+            if save_frame:
+                im_name = "frames/frame_%05i.png" %frame
+                pygame.image.save(screen,im_name)
+            
+            
+            
+            
+            #Check if the dynamics are complete
+            if done:
+                break
+            
+            #check if too many iterations have occured
+            frame+=1
+            if frame >=max_frame:
+                break
         
     #save to video
     #avconv -f image2 -i figMatplotlib%d.png -r 76 -s 800x500 foo.avi

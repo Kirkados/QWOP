@@ -49,13 +49,13 @@ class Environment:
         
         # How much the leg desired angle changes per frame when a button is pressed
         self.HIP_INCREMENT = 2.*np.pi/180. # [rad/s]
-        self.HIP_SPRING_STIFFNESS = 100 # [Nm/rad]
+        self.HIP_SPRING_STIFFNESS = 1000 # [Nm/rad]
         self.phi1 = 30*np.pi/180
         self.phi2 = -30*np.pi/180
         
         #friction properties
         self.FLOOR_MU = 0.3
-        self.FLOOR_SPRING_STIFFNESS = 1000 #[N/m]
+        self.FLOOR_SPRING_STIFFNESS = 10000 #[N/m]
         
         
         #self.body.segment(0) = 5
@@ -70,13 +70,19 @@ class Environment:
         self.SEGMENT_GAMMA_LENGTH = list()# [m]
         self.SEGMENT_PHI_NAUGTH = list()# [rad]
         
+        
+        #player stats
+        p_mass = 75#kg
+        p_height = 1.80#m
+
         # body 0, main body
-        m = 10
-        I = 10
-        L = 1
+        m = 0.497*p_mass
+        L = 0.289*p_height
         eta = 0.5*L
         gamma = L-eta
         phi0 = 0 
+        k = 0.5*L
+        I = m*k**2
          
         self.SEGMENT_MASS.append(m)
         self.SEGMENT_MOMINERT.append(I)
@@ -86,13 +92,14 @@ class Environment:
         self.SEGMENT_PHI_NAUGTH.append(phi0)
         
         # body 1, right leg
-        m = 5
-        I = 7
-        L = 1
-        eta = 0.5*L
+        m = 0.0465*p_mass+0.100*p_mass
+        L = 0.242*p_height+0.245*p_height
+        eta = (0.433*0.245*p_height*0.100*p_mass+(0.245*p_height+0.433*0.242*p_height)*0.0465*p_mass)/m
         gamma = L-eta
         phi0 = np.pi/6 
-         
+        k = 0.5*L
+        I = 0.0465*p_mass*(0.302*0.245*p_height**2)+0.0465*p_mass*(0.323*0.242*p_height**2)
+       
         self.SEGMENT_MASS.append(m)
         self.SEGMENT_MOMINERT.append(I)
         self.SEGMENT_LENGTH.append(L)
@@ -101,13 +108,14 @@ class Environment:
         self.SEGMENT_PHI_NAUGTH.append(phi0)
                 
         # body 2, left leg
-        m = 5
-        I = 7
-        L = 1
-        eta = 0.5*L
+        m = 0.0465*p_mass+0.100*p_mass
+        L = 0.242*p_height+0.245*p_height
+        eta = (0.433*0.245*p_height*0.100*p_mass+(0.245*p_height+0.433*0.242*p_height)*0.0465*p_mass)/m
         gamma = L-eta
         phi0 = -np.pi/6 
-         
+        k = 0.5*L
+        I = 0.0465*p_mass*(0.302*0.245*p_height**2)+0.0465*p_mass*(0.323*0.242*p_height**2)
+        
         self.SEGMENT_MASS.append(m)
         self.SEGMENT_MOMINERT.append(I)
         self.SEGMENT_LENGTH.append(L)
