@@ -40,7 +40,7 @@ class Environment:
         ##################################
         self.state_size = 18
         self.action_size = 2
-        self.TIMESTEP = 0.1 # [s]
+        self.TIMESTEP = 0.001 # [s]
         self.target_reward = 1.
         self.num_frames = 100 # total animation is cut into this many frames
         self.randomize = False # whether or not to randomize the state & target location
@@ -51,6 +51,9 @@ class Environment:
         self.phi1 = 30*np.pi/180
         self.phi2 = -30*np.pi/180
         
+        #friction properties
+        self.FLOOR_MU = 0.3
+        self.FLOOR_SPRING_STIFFNESS = 1000 #[N/m]
         
         # To be removed
         self.lower_action_bound = np.array([-0.1, -0.1]) # [Nm]
@@ -239,7 +242,7 @@ class Environment:
         fN2 = 0.
         
         # Packing up the parameters the equations of motion need
-        parameters = np.array([self.SEGMENT_MASS[0],self.SEGMENT_MASS[1],self.SEGMENT_MASS[2], self.SEGMENT_ETA_LENGTH[0],self.SEGMENT_ETA_LENGTH[1],self.SEGMENT_ETA_LENGTH[2], self.SEGMENT_GAMMA_LENGTH[0],self.SEGMENT_GAMMA_LENGTH[1],self.SEGMENT_GAMMA_LENGTH[2], self.SEGMENT_MOMINERT[0], self.SEGMENT_MOMINERT[1], self.SEGMENT_MOMINERT[2], self.g, fF1, fF2, self.phi1, self.phi2, fN1, fN2, self.HIP_SPRING_STIFFNESS], dtype = 'float64')
+        parameters = np.array([self.SEGMENT_MASS[0],self.SEGMENT_MASS[1],self.SEGMENT_MASS[2], self.SEGMENT_LENGTH[0],self.SEGMENT_LENGTH[1],self.SEGMENT_LENGTH[2],self.SEGMENT_ETA_LENGTH[0],self.SEGMENT_ETA_LENGTH[1],self.SEGMENT_ETA_LENGTH[2], self.SEGMENT_GAMMA_LENGTH[0],self.SEGMENT_GAMMA_LENGTH[1],self.SEGMENT_GAMMA_LENGTH[2], self.SEGMENT_MOMINERT[0], self.SEGMENT_MOMINERT[1], self.SEGMENT_MOMINERT[2], self.g, fF1, fF2, self.phi1, self.phi2, fN1, fN2, self.HIP_SPRING_STIFFNESS, self.FLOOR_SPRING_STIFFNESS, self.FLOOR_MU], dtype = 'float64')
 
         # Integrating forward one time step. 
         # Returns initial condition on first row then next timestep on the next row
@@ -320,7 +323,7 @@ def equations_of_motion(state, t, parameters):
     x, y, theta, x1, y1, theta1, x2, y2, theta2, xdot, ydot, thetadot, x1dot, y1dot, theta1dot, x2dot, y2dot, theta2dot = state
     
     # Unpacking parameters
-    m, m1, m2, eta, eta1, eta2, gamma, gamma1, gamma2, I, I1, I2, g, fF1, fF2, phi1, phi2, fN1, fN2, HIP_SPRING_STIFFNESS = parameters 
+    m, m1, m2, l, l1, l2, eta, eta1, eta2, gamma, gamma1, gamma2, I, I1, I2, g, fF1, fF2, phi1, phi2, fN1, fN2, HIP_SPRING_STIFFNESS, FLOOR_SPRING_STIFFNESS, FLOOR_MU  = parameters 
     
     first_derivatives = np.array([xdot, ydot, thetadot, x1dot, y1dot, theta1dot, x2dot, y2dot, theta2dot])
 
@@ -338,14 +341,16 @@ def equations_of_motion(state, t, parameters):
     
     # C matrix
     C = np.matrix([[fF1 + fF2],
-                   [fN1 + fN2 - (m + m1 + m2)*g],
+                   [np.maximum(0,-FLOOR_SPRING_STIFFNESS*(y-eta*np.cos(theta)-l1*np.cos(theta + theta1))) + np.maximum(0,-FLOOR_SPRING_STIFFNESS*(y-eta*np.cos(theta)-l2*np.cos(theta + theta2))) - (m + m1 + m2)*g],
                    [-HIP_SPRING_STIFFNESS*(phi1 - theta1 + phi2 - theta2) + m*g*eta*np.sin(theta)],
                    [-thetadot**2*eta*np.cos(theta) - (thetadot + theta1dot)**2*gamma1*np.cos(theta + theta1)],
                    [ thetadot**2*eta*np.sin(theta) + (thetadot + theta1dot)**2*gamma1*np.sin(theta + theta1)],
-                   [-m1*g*gamma1*np.sin(theta+theta1) + fN1*(eta1*np.sin(theta+theta1) + gamma1*np.sin(theta+theta1)) + fF1*(eta1*np.cos(theta+theta1) + gamma1*np.cos(theta + theta1)) + HIP_SPRING_STIFFNESS*(phi1 - theta1)],
-                   [-thetadot**2*eta*np.cos(theta) - (thetadot + theta2dot)**2*gamma2*np.cos(theta+theta2)],
+                   [-m1*g*gamma1*np.sin(theta + theta1) + np.maximum(0,-FLOOR_SPRING_STIFFNESS*(y-eta*np.cos(theta)-l1*np.cos(theta + theta1)))*(l1*np.sin(theta + theta1)) + fF1*(l1*np.cos(theta + theta1)) + HIP_SPRING_STIFFNESS*(phi1 - theta1)],
+                   [-thetadot**2*eta*np.cos(theta) - (thetadot + theta2dot)**2*gamma2*np.cos(theta + theta2)],
                    [ thetadot**2*eta*np.sin(theta) + (thetadot + theta2dot)**2*gamma2*np.sin(theta + theta2)],
-                   [-m2*g*gamma2*np.sin(theta + theta2) + fN2*(eta2*np.sin(theta + theta2) + gamma2*np.sin(theta + theta2)) + fF2*(eta2*np.cos(theta + theta2) + gamma2*np.cos(theta + theta2)) + HIP_SPRING_STIFFNESS*(phi2 - theta2)]])    
+                   [-m2*g*gamma2*np.sin(theta + theta2) + np.maximum(0,-FLOOR_SPRING_STIFFNESS*(y-eta*np.cos(theta)-l2*np.cos(theta + theta2)))*(l2*np.sin(theta + theta2)) + fF2*(l2*np.cos(theta + theta2)) + HIP_SPRING_STIFFNESS*(phi2 - theta2)]])    
+    #fN1 = np.maximum(0,FLOOR_SPRING_STIFFNESS*(y-eta*np.cos(theta)-l1*np.cos(theta+theta1)))
+    #fN2 = np.maximum(0,FLOOR_SPRING_STIFFNESS*(y-eta*np.cos(theta)-l2*np.cos(theta+theta2)))
     
     # Calculating angular rate derivatives
     #x3dx4d = np.array(np.linalg.inv(M)*(action.reshape(2,1) - C - friction*np.matrix([[x3],[x4]]))).squeeze() 
@@ -357,6 +362,33 @@ def equations_of_motion(state, t, parameters):
     derivatives = np.concatenate((first_derivatives, second_derivatives)) 
 
     return derivatives
+
+# Working, pre-normal force
+#    # Mass matrix
+#    M = np.matrix([#                    x                    y                                                 theta                              x1                                y1                             theta1                            x2                                y2                             theta2 
+#                   [                    m,                   0.,                                                0.,                               m1,                               0.,                            0.,                               m2,                               0.,                            0.],
+#                   [                   0.,                   m ,                                                0.,                               0.,                               m1,                            0.,                               0.,                               m2,                            0.],
+#                   [ -m*eta*np.cos(theta), -m*eta*np.sin(theta),                                                 I,                               0.,                               0.,                            0.,                               0.,                               0.,                            0.],
+#                   [                  -1.,                   0., eta*np.sin(theta) + gamma1*np.sin(theta + theta1),                               1.,                               0., gamma1*np.sin(theta + theta1),                               0.,                               0.,                            0.],
+#                   [                   0.,                  -1., eta*np.cos(theta) + gamma1*np.cos(theta + theta1),                               0.,                               1., gamma1*np.cos(theta + theta1),                               0.,                               0.,                            0.],
+#                   [                   0.,                   0.,                                                0., m1*gamma1*np.cos(theta + theta1), m1*gamma1*np.sin(theta + theta1),                            I1,                               0.,                               0.,                            0.],
+#                   [                  -1.,                   0., eta*np.sin(theta) + gamma2*np.sin(theta + theta2),                               0.,                               0.,                            0.,                               1.,                               0., gamma2*np.sin(theta + theta2)],
+#                   [                   0.,                  -1., eta*np.cos(theta) + gamma2*np.cos(theta + theta2),                               0.,                               0.,                            0.,                               0.,                               1., gamma2*np.cos(theta + theta2)],
+#                   [                   0.,                   0.,                                                0.,                               0.,                               0.,                            0., m2*gamma2*np.cos(theta + theta2), m2*gamma2*np.sin(theta + theta2),                            I2]])
+#    
+#    # C matrix
+#    C = np.matrix([[fF1 + fF2],
+#                   [fN1 + fN2 - (m + m1 + m2)*g],
+#                   [-HIP_SPRING_STIFFNESS*(phi1 - theta1 + phi2 - theta2) + m*g*eta*np.sin(theta)],
+#                   [-thetadot**2*eta*np.cos(theta) - (thetadot + theta1dot)**2*gamma1*np.cos(theta + theta1)],
+#                   [ thetadot**2*eta*np.sin(theta) + (thetadot + theta1dot)**2*gamma1*np.sin(theta + theta1)],
+#                   [-m1*g*gamma1*np.sin(theta+theta1) + fN1*(eta1*np.sin(theta+theta1) + gamma1*np.sin(theta+theta1)) + fF1*(eta1*np.cos(theta+theta1) + gamma1*np.cos(theta + theta1)) + HIP_SPRING_STIFFNESS*(phi1 - theta1)],
+#                   [-thetadot**2*eta*np.cos(theta) - (thetadot + theta2dot)**2*gamma2*np.cos(theta+theta2)],
+#                   [ thetadot**2*eta*np.sin(theta) + (thetadot + theta2dot)**2*gamma2*np.sin(theta + theta2)],
+#                   [-m2*g*gamma2*np.sin(theta + theta2) + fN2*(eta2*np.sin(theta + theta2) + gamma2*np.sin(theta + theta2)) + fF2*(eta2*np.cos(theta + theta2) + gamma2*np.cos(theta + theta2)) + HIP_SPRING_STIFFNESS*(phi2 - theta2)]])    
+#    
+
+
 
 # Mass matrix
 #    M = np.matrix([[1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],

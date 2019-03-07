@@ -395,7 +395,8 @@ def drawState(var,width,height):
     
     print_out = False
     frame = 0
-    max_frame = 25
+    max_frame = 1250
+    save_frame = False
     
     # -------- Main Program Loop -----------
     while running:
@@ -590,8 +591,9 @@ def drawState(var,width,height):
         
         
         #save frame to file
-        im_name = "frames/frame_%05i.png" %frame
-        pygame.image.save(screen,im_name)
+        if save_frame:
+            im_name = "frames/frame_%05i.png" %frame
+            pygame.image.save(screen,im_name)
         
         
         
