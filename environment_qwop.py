@@ -54,7 +54,8 @@ class Environment:
         
         # How much the leg desired angle changes per frame when a button is pressed
         self.HIP_INCREMENT        = 2.*np.pi/180. # [rad/s]
-        self.HIP_SPRING_STIFFNESS = 1000 # [Nm/rad]
+        self.HIP_SPRING_STIFFNESS = 1000 # [Nm/rad]       
+        self.HIP_DAMPING_STIFFNESS = 100 # [Nm/rad]
         self.phi1                 = 30*np.pi/180
         self.phi2                 = -30*np.pi/180
         
@@ -74,6 +75,8 @@ class Environment:
         self.SEGMENT_ETA_LENGTH = list()# [m]
         self.SEGMENT_GAMMA_LENGTH = list()# [m]
         self.SEGMENT_PHI_NAUGTH = list()# [rad]
+        self.SEGMENT_PHI_MAX = list()# [rad]
+        self.SEGMENT_PHI_MIN = list()# [rad]
         
         
         #player stats
@@ -86,8 +89,11 @@ class Environment:
         eta = 0.5*L
         gamma = L-eta
         phi0 = 0 
+        phi_min = -1000000
+        phi_max =  1000000
         k = 0.5*L
         I = m*k**2
+        
          
         self.SEGMENT_MASS.append(m)
         self.SEGMENT_MOMINERT.append(I)
@@ -95,6 +101,8 @@ class Environment:
         self.SEGMENT_ETA_LENGTH.append(eta)
         self.SEGMENT_GAMMA_LENGTH.append(gamma)
         self.SEGMENT_PHI_NAUGTH.append(phi0)
+        self.SEGMENT_PHI_MAX.append(phi_min)
+        self.SEGMENT_PHI_MIN.append(phi_max)
         
         # body 1, right leg
         m = 0.0465*p_mass+0.100*p_mass
@@ -102,6 +110,8 @@ class Environment:
         eta = (0.433*0.245*p_height*0.100*p_mass+(0.245*p_height+0.433*0.242*p_height)*0.0465*p_mass)/m
         gamma = L-eta
         phi0 = np.pi/6 
+        phi_min = -np.pi/4
+        phi_max =  np.pi/2
         k = 0.5*L
         I = 0.0465*p_mass*(0.302*0.245*p_height**2)+0.0465*p_mass*(0.323*0.242*p_height**2)
        
@@ -111,6 +121,8 @@ class Environment:
         self.SEGMENT_ETA_LENGTH.append(eta)
         self.SEGMENT_GAMMA_LENGTH.append(gamma)
         self.SEGMENT_PHI_NAUGTH.append(phi0)
+        self.SEGMENT_PHI_MAX.append(phi_min)
+        self.SEGMENT_PHI_MIN.append(phi_max)
                 
         # body 2, left leg
         m = 0.0465*p_mass+0.100*p_mass
@@ -118,6 +130,8 @@ class Environment:
         eta = (0.433*0.245*p_height*0.100*p_mass+(0.245*p_height+0.433*0.242*p_height)*0.0465*p_mass)/m
         gamma = L-eta
         phi0 = -np.pi/6 
+        phi_min = -np.pi/4
+        phi_max =  np.pi/2
         k = 0.5*L
         I = 0.0465*p_mass*(0.302*0.245*p_height**2)+0.0465*p_mass*(0.323*0.242*p_height**2)
         
@@ -127,6 +141,8 @@ class Environment:
         self.SEGMENT_ETA_LENGTH.append(eta)
         self.SEGMENT_GAMMA_LENGTH.append(gamma)
         self.SEGMENT_PHI_NAUGTH.append(phi0)
+        self.SEGMENT_PHI_MAX.append(phi_min)
+        self.SEGMENT_PHI_MIN.append(phi_max)
         
 #        self.m = 10.          
 #        self.m1 = 5.          # [kg]
@@ -252,7 +268,7 @@ class Environment:
         fN2 = 0.
         
         # Packing up the parameters the equations of motion need
-        parameters = np.array([self.SEGMENT_MASS[0],self.SEGMENT_MASS[1],self.SEGMENT_MASS[2], self.SEGMENT_LENGTH[0],self.SEGMENT_LENGTH[1],self.SEGMENT_LENGTH[2],self.SEGMENT_ETA_LENGTH[0],self.SEGMENT_ETA_LENGTH[1],self.SEGMENT_ETA_LENGTH[2], self.SEGMENT_GAMMA_LENGTH[0],self.SEGMENT_GAMMA_LENGTH[1],self.SEGMENT_GAMMA_LENGTH[2], self.SEGMENT_MOMINERT[0], self.SEGMENT_MOMINERT[1], self.SEGMENT_MOMINERT[2], self.g, fF1, fF2, self.phi1, self.phi2, fN1, fN2, self.HIP_SPRING_STIFFNESS, self.FLOOR_SPRING_STIFFNESS, self.FLOOR_MU], dtype = 'float64')
+        parameters = np.array([self.SEGMENT_MASS[0],self.SEGMENT_MASS[1],self.SEGMENT_MASS[2], self.SEGMENT_LENGTH[0],self.SEGMENT_LENGTH[1],self.SEGMENT_LENGTH[2],self.SEGMENT_ETA_LENGTH[0],self.SEGMENT_ETA_LENGTH[1],self.SEGMENT_ETA_LENGTH[2], self.SEGMENT_GAMMA_LENGTH[0],self.SEGMENT_GAMMA_LENGTH[1],self.SEGMENT_GAMMA_LENGTH[2], self.SEGMENT_MOMINERT[0], self.SEGMENT_MOMINERT[1], self.SEGMENT_MOMINERT[2], self.g, fF1, fF2, self.phi1, self.phi2, fN1, fN2, self.HIP_SPRING_STIFFNESS, self.HIP_DAMPING_STIFFNESS, self.FLOOR_SPRING_STIFFNESS, self.FLOOR_MU], dtype = 'float64')
 
         # Integrating forward one time step. 
         # Returns initial condition on first row then next timestep on the next row
@@ -337,7 +353,7 @@ def equations_of_motion(state, t, parameters):
     x, y, theta, x1, y1, theta1, x2, y2, theta2, xdot, ydot, thetadot, x1dot, y1dot, theta1dot, x2dot, y2dot, theta2dot = state
     
     # Unpacking parameters
-    m, m1, m2, l, l1, l2, eta, eta1, eta2, gamma, gamma1, gamma2, I, I1, I2, g, fF1, fF2, phi1, phi2, fN1, fN2, HIP_SPRING_STIFFNESS, FLOOR_SPRING_STIFFNESS, FLOOR_MU  = parameters 
+    m, m1, m2, l, l1, l2, eta, eta1, eta2, gamma, gamma1, gamma2, I, I1, I2, g, fF1, fF2, phi1, phi2, fN1, fN2, HIP_SPRING_STIFFNESS,HIP_DAMPING_STIFFNESS, FLOOR_SPRING_STIFFNESS, FLOOR_MU  = parameters 
     
     first_derivatives = np.array([xdot, ydot, thetadot, x1dot, y1dot, theta1dot, x2dot, y2dot, theta2dot])
 
@@ -356,13 +372,13 @@ def equations_of_motion(state, t, parameters):
     # C matrix
     C = np.matrix([[fF1 + fF2],
                    [np.maximum(0,-FLOOR_SPRING_STIFFNESS*(y-eta*np.cos(theta)-l1*np.cos(theta + theta1))) + np.maximum(0,-FLOOR_SPRING_STIFFNESS*(y-eta*np.cos(theta)-l2*np.cos(theta + theta2))) - (m + m1 + m2)*g],
-                   [-HIP_SPRING_STIFFNESS*(phi1 - theta1 + phi2 - theta2) + m*g*eta*np.sin(theta)],
+                   [-HIP_SPRING_STIFFNESS*(phi1 - theta1 + phi2 - theta2) -HIP_DAMPING_STIFFNESS*( -theta1dot - theta2dot) + m*g*eta*np.sin(theta)],
                    [ thetadot**2*eta*np.sin(theta) + (thetadot + theta1dot)**2*gamma1*np.sin(theta + theta1)],
                    [-thetadot**2*eta*np.cos(theta) - (thetadot + theta1dot)**2*gamma1*np.cos(theta + theta1)],
-                   [-m1*g*gamma1*np.sin(theta + theta1) + np.maximum(0,-FLOOR_SPRING_STIFFNESS*(y-eta*np.cos(theta)-l1*np.cos(theta + theta1)))*(l1*np.sin(theta + theta1)) + fF1*(l1*np.cos(theta + theta1)) + HIP_SPRING_STIFFNESS*(phi1 - theta1)],
+                   [-m1*g*gamma1*np.sin(theta + theta1) + np.maximum(0,-FLOOR_SPRING_STIFFNESS*(y-eta*np.cos(theta)-l1*np.cos(theta + theta1)))*(l1*np.sin(theta + theta1)) + fF1*(l1*np.cos(theta + theta1)) + HIP_SPRING_STIFFNESS*(phi1 - theta1)+ HIP_DAMPING_STIFFNESS*(-theta1dot)],
                    [ thetadot**2*eta*np.sin(theta) + (thetadot + theta2dot)**2*gamma2*np.sin(theta + theta2)],
                    [-thetadot**2*eta*np.cos(theta) - (thetadot + theta2dot)**2*gamma2*np.cos(theta + theta2)],
-                   [-m2*g*gamma2*np.sin(theta + theta2) + np.maximum(0,-FLOOR_SPRING_STIFFNESS*(y-eta*np.cos(theta)-l2*np.cos(theta + theta2)))*(l2*np.sin(theta + theta2)) + fF2*(l2*np.cos(theta + theta2)) + HIP_SPRING_STIFFNESS*(phi2 - theta2)]])    
+                   [-m2*g*gamma2*np.sin(theta + theta2) + np.maximum(0,-FLOOR_SPRING_STIFFNESS*(y-eta*np.cos(theta)-l2*np.cos(theta + theta2)))*(l2*np.sin(theta + theta2)) + fF2*(l2*np.cos(theta + theta2)) + HIP_SPRING_STIFFNESS*(phi2 - theta2)+ HIP_DAMPING_STIFFNESS*(-theta2dot)]])    
     #fN1 = np.maximum(0,FLOOR_SPRING_STIFFNESS*(y-eta*np.cos(theta)-l1*np.cos(theta+theta1)))
     #fN2 = np.maximum(0,FLOOR_SPRING_STIFFNESS*(y-eta*np.cos(theta)-l2*np.cos(theta+theta2)))
     
