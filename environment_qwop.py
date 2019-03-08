@@ -61,7 +61,7 @@ class Environment:
         
         #friction properties
         self.FLOOR_MU               = 0.3
-        self.FLOOR_SPRING_STIFFNESS = 10000 #[N/m]
+        self.FLOOR_SPRING_STIFFNESS = 100000 #[N/m]
         
         
         #self.body.segment(0) = 5
@@ -101,8 +101,8 @@ class Environment:
         self.SEGMENT_ETA_LENGTH.append(eta)
         self.SEGMENT_GAMMA_LENGTH.append(gamma)
         self.SEGMENT_PHI_NAUGTH.append(phi0)
-        self.SEGMENT_PHI_MAX.append(phi_min)
-        self.SEGMENT_PHI_MIN.append(phi_max)
+        self.SEGMENT_PHI_MAX.append(phi_max)
+        self.SEGMENT_PHI_MIN.append(phi_min)
         
         # body 1, right leg
         m = 0.0465*p_mass+0.100*p_mass
@@ -121,9 +121,9 @@ class Environment:
         self.SEGMENT_ETA_LENGTH.append(eta)
         self.SEGMENT_GAMMA_LENGTH.append(gamma)
         self.SEGMENT_PHI_NAUGTH.append(phi0)
-        self.SEGMENT_PHI_MAX.append(phi_min)
-        self.SEGMENT_PHI_MIN.append(phi_max)
-                
+        self.SEGMENT_PHI_MAX.append(phi_max)
+        self.SEGMENT_PHI_MIN.append(phi_min)
+        
         # body 2, left leg
         m = 0.0465*p_mass+0.100*p_mass
         L = 0.242*p_height+0.245*p_height
@@ -141,8 +141,8 @@ class Environment:
         self.SEGMENT_ETA_LENGTH.append(eta)
         self.SEGMENT_GAMMA_LENGTH.append(gamma)
         self.SEGMENT_PHI_NAUGTH.append(phi0)
-        self.SEGMENT_PHI_MAX.append(phi_min)
-        self.SEGMENT_PHI_MIN.append(phi_max)
+        self.SEGMENT_PHI_MAX.append(phi_max)
+        self.SEGMENT_PHI_MIN.append(phi_min)
         
 #        self.m = 10.          
 #        self.m1 = 5.          # [kg]
@@ -254,12 +254,16 @@ class Environment:
         # O and P control leg 2 through phi2
         if pressed_q:
             self.phi1 += self.HIP_INCREMENT
+            self.phi1 = np.minimum(self.phi1,self.SEGMENT_PHI_MAX[1])
         if pressed_w:
             self.phi1 -= self.HIP_INCREMENT
+            self.phi1 = np.maximum(self.phi1,self.SEGMENT_PHI_MIN[1])
         if pressed_o:
             self.phi2 += self.HIP_INCREMENT
+            self.phi1 = np.minimum(self.phi2,self.SEGMENT_PHI_MAX[2])
         if pressed_p:
-            self.phi2 -= self.HIP_INCREMENT        
+            self.phi2 -= self.HIP_INCREMENT 
+            self.phi1 = np.maximum(self.phi2,self.SEGMENT_PHI_MIN[2])  
         
         # Choosing friction and normal force
         fF1 = 0.

@@ -264,7 +264,9 @@ def drawState(var,width,height):
     
     TEXT = (255, 255, 255)
     TEXT_PRESSED = (200, 200, 200)
-    PRESSED = (50, 50, 50)
+    PRESSED = (50, 50, 50)   
+    TEXT_GAMEOVER = (255, 25, 25)   
+    TEXT_BEGIN = (200, 200, 200)
     
     LINE = (255,255,255)
     BODY = (25, 25, 25)
@@ -273,8 +275,10 @@ def drawState(var,width,height):
     
     # Define some fonts to use, size, bold, italics
     font_subtitles = pygame.font.SysFont('courier', 18, True, False)
+    font_begin = pygame.font.SysFont('courier', 16, True, False)
     font_distance = pygame.font.SysFont('courier', 30, True, False)
-    font_ticks = pygame.font.SysFont('courier', 12, True, False)
+    font_ticks = pygame.font.SysFont('courier', 12, True, False)   
+    font_gameover = pygame.font.SysFont('courier', 48, True, False)
     font_qwop = pygame.font.SysFont('courier', 25, True, False)
     
     text_q = font_qwop.render("Q", True, TEXT_PRESSED)
@@ -338,23 +342,23 @@ def drawState(var,width,height):
     segment_points = np.zeros((segment_count,3,2))
 
 
-    l = 1#self.body_length
-    l1 = 1#self.leg1_length
-    l2 = 1#self.leg2_length  
+#    l = 1#self.body_length
+#    l1 = 1#self.leg1_length
+#    l2 = 1#self.leg2_length  
     
-    a = 0.5
-    a1 = 0.55
-    a2 = 0.55
-    
-    x= 0.00000000e+00
-    y= 2.00000000e+00
-    theta= 0 
-    x1=2.50000000e-01
-    y1=1.06698730e+00
-    theta1=30*np.pi/180
-    x2=-2.50000000e-01 
-    y2=1.06698730e+00
-    theta2=-30*np.pi/180
+#    a = 0.5
+#    a1 = 0.55
+#    a2 = 0.55
+#    
+#    x= 0.00000000e+00
+#    y= 2.00000000e+00
+#    theta= 0 
+#    x1=2.50000000e-01
+#    y1=1.06698730e+00
+#    theta1=30*np.pi/180
+#    x2=-2.50000000e-01 
+#    y2=1.06698730e+00
+#    theta2=-30*np.pi/180
 
      
     # Loop until the user clicks the close button.
@@ -398,6 +402,16 @@ def drawState(var,width,height):
     max_frame = 2000
     save_frame = False
     begin = False
+    play_game = True
+    game_over = False
+    
+    
+    #prepare screen
+    screen.blit(background,(0,0))
+    if play_game:
+        text_begin = font_begin.render("PRESS [SPACE] TO PLAY", True, TEXT_BEGIN)
+        screen.blit(text_begin, [10,10])
+    pygame.display.flip()
     
     # -------- Main Program Loop -----------
     while running:
@@ -578,6 +592,15 @@ def drawState(var,width,height):
                 pygame.draw.ellipse(screen, BODY, [segment_points[segment_id,0,0]-6,segment_points[segment_id,0,1]-6,12,12], 0)
                 pygame.draw.ellipse(screen, BODY, [segment_points[segment_id,2,0]-6,segment_points[segment_id,2,1]-6,12,12], 0)
                 #print(" ", segment_points[segment_id,0,:],segment_points[segment_id,2,:])
+            
+            #check if node out-of-bounds. If so, call it quits 
+            if np.any(segment_points[:,0,1]>height):
+                text_GO = font_gameover.render("GAME OVER!", True, TEXT_GAMEOVER)
+                text_GO_w = text_GO.get_rect().width
+                text_GO_h = text_GO.get_rect().height
+                screen.blit(text_GO, [np.rint(width/2-text_GO_w/2), np.rint(height/2-text_GO_h/2)])
+                game_over = True
+                   
                 
         
             # --- Wrap-up
@@ -586,15 +609,17 @@ def drawState(var,width,height):
          
             # Go ahead and update the screen with what we've drawn.
             pygame.display.flip() # more efficient: update(rectangle_list) https://www.pygame.org/docs/ref/display.html
-            
+        
+             
             
             #save frame to file
             if save_frame:
                 im_name = "frames/frame_%05i.png" %frame
                 pygame.image.save(screen,im_name)
             
-            
-            
+            #Check of game is over
+            if game_over:
+                break            
             
             #Check if the dynamics are complete
             if done:
