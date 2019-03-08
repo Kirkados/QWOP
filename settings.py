@@ -11,7 +11,7 @@ class Settings:
     ##### Run Settings #####
     ########################
     
-    RUN_NAME               = 'C51_LunarLander_video' # use just the name. If trying to restore from file, use name along with timestamp
+    RUN_NAME               = 'Acrobot' # use just the name. If trying to restore from file, use name along with timestamp
     ENVIRONMENT            = 'gym'
     RECORD_VIDEO           = True
     VIDEO_RECORD_FREQUENCY = 40 # Multiples of "CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES"

@@ -37,7 +37,9 @@ class Environment:
         ##################################
         ##### Environment Properties #####
         ##################################
-        self.ENVIRONMENT = 'LunarLander-v2'        
+        #self.ENVIRONMENT = 'MountainCar-v0' # MIN_Q = -2; MAX_Q = 0; RewScale = 100
+        self.ENVIRONMENT = 'Acrobot-v1' # MIN_Q = -5; MAX_Q = 0; RewScale = 100
+        #self.ENVIRONMENT = 'LunarLander-v2' # MIN_Q = -6; MAX_Q = 5; RewScale = 100  
         self.env = gym.make(self.ENVIRONMENT)
         
         self.STATE_SIZE              = list(self.env.observation_space.shape)[0] # dimension of the observation/state space            
@@ -47,8 +49,8 @@ class Environment:
         self.MAX_NUMBER_OF_TIMESTEPS = 1200 # per episode
         self.NORMALIZE_STATE         = False # Normalize state on each timestep to avoid vanishing gradients
         self.REWARD_SCALING          = 100.0 # Amount to scale down the reward signal
-        self.MIN_Q                   = -6.0
-        self.MAX_Q                   = 5.0
+        self.MIN_Q                   = -5.0
+        self.MAX_Q                   = 0.0
         
         # If we're the environment for the first agent, start a display and set the rendering
         if n_agent == 1:
