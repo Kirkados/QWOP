@@ -1,5 +1,5 @@
-git clone /path/to/repository
-git pull - update local director from server
+git clone </path/to/repository>
+git pull - update local directory from server
 
 cd Documents/Github/Qwop
 git clone https://github.com/Kirkados/QWOP.git

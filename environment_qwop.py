@@ -39,11 +39,10 @@ class Environment:
         ##################################
         ##### Environment Properties #####
         ##################################
-        self.STATE_SIZE              = 18
-        self.ACTION_SIZE             = 2
+        self.STATE_SIZE              = 26
+        self.ACTION_SIZE             = 9
         self.TIMESTEP                = 0.01 # [s]        
         self.MAX_NUMBER_OF_TIMESTEPS = 1200 # per episode
-        self.TARGET_REWARD           = 1.
         self.NUM_FRAMES              = 100 # total animation is cut into this many frames
         self.RANDOMIZE               = False # whether or not to randomize the state & target location
         self.UPPER_STATE_BOUND       =  np.array([1., 1., 1.])

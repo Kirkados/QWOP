@@ -11,9 +11,9 @@ class Settings:
     ##### Run Settings #####
     ########################
     
-    RUN_NAME               = 'Acrobot' # use just the name. If trying to restore from file, use name along with timestamp
-    ENVIRONMENT            = 'gym'
-    RECORD_VIDEO           = True
+    RUN_NAME               = 'first_run' # use just the name. If trying to restore from file, use name along with timestamp
+    ENVIRONMENT            = 'qwop'
+    RECORD_VIDEO           = False
     VIDEO_RECORD_FREQUENCY = 40 # Multiples of "CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES"
     LEARN_FROM_PIXELS      = False # False = learn from state (fully observed); True = learn from pixels (partially observed)
     RESUME_TRAINING        = False # If True, be sure to set "RUN_NAME" to the previous run's filename
