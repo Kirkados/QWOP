@@ -62,7 +62,7 @@ class Environment:
         #friction properties
         self.FLOOR_MU               = 0.3
         self.FLOOR_SPRING_STIFFNESS = 100000 #[N/m]
-        self.FLOOR_FRICTION_STIFFNESS = 1000000 #[N/m]
+        self.FLOOR_FRICTION_STIFFNESS = 100000 #[N/m]
         
         #self.body.segment(0) = 5
         
@@ -364,7 +364,7 @@ def equations_of_motion(state, t, parameters):
     # Unpacking parameters
     m, m1, m2, l, l1, l2, eta, eta1, eta2, gamma, gamma1, gamma2, I, I1, I2, g, fF1, fF2, phi1, phi2, fN1, fN2, HIP_SPRING_STIFFNESS,HIP_DAMPING_STIFFNESS, FLOOR_SPRING_STIFFNESS, FLOOR_FRICTION_STIFFNESS,FLOOR_MU  = parameters 
     
-    first_derivatives = np.array([xdot, ydot, thetadot, x1dot, y1dot, theta1dot, x2dot, y2dot, theta2dot])
+    first_derivatives = np.array([xdot, ydot, thetadot, x1dot, y1dot, theta1dot, x2dot, y2dot, theta2dot,xf1dot,yf1dot,xf2dot,yf2dot])
 
     # Mass matrix
     M = np.matrix([#                    x                    y                                                 theta                              x1                                y1                             theta1                            x2                                y2                             theta2                           xf1                            yf1                              xf2                            yf2
@@ -383,15 +383,15 @@ def equations_of_motion(state, t, parameters):
                    [                   0.,                   0.,                      -eta2*np.sin(theta + theta2),                               0.,                               0.,                            0.,                               0.,                               -1,  -eta2*np.sin(theta + theta2),                              0.,                            0.,                               0.,                            1 ]])
     
     
-    C = np.matrix([[fF1 + fF2],
-                   [np.maximum(0,-FLOOR_SPRING_STIFFNESS*(yf1)) + np.maximum(0,-FLOOR_SPRING_STIFFNESS*(yf2)) - (m + m1 + m2)*g],
+    C = np.matrix([[(-np.sign(xf1dot)*np.minimum(FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf1)*FLOOR_MU,np.abs(xf1dot)*FLOOR_FRICTION_STIFFNESS)) + (-np.sign(xf2dot)*np.minimum(FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf2)*FLOOR_MU,np.abs(xf2dot)*FLOOR_FRICTION_STIFFNESS))],
+                   [FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf1) + FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf2) - (m + m1 + m2)*g],
                    [-HIP_SPRING_STIFFNESS*(phi1 - theta1 + phi2 - theta2) -HIP_DAMPING_STIFFNESS*( -theta1dot - theta2dot) + m*g*eta*np.sin(theta)],
                    [ thetadot**2*eta*np.sin(theta) + (thetadot + theta1dot)**2*gamma1*np.sin(theta + theta1)],
                    [-thetadot**2*eta*np.cos(theta) - (thetadot + theta1dot)**2*gamma1*np.cos(theta + theta1)],
-                   [-m1*g*gamma1*np.sin(theta + theta1) + np.maximum(0,-FLOOR_SPRING_STIFFNESS*(yf1))*(l1*np.sin(theta + theta1)) + fF1*(l1*np.cos(theta + theta1)) + HIP_SPRING_STIFFNESS*(phi1 - theta1)+ HIP_DAMPING_STIFFNESS*(-theta1dot)],
+                   [-m1*g*gamma1*np.sin(theta + theta1) + FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf1)*(l1*np.sin(theta + theta1)) + (-np.sign(xf1dot)*np.minimum(FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf1)*FLOOR_MU,np.abs(xf1dot)*FLOOR_FRICTION_STIFFNESS))*(l1*np.cos(theta + theta1)) + HIP_SPRING_STIFFNESS*(phi1 - theta1)+ HIP_DAMPING_STIFFNESS*(-theta1dot)],
                    [ thetadot**2*eta*np.sin(theta) + (thetadot + theta2dot)**2*gamma2*np.sin(theta + theta2)],
                    [-thetadot**2*eta*np.cos(theta) - (thetadot + theta2dot)**2*gamma2*np.cos(theta + theta2)],
-                   [-m2*g*gamma2*np.sin(theta + theta2) + np.maximum(0,-FLOOR_SPRING_STIFFNESS*(yf2))*(l2*np.sin(theta + theta2)) + fF2*(l2*np.cos(theta + theta2)) + HIP_SPRING_STIFFNESS*(phi2 - theta2)+ HIP_DAMPING_STIFFNESS*(-theta2dot)],
+                   [-m2*g*gamma2*np.sin(theta + theta2) + FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf2)*(l2*np.sin(theta + theta2)) + (-np.sign(xf2dot)*np.minimum(FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf2)*FLOOR_MU,np.abs(xf2dot)*FLOOR_FRICTION_STIFFNESS))*(l2*np.cos(theta + theta2)) + HIP_SPRING_STIFFNESS*(phi2 - theta2)+ HIP_DAMPING_STIFFNESS*(-theta2dot)],
                    [-eta1*(thetadot + theta1dot)**2*np.sin(theta + theta1)],
                    [ eta1*(thetadot + theta1dot)**2*np.cos(theta + theta1)],
                    [-eta2*(thetadot + theta2dot)**2*np.sin(theta + theta2)],
