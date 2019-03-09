@@ -62,7 +62,7 @@ class Environment:
         #friction properties
         self.FLOOR_MU               = 0.3
         self.FLOOR_SPRING_STIFFNESS = 100000 #[N/m]
-        self.FLOOR_FRICTION_STIFFNESS = 1000000 #[N/m]
+        
         
         #self.body.segment(0) = 5
         
@@ -194,14 +194,9 @@ class Environment:
             initial_x2 = self.SEGMENT_ETA_LENGTH[0] * np.sin(initial_body_angle) + self.SEGMENT_GAMMA_LENGTH[2] * np.sin(initial_body_angle + initial_leg2_angle)
             initial_y2 = initial_torso_height - self.SEGMENT_ETA_LENGTH[0] * np.cos(initial_body_angle) - self.SEGMENT_GAMMA_LENGTH[2] * np.cos(initial_body_angle + initial_leg2_angle)
             
-            initial_xf1 = self.SEGMENT_ETA_LENGTH[0] * np.sin(initial_body_angle) + self.SEGMENT_LENGTH[1] * np.sin(initial_body_angle + initial_leg1_angle)
-            initial_yf1 = initial_torso_height - self.SEGMENT_ETA_LENGTH[0] * np.cos(initial_body_angle) - self.SEGMENT_LENGTH[1] * np.cos(initial_body_angle + initial_leg1_angle)
-            initial_xf2 = self.SEGMENT_ETA_LENGTH[0] * np.sin(initial_body_angle) + self.SEGMENT_LENGTH[1] * np.sin(initial_body_angle + initial_leg1_angle)
-            initial_yf2 = initial_torso_height - self.SEGMENT_ETA_LENGTH[0] * np.cos(initial_body_angle) - self.SEGMENT_LENGTH[1] * np.cos(initial_body_angle + initial_leg1_angle)
-            
             # Assembling into the state
             # Note: state = [x, y, theta, x1, y1, theta1, x2, y2, theta2, xdot, ydot, thetadot, x1dot, y1dot, theta1dot, x2dot, y2dot, theta2dot]
-            self.state = np.array([0., initial_torso_height, initial_body_angle, initial_x1, initial_y1, initial_leg1_angle, initial_x2, initial_y2, initial_leg2_angle, initial_xf1,initial_yf1,initial_xf2,initial_yf2,0., 0., 0., 0., 0., 0., 0., 0., 0.,0., 0., 0., 0.,])
+            self.state = np.array([0., initial_torso_height, initial_body_angle, initial_x1, initial_y1, initial_leg1_angle, initial_x2, initial_y2, initial_leg2_angle, 0., 0., 0., 0., 0., 0., 0., 0., 0.,])
 
         # Resetting the time
         self.time = 0.0  
@@ -277,7 +272,7 @@ class Environment:
         fN2 = 0.
         
         # Packing up the parameters the equations of motion need
-        parameters = np.array([self.SEGMENT_MASS[0],self.SEGMENT_MASS[1],self.SEGMENT_MASS[2], self.SEGMENT_LENGTH[0],self.SEGMENT_LENGTH[1],self.SEGMENT_LENGTH[2],self.SEGMENT_ETA_LENGTH[0],self.SEGMENT_ETA_LENGTH[1],self.SEGMENT_ETA_LENGTH[2], self.SEGMENT_GAMMA_LENGTH[0],self.SEGMENT_GAMMA_LENGTH[1],self.SEGMENT_GAMMA_LENGTH[2], self.SEGMENT_MOMINERT[0], self.SEGMENT_MOMINERT[1], self.SEGMENT_MOMINERT[2], self.g, fF1, fF2, self.phi1, self.phi2, fN1, fN2, self.HIP_SPRING_STIFFNESS, self.HIP_DAMPING_STIFFNESS, self.FLOOR_SPRING_STIFFNESS,self.FLOOR_FRICTION_STIFFNESS, self.FLOOR_MU], dtype = 'float64')
+        parameters = np.array([self.SEGMENT_MASS[0],self.SEGMENT_MASS[1],self.SEGMENT_MASS[2], self.SEGMENT_LENGTH[0],self.SEGMENT_LENGTH[1],self.SEGMENT_LENGTH[2],self.SEGMENT_ETA_LENGTH[0],self.SEGMENT_ETA_LENGTH[1],self.SEGMENT_ETA_LENGTH[2], self.SEGMENT_GAMMA_LENGTH[0],self.SEGMENT_GAMMA_LENGTH[1],self.SEGMENT_GAMMA_LENGTH[2], self.SEGMENT_MOMINERT[0], self.SEGMENT_MOMINERT[1], self.SEGMENT_MOMINERT[2], self.g, fF1, fF2, self.phi1, self.phi2, fN1, fN2, self.HIP_SPRING_STIFFNESS, self.HIP_DAMPING_STIFFNESS, self.FLOOR_SPRING_STIFFNESS, self.FLOOR_MU], dtype = 'float64')
 
         # Integrating forward one time step. 
         # Returns initial condition on first row then next timestep on the next row
@@ -359,43 +354,35 @@ def equations_of_motion(state, t, parameters):
     # From the state, it returns the first derivative of the state
     
     # Unpacking the state
-    x, y, theta, x1, y1, theta1, x2, y2, theta2, xf1,yf1,xf2,yf2, xdot, ydot, thetadot, x1dot, y1dot, theta1dot, x2dot, y2dot, theta2dot,xf1dot,yf1dot,xf2dot,yf2dot = state
+    x, y, theta, x1, y1, theta1, x2, y2, theta2, xdot, ydot, thetadot, x1dot, y1dot, theta1dot, x2dot, y2dot, theta2dot = state
     
     # Unpacking parameters
-    m, m1, m2, l, l1, l2, eta, eta1, eta2, gamma, gamma1, gamma2, I, I1, I2, g, fF1, fF2, phi1, phi2, fN1, fN2, HIP_SPRING_STIFFNESS,HIP_DAMPING_STIFFNESS, FLOOR_SPRING_STIFFNESS, FLOOR_FRICTION_STIFFNESS,FLOOR_MU  = parameters 
+    m, m1, m2, l, l1, l2, eta, eta1, eta2, gamma, gamma1, gamma2, I, I1, I2, g, fF1, fF2, phi1, phi2, fN1, fN2, HIP_SPRING_STIFFNESS,HIP_DAMPING_STIFFNESS, FLOOR_SPRING_STIFFNESS, FLOOR_MU  = parameters 
     
     first_derivatives = np.array([xdot, ydot, thetadot, x1dot, y1dot, theta1dot, x2dot, y2dot, theta2dot])
 
     # Mass matrix
-    M = np.matrix([#                    x                    y                                                 theta                              x1                                y1                             theta1                            x2                                y2                             theta2                           xf1                            yf1                              xf2                            yf2
-                   [                    m,                   0.,                                                0.,                               m1,                               0.,                            0.,                               m2,                               0.,                            0.,                              0.,                            0.,                               0.,                            0.],
-                   [                   0.,                   m ,                                                0.,                               0.,                               m1,                            0.,                               0.,                               m2,                            0.,                              0.,                            0.,                               0.,                            0.],
-                   [ -m*eta*np.cos(theta), -m*eta*np.sin(theta),                                                 I,                               0.,                               0.,                            0.,                               0.,                               0.,                            0.,                              0.,                            0.,                               0.,                            0.],
-                   [                   1.,                   0., eta*np.cos(theta) + gamma1*np.cos(theta + theta1),                              -1.,                               0., gamma1*np.cos(theta + theta1),                               0.,                               0.,                            0.,                              0.,                            0.,                               0.,                            0.],
-                   [                   0.,                   1., eta*np.sin(theta) + gamma1*np.sin(theta + theta1),                               0.,                              -1., gamma1*np.sin(theta + theta1),                               0.,                               0.,                            0.,                              0.,                            0.,                               0.,                            0.],
-                   [                   0.,                   0.,                                                0., m1*gamma1*np.cos(theta + theta1), m1*gamma1*np.sin(theta + theta1),                            I1,                               0.,                               0.,                            0.,                              0.,                            0.,                               0.,                            0.],
-                   [                   1.,                   0., eta*np.cos(theta) + gamma2*np.cos(theta + theta2),                               0.,                               0.,                            0.,                              -1.,                               0., gamma2*np.cos(theta + theta2),                              0.,                            0.,                               0.,                            0.],
-                   [                   0.,                   1., eta*np.sin(theta) + gamma2*np.sin(theta + theta2),                               0.,                               0.,                            0.,                               0.,                              -1., gamma2*np.sin(theta + theta2),                              0.,                            0.,                               0.,                            0.],
-                   [                   0.,                   0.,                                                0.,                               0.,                               0.,                            0., m2*gamma2*np.cos(theta + theta2), m2*gamma2*np.sin(theta + theta2),                            I2,                              0.,                            0.,                               0.,                            0.],
-                   [                   0.,                   0.,                      -eta1*np.cos(theta + theta1),                               -1,                               0.,  -eta1*np.cos(theta + theta1),                               0.,                               0.,                            0.,                              1 ,                            0.,                               0.,                            0.],
-                   [                   0.,                   0.,                      -eta1*np.sin(theta + theta1),                               0.,                               -1,  -eta1*np.sin(theta + theta1),                               0.,                               0.,                            0.,                              0.,                            1 ,                               0.,                            0.],
-                   [                   0.,                   0.,                      -eta2*np.cos(theta + theta2),                               0.,                               0.,                            0.,                               -1,                               0.,  -eta2*np.cos(theta + theta2),                              0.,                            0.,                               1 ,                            0.],
-                   [                   0.,                   0.,                      -eta2*np.sin(theta + theta2),                               0.,                               0.,                            0.,                               0.,                               -1,  -eta2*np.sin(theta + theta2),                              0.,                            0.,                               0.,                            1 ]])
+    M = np.matrix([#                    x                    y                                                 theta                              x1                                y1                             theta1                            x2                                y2                             theta2 
+                   [                    m,                   0.,                                                0.,                               m1,                               0.,                            0.,                               m2,                               0.,                            0.],
+                   [                   0.,                   m ,                                                0.,                               0.,                               m1,                            0.,                               0.,                               m2,                            0.],
+                   [ -m*eta*np.cos(theta), -m*eta*np.sin(theta),                                                 I,                               0.,                               0.,                            0.,                               0.,                               0.,                            0.],
+                   [                   1.,                   0., eta*np.cos(theta) + gamma1*np.cos(theta + theta1),                              -1.,                               0., gamma1*np.cos(theta + theta1),                               0.,                               0.,                            0.],
+                   [                   0.,                   1., eta*np.sin(theta) + gamma1*np.sin(theta + theta1),                               0.,                              -1., gamma1*np.sin(theta + theta1),                               0.,                               0.,                            0.],
+                   [                   0.,                   0.,                                                0., m1*gamma1*np.cos(theta + theta1), m1*gamma1*np.sin(theta + theta1),                            I1,                               0.,                               0.,                            0.],
+                   [                   1.,                   0., eta*np.cos(theta) + gamma2*np.cos(theta + theta2),                               0.,                               0.,                            0.,                              -1.,                               0., gamma2*np.cos(theta + theta2)],
+                   [                   0.,                   1., eta*np.sin(theta) + gamma2*np.sin(theta + theta2),                               0.,                               0.,                            0.,                               0.,                              -1., gamma2*np.sin(theta + theta2)],
+                   [                   0.,                   0.,                                                0.,                               0.,                               0.,                            0., m2*gamma2*np.cos(theta + theta2), m2*gamma2*np.sin(theta + theta2),                            I2]])
     
-    
+    # C matrix
     C = np.matrix([[fF1 + fF2],
-                   [np.maximum(0,-FLOOR_SPRING_STIFFNESS*(yf1)) + np.maximum(0,-FLOOR_SPRING_STIFFNESS*(yf2)) - (m + m1 + m2)*g],
+                   [np.maximum(0,-FLOOR_SPRING_STIFFNESS*(y-eta*np.cos(theta)-l1*np.cos(theta + theta1))) + np.maximum(0,-FLOOR_SPRING_STIFFNESS*(y-eta*np.cos(theta)-l2*np.cos(theta + theta2))) - (m + m1 + m2)*g],
                    [-HIP_SPRING_STIFFNESS*(phi1 - theta1 + phi2 - theta2) -HIP_DAMPING_STIFFNESS*( -theta1dot - theta2dot) + m*g*eta*np.sin(theta)],
                    [ thetadot**2*eta*np.sin(theta) + (thetadot + theta1dot)**2*gamma1*np.sin(theta + theta1)],
                    [-thetadot**2*eta*np.cos(theta) - (thetadot + theta1dot)**2*gamma1*np.cos(theta + theta1)],
-                   [-m1*g*gamma1*np.sin(theta + theta1) + np.maximum(0,-FLOOR_SPRING_STIFFNESS*(yf1))*(l1*np.sin(theta + theta1)) + fF1*(l1*np.cos(theta + theta1)) + HIP_SPRING_STIFFNESS*(phi1 - theta1)+ HIP_DAMPING_STIFFNESS*(-theta1dot)],
+                   [-m1*g*gamma1*np.sin(theta + theta1) + np.maximum(0,-FLOOR_SPRING_STIFFNESS*(y-eta*np.cos(theta)-l1*np.cos(theta + theta1)))*(l1*np.sin(theta + theta1)) + fF1*(l1*np.cos(theta + theta1)) + HIP_SPRING_STIFFNESS*(phi1 - theta1)+ HIP_DAMPING_STIFFNESS*(-theta1dot)],
                    [ thetadot**2*eta*np.sin(theta) + (thetadot + theta2dot)**2*gamma2*np.sin(theta + theta2)],
                    [-thetadot**2*eta*np.cos(theta) - (thetadot + theta2dot)**2*gamma2*np.cos(theta + theta2)],
-                   [-m2*g*gamma2*np.sin(theta + theta2) + np.maximum(0,-FLOOR_SPRING_STIFFNESS*(yf2))*(l2*np.sin(theta + theta2)) + fF2*(l2*np.cos(theta + theta2)) + HIP_SPRING_STIFFNESS*(phi2 - theta2)+ HIP_DAMPING_STIFFNESS*(-theta2dot)],
-                   [-eta1*(thetadot + theta1dot)**2*np.sin(theta + theta1)],
-                   [ eta1*(thetadot + theta1dot)**2*np.cos(theta + theta1)],
-                   [-eta2*(thetadot + theta2dot)**2*np.sin(theta + theta2)],
-                   [ eta2*(thetadot + theta2dot)**2*np.cos(theta + theta2)]])    
+                   [-m2*g*gamma2*np.sin(theta + theta2) + np.maximum(0,-FLOOR_SPRING_STIFFNESS*(y-eta*np.cos(theta)-l2*np.cos(theta + theta2)))*(l2*np.sin(theta + theta2)) + fF2*(l2*np.cos(theta + theta2)) + HIP_SPRING_STIFFNESS*(phi2 - theta2)+ HIP_DAMPING_STIFFNESS*(-theta2dot)]])    
     #fN1 = np.maximum(0,FLOOR_SPRING_STIFFNESS*(y-eta*np.cos(theta)-l1*np.cos(theta+theta1)))
     #fN2 = np.maximum(0,FLOOR_SPRING_STIFFNESS*(y-eta*np.cos(theta)-l2*np.cos(theta+theta2)))
     
