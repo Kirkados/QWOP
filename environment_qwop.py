@@ -41,7 +41,7 @@ class Environment:
         ##################################
         self.STATE_SIZE              = 26
         self.ACTION_SIZE             = 9
-        self.TIMESTEP                = 0.01 # [s]        
+        self.TIMESTEP                = 0.05 # [s]        
         self.MAX_NUMBER_OF_TIMESTEPS = 1200 # per episode
         self.NUM_FRAMES              = 100 # total animation is cut into this many frames
         self.RANDOMIZE               = False # whether or not to randomize the state & target location
@@ -62,6 +62,8 @@ class Environment:
         self.FLOOR_MU               = 0.3
         self.FLOOR_SPRING_STIFFNESS = 100000 #[N/m]
         self.FLOOR_FRICTION_STIFFNESS = 100000 #[N/m]
+        self.ATANDEL = 0.001
+        self.ATANGAIN = 12.7
         
         #self.body.segment(0) = 5
         
@@ -276,7 +278,7 @@ class Environment:
         fN2 = 0.
         
         # Packing up the parameters the equations of motion need
-        parameters = np.array([self.SEGMENT_MASS[0],self.SEGMENT_MASS[1],self.SEGMENT_MASS[2], self.SEGMENT_LENGTH[0],self.SEGMENT_LENGTH[1],self.SEGMENT_LENGTH[2],self.SEGMENT_ETA_LENGTH[0],self.SEGMENT_ETA_LENGTH[1],self.SEGMENT_ETA_LENGTH[2], self.SEGMENT_GAMMA_LENGTH[0],self.SEGMENT_GAMMA_LENGTH[1],self.SEGMENT_GAMMA_LENGTH[2], self.SEGMENT_MOMINERT[0], self.SEGMENT_MOMINERT[1], self.SEGMENT_MOMINERT[2], self.g, fF1, fF2, self.phi1, self.phi2, fN1, fN2, self.HIP_SPRING_STIFFNESS, self.HIP_DAMPING_STIFFNESS, self.FLOOR_SPRING_STIFFNESS,self.FLOOR_FRICTION_STIFFNESS, self.FLOOR_MU], dtype = 'float64')
+        parameters = np.array([self.SEGMENT_MASS[0],self.SEGMENT_MASS[1],self.SEGMENT_MASS[2], self.SEGMENT_LENGTH[0],self.SEGMENT_LENGTH[1],self.SEGMENT_LENGTH[2],self.SEGMENT_ETA_LENGTH[0],self.SEGMENT_ETA_LENGTH[1],self.SEGMENT_ETA_LENGTH[2], self.SEGMENT_GAMMA_LENGTH[0],self.SEGMENT_GAMMA_LENGTH[1],self.SEGMENT_GAMMA_LENGTH[2], self.SEGMENT_MOMINERT[0], self.SEGMENT_MOMINERT[1], self.SEGMENT_MOMINERT[2], self.g, fF1, fF2, self.phi1, self.phi2, fN1, fN2, self.HIP_SPRING_STIFFNESS, self.HIP_DAMPING_STIFFNESS, self.FLOOR_SPRING_STIFFNESS,self.FLOOR_FRICTION_STIFFNESS, self.FLOOR_MU, self.ATANDEL,self.ATANGAIN], dtype = 'float64')
 
         # Integrating forward one time step. 
         # Returns initial condition on first row then next timestep on the next row
@@ -361,7 +363,7 @@ def equations_of_motion(state, t, parameters):
     x, y, theta, x1, y1, theta1, x2, y2, theta2, xf1,yf1,xf2,yf2, xdot, ydot, thetadot, x1dot, y1dot, theta1dot, x2dot, y2dot, theta2dot,xf1dot,yf1dot,xf2dot,yf2dot = state
     
     # Unpacking parameters
-    m, m1, m2, l, l1, l2, eta, eta1, eta2, gamma, gamma1, gamma2, I, I1, I2, g, fF1, fF2, phi1, phi2, fN1, fN2, HIP_SPRING_STIFFNESS,HIP_DAMPING_STIFFNESS, FLOOR_SPRING_STIFFNESS, FLOOR_FRICTION_STIFFNESS,FLOOR_MU  = parameters 
+    m, m1, m2, l, l1, l2, eta, eta1, eta2, gamma, gamma1, gamma2, I, I1, I2, g, fF1, fF2, phi1, phi2, fN1, fN2, HIP_SPRING_STIFFNESS,HIP_DAMPING_STIFFNESS, FLOOR_SPRING_STIFFNESS, FLOOR_FRICTION_STIFFNESS,FLOOR_MU, ATANDEL, ATANGAIN  = parameters 
     
     first_derivatives = np.array([xdot, ydot, thetadot, x1dot, y1dot, theta1dot, x2dot, y2dot, theta2dot,xf1dot,yf1dot,xf2dot,yf2dot])
 
@@ -382,21 +384,40 @@ def equations_of_motion(state, t, parameters):
                    [                   0.,                   0.,                      -eta2*np.sin(theta + theta2),                               0.,                               0.,                            0.,                               0.,                               -1,  -eta2*np.sin(theta + theta2),                              0.,                            0.,                               0.,                            1 ]])
     
     
-    C = np.matrix([[(-np.sign(xf1dot)*np.minimum(FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf1)*FLOOR_MU,np.abs(xf1dot)*FLOOR_FRICTION_STIFFNESS)) + (-np.sign(xf2dot)*np.minimum(FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf2)*FLOOR_MU,np.abs(xf2dot)*FLOOR_FRICTION_STIFFNESS))],
+    C = np.matrix([[(-FLOOR_MU*FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf1)*2/np.pi*np.arctan(xf1dot*ATANGAIN/ATANDEL)) + (-FLOOR_MU*FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf2)*2/np.pi*np.arctan(xf2dot*ATANGAIN/ATANDEL))],
                    [FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf1) + FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf2) - (m + m1 + m2)*g],
                    [-HIP_SPRING_STIFFNESS*(phi1 - theta1 + phi2 - theta2) -HIP_DAMPING_STIFFNESS*( -theta1dot - theta2dot) + m*g*eta*np.sin(theta)],
                    [ thetadot**2*eta*np.sin(theta) + (thetadot + theta1dot)**2*gamma1*np.sin(theta + theta1)],
                    [-thetadot**2*eta*np.cos(theta) - (thetadot + theta1dot)**2*gamma1*np.cos(theta + theta1)],
-                   [-m1*g*gamma1*np.sin(theta + theta1) + FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf1)*(l1*np.sin(theta + theta1)) + (-np.sign(xf1dot)*np.minimum(FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf1)*FLOOR_MU,np.abs(xf1dot)*FLOOR_FRICTION_STIFFNESS))*(l1*np.cos(theta + theta1)) + HIP_SPRING_STIFFNESS*(phi1 - theta1)+ HIP_DAMPING_STIFFNESS*(-theta1dot)],
+                   [-m1*g*gamma1*np.sin(theta + theta1) + FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf1)*(l1*np.sin(theta + theta1)) + (-FLOOR_MU*FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf1)*2/np.pi*np.arctan(xf1dot*ATANGAIN/ATANDEL))*(l1*np.cos(theta + theta1)) + HIP_SPRING_STIFFNESS*(phi1 - theta1)+ HIP_DAMPING_STIFFNESS*(-theta1dot)],
                    [ thetadot**2*eta*np.sin(theta) + (thetadot + theta2dot)**2*gamma2*np.sin(theta + theta2)],
                    [-thetadot**2*eta*np.cos(theta) - (thetadot + theta2dot)**2*gamma2*np.cos(theta + theta2)],
-                   [-m2*g*gamma2*np.sin(theta + theta2) + FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf2)*(l2*np.sin(theta + theta2)) + (-np.sign(xf2dot)*np.minimum(FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf2)*FLOOR_MU,np.abs(xf2dot)*FLOOR_FRICTION_STIFFNESS))*(l2*np.cos(theta + theta2)) + HIP_SPRING_STIFFNESS*(phi2 - theta2)+ HIP_DAMPING_STIFFNESS*(-theta2dot)],
+                   [-m2*g*gamma2*np.sin(theta + theta2) + FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf2)*(l2*np.sin(theta + theta2)) + (-FLOOR_MU*FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf2)*2/np.pi*np.arctan(xf2dot*ATANGAIN/ATANDEL))*(l2*np.cos(theta + theta2)) + HIP_SPRING_STIFFNESS*(phi2 - theta2)+ HIP_DAMPING_STIFFNESS*(-theta2dot)],
                    [-eta1*(thetadot + theta1dot)**2*np.sin(theta + theta1)],
                    [ eta1*(thetadot + theta1dot)**2*np.cos(theta + theta1)],
                    [-eta2*(thetadot + theta2dot)**2*np.sin(theta + theta2)],
                    [ eta2*(thetadot + theta2dot)**2*np.cos(theta + theta2)]])    
-    #fN1 = np.maximum(0,FLOOR_SPRING_STIFFNESS*(y-eta*np.cos(theta)-l1*np.cos(theta+theta1)))
-    #fN2 = np.maximum(0,FLOOR_SPRING_STIFFNESS*(y-eta*np.cos(theta)-l2*np.cos(theta+theta2)))
+    
+    #test 3 - continuous simoird-like function
+    #fN1 = FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf1)
+    #fN2 = FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf2)
+    #fF1 = (-FLOOR_MU*FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf1)*2/np.pi*np.arctan(xf1dot*ATANGAIN/ATANDEL))
+    #fF2 = (-FLOOR_MU*FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf2)*2/np.pi*np.arctan(xf2dot*ATANGAIN/ATANDEL))
+    
+    #(np.minimum(FLOOR_MU*FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf1),np.maximum(-FLOOR_MU*FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf1), -xf1dot*FLOOR_FRICTION_STIFFNESS)))
+    #fF2 = (np.minimum(FLOOR_MU*FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf2),np.maximum(-FLOOR_MU*FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf2), -xf2dot*FLOOR_FRICTION_STIFFNESS)))
+     
+    #test 2 - exact min/max with spring in x
+    #fN1 = FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf1)
+    #fN2 = FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf2)
+    #fF1 = (np.minimum(FLOOR_MU*FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf1),np.maximum(-FLOOR_MU*FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf1), -xf1dot*FLOOR_FRICTION_STIFFNESS)))
+    #fF2 = (np.minimum(FLOOR_MU*FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf2),np.maximum(-FLOOR_MU*FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf2), -xf2dot*FLOOR_FRICTION_STIFFNESS)))
+    
+    #test 1 - min/max with spring in x
+    #fN1 = FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf1)
+    #fN2 = FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf2)
+    #fF1 = (-np.sign(xf1dot)*np.minimum(FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf1)*FLOOR_MU,np.abs(xf1dot)*FLOOR_FRICTION_STIFFNESS)) 
+    #fF2 = (-np.sign(xf2dot)*np.minimum(FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf2)*FLOOR_MU,np.abs(xf2dot)*FLOOR_FRICTION_STIFFNESS)) 
     
     # Calculating angular rate derivatives
     #x3dx4d = np.array(np.linalg.inv(M)*(action.reshape(2,1) - C - friction*np.matrix([[x3],[x4]]))).squeeze() 

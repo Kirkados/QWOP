@@ -241,13 +241,16 @@ def drawDistLine(width,hum_scale,x):
         
 
 
-def drawState(var,width,height):
+def drawState(var):
     # intialize window 
     pygame.init()
     pygame.display.set_caption("QWOP")
     
     # Set the height and width of the screen
+    width = 800
+    height = 500
     size = [width, height]
+    hum_scale = 150 #pixel/m
     screen = pygame.display.set_mode(size)
     background = drawBackground(width,height)
     
@@ -305,10 +308,7 @@ def drawState(var,width,height):
     best_x = 20
     best_trial = 10
     
-    #scale
-    hum_scale = 150 #pixel/m
-    width = 800
-    height = 500
+
     
     
     #define relative positions of text and buttons    
@@ -337,28 +337,8 @@ def drawState(var,width,height):
     x_0 = np.rint(width/2)
     y_0 = np.rint(height*9/10)
     
-    #define the body
-    segment_count = 3
-    segment_points = np.zeros((segment_count,3,2))
-
-
-#    l = 1#self.body_length
-#    l1 = 1#self.leg1_length
-#    l2 = 1#self.leg2_length  
     
-#    a = 0.5
-#    a1 = 0.55
-#    a2 = 0.55
-#    
-#    x= 0.00000000e+00
-#    y= 2.00000000e+00
-#    theta= 0 
-#    x1=2.50000000e-01
-#    y1=1.06698730e+00
-#    theta1=30*np.pi/180
-#    x2=-2.50000000e-01 
-#    y2=1.06698730e+00
-#    theta2=-30*np.pi/180
+
 
      
     # Loop until the user clicks the close button.
@@ -374,6 +354,12 @@ def drawState(var,width,height):
 #    myimage = pygame.image.load("background_im.png")
 #    imagerect = myimage.get_rect()
     
+    
+    #define the body
+    segment_count = 3
+    segment_points = np.zeros((segment_count,3,2))
+
+    
     x = state[0]
     y = state[1]
     theta = state[2]
@@ -384,7 +370,7 @@ def drawState(var,width,height):
     y2 = state[7]
     theta2 = state[8]
     
-    
+    # DRAW INITIAL STATE 
     l=env.SEGMENT_LENGTH[0]
     l1=env.SEGMENT_LENGTH[1]
     l2=env.SEGMENT_LENGTH[2]
@@ -408,9 +394,26 @@ def drawState(var,width,height):
     
     #prepare screen
     screen.blit(background,(0,0))
+    #draw stickman in initial position
+    #Get point coordinates for each segment
+    segment_points[0,:,:] = returnPointCoords(x,y,theta,gamma,eta,x,x_0,y_0,hum_scale)
+    segment_points[1,:,:] = returnPointCoords(x1,y1,theta+theta1,gamma1,eta1,x,x_0,y_0,hum_scale)
+    segment_points[2,:,:] = returnPointCoords(x2,y2,theta+theta2,gamma2,eta2,x,x_0,y_0,hum_scale)
+    
+    
+    #Draw body
+    for segment_id in range(segment_count):
+        pygame.draw.line(screen, BODY, segment_points[segment_id,0,:], segment_points[segment_id,2,:], 10)
+        pygame.draw.ellipse(screen, COG, [segment_points[segment_id,1,0]-5,segment_points[segment_id,1,1]-5,10,10], 2)
+        pygame.draw.ellipse(screen, BODY, [segment_points[segment_id,0,0]-6,segment_points[segment_id,0,1]-6,12,12], 0)
+        pygame.draw.ellipse(screen, BODY, [segment_points[segment_id,2,0]-6,segment_points[segment_id,2,1]-6,12,12], 0)
+           
+    
     if play_game:
         text_begin = font_begin.render("PRESS [SPACE] TO PLAY", True, TEXT_BEGIN)
         screen.blit(text_begin, [10,10])
+        
+    #force screen to display all the latest    
     pygame.display.flip()
     
     # -------- Main Program Loop -----------
@@ -605,7 +608,7 @@ def drawState(var,width,height):
         
             # --- Wrap-up
             # Limit to 60 frames per second
-            clock.tick(60)
+            clock.tick(20)
          
             # Go ahead and update the screen with what we've drawn.
             pygame.display.flip() # more efficient: update(rectangle_list) https://www.pygame.org/docs/ref/display.html
