@@ -41,11 +41,8 @@ class Agent:
         if self.n_agent == 1 and Settings.RECORD_VIDEO:
             # Generates a fake display that collects the frames during rendering.
             # Must be rendered on Linux.
-            try:
-                display = Display(visible = 0, size = (1400,900))
-                display.start()
-            except:
-                print("You must run on Linux if you want to record gym videos!")
+            display = Display(visible = 0, size = (1400,900))
+            display.start()
         
         # Generating distribution's value bins
         self.bins = np.linspace(Settings.MIN_Q, Settings.MAX_Q, Settings.NUMBER_OF_BINS, dtype = np.float32) 
@@ -129,11 +126,6 @@ class Agent:
             self.agent_to_env.put(True)
             state = self.env_to_agent.get()
 
-            # Normalizing the state to 1 separately along each dimension
-            # to avoid the 'vanishing gradients' problem
-            if Settings.NORMALIZE_STATE:
-                state = state/Settings.UPPER_STATE_BOUND
-            
             # Clearing the N-step memory for this episode
             self.n_step_memory.clear()
             
@@ -145,8 +137,9 @@ class Agent:
             # Calculating the noise scale for this episode. The noise scale 
             # allows for changing the amount of noise added to the actor during training.
             if test_time:
-                # It's test time! Run this episode without noise to evaluate performance.
-                exploration_rate = 0.           
+                # It's test time! Run this episode without noise (if desired) to evaluate performance.
+                if Settings.NOISELESS_AT_TEST_TIME:
+                    exploration_rate = 0.           
                 
                 # Additionally, if it's time to render, make a statement to the user
                 if Settings.RECORD_VIDEO and episode_number % (Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES*Settings.VIDEO_RECORD_FREQUENCY) == 0:
@@ -155,11 +148,19 @@ class Agent:
                     state_log = []
                     action_log = []
                     time_log = []
+                    state_log.append(state)
                 
             else:
                 # Regular training episode, use noise.
                 # Noise is decayed during the training
                 exploration_rate = Settings.INITIAL_EXPLORATION_RATE * Settings.EXPLORATION_RATE_DECAY ** episode_number
+                
+            # Normalizing the state to 1 separately along each dimension
+            # to avoid the 'vanishing gradients' problem
+            if Settings.NORMALIZE_STATE:
+                state = state/Settings.UPPER_STATE_BOUND
+            # Discarding irrelevant states
+            state = np.delete(state, Settings.IRRELEVANT_STATES)
             
             # Resetting items for this episode
             episode_reward = 0
@@ -197,11 +198,19 @@ class Agent:
                 # Add reward we just received to running total for this episode
                 episode_reward += reward
                 
+                # If this episode is being rendered, log the state for rendering later
+                if self.n_agent == 1 and Settings.RECORD_VIDEO and episode_number % (Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES*Settings.VIDEO_RECORD_FREQUENCY) == 0 and not Settings.ENVIRONMENT == 'gym':                    
+                    state_log.append(next_state)
+                    action_log.append(action)
+                    time_log.append(timestep_number*Settings.TIMESTEP)
+                
                 # Normalize the state and scale down reward
                 if Settings.NORMALIZE_STATE:
                     next_state = next_state/Settings.UPPER_STATE_BOUND
                 reward = reward/Settings.REWARD_SCALING
-                                
+                # Discarding irrelevant states
+                next_state = np.delete(next_state, Settings.IRRELEVANT_STATES)
+                
                 # Store the data in this temporary buffer until we calculate the n-step return
                 self.n_step_memory.append((state, action, reward))
                 
@@ -223,12 +232,6 @@ class Agent:
                     # wait until that is done before adding more data to the buffer
                     replay_buffer_dump_flag.wait() # blocks until replay_buffer_dump_flag is True
                     self.replay_buffer.add((state_0, action_0, n_step_reward, next_state, done, discount_factor))
-                
-                # If this episode is being rendered, log the state for rendering later
-                if self.n_agent == 1 and Settings.RECORD_VIDEO and episode_number % (Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES*Settings.VIDEO_RECORD_FREQUENCY) == 0 and not Settings.ENVIRONMENT == 'gym':                    
-                    state_log.append(state)
-                    action_log.append(action)
-                    time_log.append(timestep_number*Settings.TIMESTEP)
                 
                 # End of timestep -> next state becomes current state
                 state = next_state

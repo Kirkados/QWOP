@@ -11,10 +11,11 @@ class Settings:
     ##### Run Settings #####
     ########################
     
-    RUN_NAME               = 'first_run' # use just the name. If trying to restore from file, use name along with timestamp
+    RUN_NAME               = 'first_training_run' # use just the name. If trying to restore from file, use name along with timestamp
     ENVIRONMENT            = 'qwop'
     RECORD_VIDEO           = False
     VIDEO_RECORD_FREQUENCY = 40 # Multiples of "CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES"
+    NOISELESS_AT_TEST_TIME = True # Whether or not to test noise-free (Keep at True unless debugging)
     LEARN_FROM_PIXELS      = False # False = learn from state (fully observed); True = learn from pixels (partially observed)
     RESUME_TRAINING        = False # If True, be sure to set "RUN_NAME" to the previous run's filename
     USE_GPU_WHEN_AVAILABLE = True # As of Nov 19, 2018, it appears better to use CPU. Re-evaluate again later
@@ -43,7 +44,7 @@ class Settings:
     CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES       = 5    
     LOG_TRAINING_PERFORMANCE_EVERY_NUM_ITERATIONS     = 100
     DISPLAY_TRAINING_PERFORMANCE_EVERY_NUM_ITERATIONS = 50000
-    DISPLAY_ACTOR_PERFORMANCE_EVERY_NUM_EPISODES      = 2500
+    DISPLAY_ACTOR_PERFORMANCE_EVERY_NUM_EPISODES      = 50
     
     # Buffer settings
     PRIORITY_REPLAY_BUFFER = False
@@ -111,6 +112,7 @@ class Settings:
     MAX_Q                   = env.MAX_Q
     TIMESTEP                = env.TIMESTEP
     MAX_NUMBER_OF_TIMESTEPS = env.MAX_NUMBER_OF_TIMESTEPS # per episode
+    IRRELEVANT_STATES       = env.IRRELEVANT_STATES
     
     
     # Delete the test environment

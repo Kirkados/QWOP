@@ -34,22 +34,35 @@ import pygame
 from scipy.integrate import odeint # Numerical integrator
 
 class Environment:
+    # For reference
+    # state = x, y, theta, x1, y1, theta1, x2, y2, theta2, xf1, yf1, xf2, yf2, xdot, ydot, thetadot, x1dot, y1dot, theta1dot, x2dot, y2dot, theta2dot, xf1dot, yf1dot, xf2dot, yf2dot
     
     def __init__(self): 
         ##################################
         ##### Environment Properties #####
         ##################################
-        self.STATE_SIZE              = 26
+        self.TOTAL_STATE_SIZE        = 26 # total number of states
+        self.IRRELEVANT_STATES       = [0,3,4,6,7,9,10,11,12,16,17,19,20,22,23,24,25] # states that are irrelevant to the policy network in its decision making
+        self.STATE_SIZE              = self.TOTAL_STATE_SIZE - len(self.IRRELEVANT_STATES) # total number of relevant states
         self.ACTION_SIZE             = 9
         self.TIMESTEP                = 0.05 # [s]        
         self.MAX_NUMBER_OF_TIMESTEPS = 1200 # per episode
         self.NUM_FRAMES              = 100 # total animation is cut into this many frames
         self.RANDOMIZE               = False # whether or not to randomize the state & target location
-        self.UPPER_STATE_BOUND       =  np.array([1., 1., 1.])
-        self.NORMALIZE_STATE         = False # Normalize state on each timestep to avoid vanishing gradients
+        self.UPPER_STATE_BOUND       = np.array([np.inf, 2., 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, np.inf, np.inf, 1., 1., 1., np.inf, np.inf, 1., np.inf, np.inf, 1., np.inf, np.inf, np.inf, np.inf])
+        self.NORMALIZE_STATE         = True # Normalize state on each timestep to avoid vanishing gradients
         self.REWARD_SCALING          = 100.0 # Amount to scale down the reward signal
         self.MIN_Q                   = -6.0
         self.MAX_Q                   = 5.0
+        self.DONE_ON_FALL            = True # whether or not falling down ends the episode
+        
+        # Rendering parameters
+        self.HEIGHT = 500
+        self.WIDTH  = 800
+        self.HUMAN_SCALE = 150 #pixel/m
+        
+        self.x_0 = np.rint(self.WIDTH/2) # 0 in x on the screen
+        self.y_0 = np.rint(self.HEIGHT*9/10) # 0 in y on the screen
         
         # How much the leg desired angle changes per frame when a button is pressed
         self.HIP_INCREMENT        = 2.*np.pi/180. # [rad/s]
@@ -242,6 +255,41 @@ class Environment:
         
         return pressed_q, pressed_w, pressed_o, pressed_p
        
+    # Returns the point coordinates for each member 
+    def returnPointCoords(self, x, y, theta_cum, gamma, eta, x_c, x_0, y_0, hum_scale):
+        #gamma is "above", eta is "below" CG
+        
+        pointCoords = np.array([[x-gamma*np.sin(theta_cum),y+gamma*np.cos(theta_cum)],[x,y],[x+eta*np.sin(theta_cum),y-eta*np.cos(theta_cum)]])      
+        
+        pointCoords[:,0]=(pointCoords[:,0]-x_c)*hum_scale+x_0
+        pointCoords[:,1]=y_0-(pointCoords[:,1])*hum_scale
+        
+        return pointCoords
+    
+    def is_done(self):
+        # Determines whether this episode is done
+        
+        # Define the body
+        segment_count = 3
+        segment_points = np.zeros((segment_count,3,2))
+        
+        # Unpacking the state
+        x, y, theta, x1, y1, theta1, x2, y2, theta2, *_ = self.state
+
+        #Get point coordinates for each segment
+        segment_points[0,:,:] = self.returnPointCoords(x,y,theta,self.SEGMENT_GAMMA_LENGTH[0],self.SEGMENT_ETA_LENGTH[0],x,self.x_0,self.y_0,self.HUMAN_SCALE)
+        segment_points[1,:,:] = self.returnPointCoords(x1,y1,theta+theta1,self.SEGMENT_GAMMA_LENGTH[1],self.SEGMENT_ETA_LENGTH[1],x,self.x_0,self.y_0,self.HUMAN_SCALE)
+        segment_points[2,:,:] = self.returnPointCoords(x2,y2,theta+theta2,self.SEGMENT_GAMMA_LENGTH[2],self.SEGMENT_ETA_LENGTH[2],x,self.x_0,self.y_0,self.HUMAN_SCALE)
+        
+        # Check if any node is out-of-bounds. If so, this episode is done
+        if np.any(segment_points[:,0,1] > self.HEIGHT) and self.DONE_ON_FALL:
+            done = True
+            #print("Episode done at time %.2f seconds" %self.time)
+        else:
+            done = False
+        
+        return done
+    
     
     #####################################
     ##### Step the Dynamics forward #####
@@ -251,10 +299,7 @@ class Environment:
         # Parsing action number into button presses
         #0: No buttons pressed; 1: Q only; 2: QO; 3: QP; 4: W only; 5: WO; 6: WP; 7: O only; 8: P only
         pressed_q, pressed_w, pressed_o, pressed_p = self.parse_action(action)
-        
-        # Initializing
-        done = False  
-            
+
         # Incrementing the desired leg angles
         # Q and W control leg 1 through phi1
         # O and P control leg 2 through phi2
@@ -287,7 +332,11 @@ class Environment:
         ##############################
         next_states = odeint(equations_of_motion, self.state, [self.time, self.time + self.TIMESTEP], args = (parameters,), full_output = 0)
         
+        # Get this timestep's reward
         reward = self.reward_function(action) 
+        
+        # Check if this episode is done
+        done = self.is_done()
         
         self.state = next_states[1,:] # remembering the current state
         self.time += self.TIMESTEP # updating the stored time
@@ -301,7 +350,7 @@ class Environment:
         # Returns the reward for this timestep as a function of the state and action
         
         # The agent is (currently) rewarded for forward velocity.
-        reward = self.state[9]        
+        reward = self.state[13]        
         return reward
     
     
