@@ -11,7 +11,7 @@ class Settings:
     ##### Run Settings #####
     ########################
     
-    RUN_NAME               = 'first_training_run' # use just the name. If trying to restore from file, use name along with timestamp
+    RUN_NAME               = 'second_training_run' # use just the name. If trying to restore from file, use name along with timestamp
     ENVIRONMENT            = 'qwop'
     RECORD_VIDEO           = False
     VIDEO_RECORD_FREQUENCY = 40 # Multiples of "CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES"
@@ -27,9 +27,9 @@ class Settings:
     #############################
     
     # Hyperparameters
-    NUMBER_OF_ACTORS        = 10
+    NUMBER_OF_ACTORS        = 4
     NUMBER_OF_EPISODES      = 1e5 # that each agent will perform
-    MAX_TRAINING_ITERATIONS = 3e5
+    MAX_TRAINING_ITERATIONS = 1e6
     CRITIC_LEARNING_RATE    = 0.0001
     TARGET_NETWORK_TAU      = 0.001
     DISCOUNT_FACTOR         = 0.99

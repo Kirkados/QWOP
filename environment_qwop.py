@@ -51,9 +51,9 @@ class Environment:
         self.RANDOMIZE               = False # whether or not to randomize the state & target location
         self.UPPER_STATE_BOUND       = np.array([np.inf, 2., 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, np.inf, np.inf, 1., 1., 1., np.inf, np.inf, 1., np.inf, np.inf, 1., np.inf, np.inf, np.inf, np.inf])
         self.NORMALIZE_STATE         = True # Normalize state on each timestep to avoid vanishing gradients
-        self.REWARD_SCALING          = 100.0 # Amount to scale down the reward signal
-        self.MIN_Q                   = -6.0
-        self.MAX_Q                   = 5.0
+        self.REWARD_SCALING          = 1000.0 # Amount to scale down the reward signal
+        self.MIN_Q                   = -2.0
+        self.MAX_Q                   =  5.0
         self.DONE_ON_FALL            = True # whether or not falling down ends the episode
         
         # Rendering parameters
