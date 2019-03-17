@@ -546,7 +546,7 @@ def equations_of_motion(state, t, parameters):
 #                   [thetadot**2*eta*np.sin(theta) + (thetadot + theta2dot)**2*gamma2*np.sin(theta + theta2)],
 #                   [-g*gamma2*np.sin(theta + theta2) + fN2*(eta2*np.sin(theta + theta2) + gamma2*np.sin(theta + theta2)) + fF2*(eta2*np.cos(theta + theta2) + gamma2*np.cos(theta + theta2)) + K*(phi2 - theta2)]])    
     
-def render(state_log, action_log, time_log, episode_number, filename):
+def render(play_game, save_game, state_log, action_log, episode_number, filename):
         """
         This function animates the motion of one episode. It receives the 
         log of the states encountered during one episode.
