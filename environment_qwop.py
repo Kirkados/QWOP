@@ -29,8 +29,7 @@ Inputs:
 import numpy as np
 import multiprocessing
 import signal
-#import animator
-import pygame
+import animator
 from scipy.integrate import odeint # Numerical integrator
 
 class Environment:
@@ -52,8 +51,8 @@ class Environment:
         self.UPPER_STATE_BOUND       = np.array([np.inf, 2., 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, np.inf, np.inf, 1., 1., 1., np.inf, np.inf, 1., np.inf, np.inf, 1., np.inf, np.inf, np.inf, np.inf])
         self.NORMALIZE_STATE         = True # Normalize state on each timestep to avoid vanishing gradients
         self.REWARD_SCALING          = 1000.0 # Amount to scale down the reward signal
-        self.MIN_Q                   = -2.0
-        self.MAX_Q                   =  5.0
+        self.MIN_Q                   = -5.0
+        self.MAX_Q                   = 15.0
         self.DONE_ON_FALL            = True # whether or not falling down ends the episode
         
         # Rendering parameters
@@ -546,7 +545,7 @@ def equations_of_motion(state, t, parameters):
 #                   [thetadot**2*eta*np.sin(theta) + (thetadot + theta2dot)**2*gamma2*np.sin(theta + theta2)],
 #                   [-g*gamma2*np.sin(theta + theta2) + fN2*(eta2*np.sin(theta + theta2) + gamma2*np.sin(theta + theta2)) + fF2*(eta2*np.cos(theta + theta2) + gamma2*np.cos(theta + theta2)) + K*(phi2 - theta2)]])    
     
-def render(play_game, save_game, state_log, action_log, episode_number, filename):
+def render(filename, state_log, action_log, episode_number):
         """
         This function animates the motion of one episode. It receives the 
         log of the states encountered during one episode.
@@ -566,44 +565,10 @@ def render(play_game, save_game, state_log, action_log, episode_number, filename
         
         
         # Stephane's Animating Code #
-        print(state_log)
-        print(action_log)
-        print(time_log)
+        #print(state_log[1])
+        #print(action_log)
+        animator.drawState(play_game = False, filename = filename, state_log = state_log, action_log = action_log, episode_number = episode_number)
         
         #############################
         
-                
-        #initialize the pygame window
-        width = 800
-        height = 500
-        size = [width, height]
-        pygame.init()
-        pygame.display.set_caption("QWOP")
-        screen = pygame.display.set_mode(size)
-        
-        #prepare background surface
-        background_surface = animator.drawBackground(width,height)
-        screen.blit(background_surface, (0, 0))
-        pygame.display.update()
-        
-        
-        
-        #loop 
-        time_steps = len(state_log)
-        for this_step in range(time_steps): #this loop becomes while not dead for game
-            print(this_step)
-            
-            #get current state (from state or using physics in game)
-            
-            
-            #Prep surface
-            #frame_surface = animator.drawState(background_surface,self, state_log(i), action_log(i), episode_number)
-            #Draw new body
-        
-            #save image
-            pygame.image.save(background_surface,"test.png")
-            
-        pygame.quit()
-        
-        #read images and write video, delete images
         

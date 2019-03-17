@@ -14,7 +14,7 @@ class Settings:
     RUN_NAME               = 'first_animation_run' # use just the name. If trying to restore from file, use name along with timestamp
     ENVIRONMENT            = 'qwop'
     RECORD_VIDEO           = True
-    VIDEO_RECORD_FREQUENCY = 40 # Multiples of "CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES"
+    VIDEO_RECORD_FREQUENCY = 1 # Multiples of "CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES"
     NOISELESS_AT_TEST_TIME = True # Whether or not to test noise-free (Keep at True unless debugging)
     LEARN_FROM_PIXELS      = False # False = learn from state (fully observed); True = learn from pixels (partially observed)
     RESUME_TRAINING        = False # If True, be sure to set "RUN_NAME" to the previous run's filename
@@ -41,7 +41,7 @@ class Settings:
     # Periodic events
     UPDATE_TARGET_NETWORKS_EVERY_NUM_ITERATIONS       = 1 
     UPDATE_ACTORS_EVERY_NUM_EPISODES                  = 1
-    CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES       = 5    
+    CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES       = 5  
     LOG_TRAINING_PERFORMANCE_EVERY_NUM_ITERATIONS     = 100
     DISPLAY_TRAINING_PERFORMANCE_EVERY_NUM_ITERATIONS = 50000
     DISPLAY_ACTOR_PERFORMANCE_EVERY_NUM_EPISODES      = 50
