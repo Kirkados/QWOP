@@ -241,7 +241,35 @@ def drawDistLine(width,hum_scale,x):
         
 
 
-def drawState(var):
+def drawState(play_game, filename="", state_log=None, action_log=None, episode_number=1):
+
+    
+    #define game parameters
+    print_out = False
+
+    #save_game = False
+    #play_game = True
+    begin = False
+    game_over = False
+    quit_game = False
+    
+    if filename == "":
+        save_game = False
+    else:
+        save_game = True
+    
+    
+    frame = 0
+    max_frame = 2000    
+    
+    
+    # generation                best x (gen)
+    # time                      x
+    n_trial = 1
+    best_x = 20
+    best_trial = 10
+    
+    
     # intialize window 
     pygame.init()
     pygame.display.set_caption("QWOP")
@@ -301,16 +329,7 @@ def drawState(var):
     #text_p_h = text_q.get_rect().height
             
 
-        
-    # generation                best x (gen)
-    # time                      x
-    n_trial = 1
-    best_x = 20
-    best_trial = 10
-    
 
-    
-    
     #define relative positions of text and buttons    
     dx_btn = np.rint(height/12)
     dy_btn = np.rint(height/12)
@@ -381,17 +400,7 @@ def drawState(var):
     eta1=env.SEGMENT_ETA_LENGTH[1]
     eta2=env.SEGMENT_ETA_LENGTH[2]
     
-    
-    
-    print_out = False
-    frame = 0
-    max_frame = 2000
-    save_frame = False
-    begin = False
-    play_game = True
-    game_over = False
-    
-    
+        
     #prepare screen
     screen.blit(background,(0,0))
     #draw stickman in initial position
@@ -416,103 +425,126 @@ def drawState(var):
     #force screen to display all the latest    
     pygame.display.flip()
     
+    
+    
+    frame_num = 0
     # -------- Main Program Loop -----------
     while running:
-        #pygame.event.wait()
-        # --- Event Processing
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            elif event.type == pygame.KEYDOWN:
-                #print("User pressed a key.")
-                keys = pygame.key.get_pressed()
-    
-                pressed_q = keys[pygame.K_q]
-                pressed_w = keys[pygame.K_w]
-                pressed_o = keys[pygame.K_o]
-                pressed_p = keys[pygame.K_p]
-                
-                if print_out:
-                    if pressed_q:
-                        print("Q")
-                    if pressed_w:
-                        print("W")
-                    if pressed_o:
-                        print("O")
-                    if pressed_p:
-                        print("P")
-                        
-                if keys[pygame.K_SPACE]:
-                    begin = True
-            elif event.type == pygame.KEYUP:
-                #print("User let go of a key.")
-                keys = pygame.key.get_pressed()
-                
-                if print_out:
-                    if not keys[pygame.K_q]:
-                        if pressed_q:
-                            print("!Q")
-                    if not keys[pygame.K_w]:
-                        if pressed_w:
-                            print("!W")
-                    if not keys[pygame.K_o]:
-                        if pressed_o:
-                            print("!O")
-                    if not keys[pygame.K_p]:
-                        if pressed_p:
-                            print("!P")  
+        if play_game:
+            ############################################            
+            ###### DETERMINE USER  INPUTS TO GAME ######            
+            ############################################   
+            
+            #pygame.event.wait()
+            # --- Event Processing
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                elif event.type == pygame.KEYDOWN:
+                    #print("User pressed a key.")
+                    keys = pygame.key.get_pressed()
+        
+                    pressed_q = keys[pygame.K_q]
+                    pressed_w = keys[pygame.K_w]
+                    pressed_o = keys[pygame.K_o]
+                    pressed_p = keys[pygame.K_p]
                     
-                pressed_q = keys[pygame.K_q]
-                pressed_w = keys[pygame.K_w]
-                pressed_o = keys[pygame.K_o]
-                pressed_p = keys[pygame.K_p]        
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                if print_out:
-                     print("User pressed a mouse button")
-            elif event.type == pygame.MOUSEMOTION:
-                if print_out:
-                     print("User moved the mouse")            
-                     po = pygame.mouse.get_pos()
-                     print(po)
-            else:
-                if print_out:
-                     print("Other")
+                    if print_out:
+                        if pressed_q:
+                            print("Q")
+                        if pressed_w:
+                            print("W")
+                        if pressed_o:
+                            print("O")
+                        if pressed_p:
+                            print("P")
+                            
+                    if keys[pygame.K_SPACE]:
+                        if not begin:
+                            begin = True
+                        if game_over:
+                            
+                            game_over = False
+                            #check high-score
+                            
+                            #update time and texts
+                            
+                            #reset environment
+                            env.rest()
+                            
+                    if keys[pygame.K_ESCAPE]:
+                        if game_over:
+                            quit_game = True
+                        
+                elif event.type == pygame.KEYUP:
+                    #print("User let go of a key.")
+                    keys = pygame.key.get_pressed()
+                    
+                    if print_out:
+                        if not keys[pygame.K_q]:
+                            if pressed_q:
+                                print("!Q")
+                        if not keys[pygame.K_w]:
+                            if pressed_w:
+                                print("!W")
+                        if not keys[pygame.K_o]:
+                            if pressed_o:
+                                print("!O")
+                        if not keys[pygame.K_p]:
+                            if pressed_p:
+                                print("!P")  
+                        
+                    pressed_q = keys[pygame.K_q]
+                    pressed_w = keys[pygame.K_w]
+                    pressed_o = keys[pygame.K_o]
+                    pressed_p = keys[pygame.K_p]        
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if print_out:
+                         print("User pressed a mouse button")
+                elif event.type == pygame.MOUSEMOTION:
+                    if print_out:
+                         print("User moved the mouse")            
+                         po = pygame.mouse.get_pos()
+                         print(po)
+                else:
+                    if print_out:
+                         print("Other")
                      
-        if begin:             
+        if begin or not play_game:   
+            ############################################            
+            ####### GAME LOGIC - DETERMINE STATE #######            
+            ############################################ 
+            
             # --- Logic
-    
-    
-            # Debugging, change angle of bodies
-    #        if pressed_q:
-    #            theta1 = theta1 + 1*np.pi/180
-    #            theta2 = theta2 - 1*np.pi/180
-    #        if pressed_w:
-    #            theta1 = theta1 - 1*np.pi/180
-    #            theta2 = theta2 + 1*np.pi/180
-    #        if pressed_o:
-    #            theta = theta + 1*np.pi/180
-    #        if pressed_p:
-    #            theta = theta - 1*np.pi/180
+            if play_game:
             
-            #pack button presses into integer tag
-            this_action = packAction(pressed_q,pressed_w,pressed_o,pressed_p)
+                #pack button presses into integer tag
+                this_action = packAction(pressed_q,pressed_w,pressed_o,pressed_p)
+                
+                #Step the dynamics forward one timestep
+                next_state,reward,game_over = env.step(this_action)
+                #done = False
             
-    
-            #Step the dynamics forward one timestep
-            next_state,reward,done = env.step(this_action)
-            #done = False
+            else: #not play game
+                #look at the state vector history and figure out what to do
+                
+                #dissect actions
+                pressed_q,pressed_w,pressed_o,pressed_p = parseAction(action_log[frame_num])
+
+                #dissect state
+                next_state = state_log[frame_num]
+                if frame_num == np.size(state_log, axis=0)-1:
+                    quit_game = True
+                    
+            
+            
+            #DONE GETS A PROPMOTION, REMOVE DONE CHECK FROM THIS CODE - USE GAME_OVER
             
             #unpack state
-            x = next_state[0]
-            y = next_state[1]
-            theta = next_state[2]
-            x1 = next_state[3]
-            y1 = next_state[4]
-            theta1 = next_state[5]
-            x2 = next_state[6]
-            y2 = next_state[7]
-            theta2 = next_state[8]
-            
+            x,y,theta = next_state[0:3]
+            x1,y1,theta1 = next_state[3:6]
+            x2,y2,theta2 = next_state[6:9]
+
             #Get point coordinates for each segment
             segment_points[0,:,:] = returnPointCoords(x,y,theta,gamma,eta,x,x_0,y_0,hum_scale)
             segment_points[1,:,:] = returnPointCoords(x1,y1,theta+theta1,gamma1,eta1,x,x_0,y_0,hum_scale)
@@ -521,7 +553,14 @@ def drawState(var):
             # Determine location of painted lines based on X distance 
             line_points = drawDistLine(width,hum_scale,x)
             
-                
+            
+            
+            
+            ############################################            
+            ####### DRAW THE STATE TO THE SCREEN #######            
+            ############################################            
+            #INDEPENDENT OF CASE
+            
             # --- Drawing
             # Set the screen background (clears)
             #screen.fill(BLACK)
@@ -608,7 +647,8 @@ def drawState(var):
         
             # --- Wrap-up
             # Limit to 60 frames per second
-            clock.tick(20)
+            if play_game:
+                clock.tick(20)
          
             # Go ahead and update the screen with what we've drawn.
             pygame.display.flip() # more efficient: update(rectangle_list) https://www.pygame.org/docs/ref/display.html
@@ -616,23 +656,21 @@ def drawState(var):
              
             
             #save frame to file
-            if save_frame:
+            if save_game:
                 im_name = "frames/frame_%05i.png" %frame
-                pygame.image.save(screen,im_name)
+                pygame.image.save(screen,im_name)          
             
-            #Check of game is over
-            if game_over:
-                break            
-            
-            #Check if the dynamics are complete
-            if done:
+            #Check if the game is over (dynamics are complete)
+            if quit_game:
                 break
             
             #check if too many iterations have occured
-            frame+=1
-            if frame >=max_frame:
+            frame_num+=1
+            if frame_num >=max_frame:
                 break
         
+        
+            this_time += env.TIMESTEP
     #save to video
     #avconv -f image2 -i figMatplotlib%d.png -r 76 -s 800x500 foo.avi
     
