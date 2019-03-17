@@ -147,7 +147,6 @@ class Agent:
                     # Also log the states & actions encountered in this episode because we are going to render them!
                     state_log = []
                     action_log = []
-                    time_log = []
                     state_log.append(state)
                 
             else:
@@ -202,7 +201,6 @@ class Agent:
                 if self.n_agent == 1 and Settings.RECORD_VIDEO and episode_number % (Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES*Settings.VIDEO_RECORD_FREQUENCY) == 0 and not Settings.ENVIRONMENT == 'gym':                    
                     state_log.append(next_state)
                     action_log.append(action)
-                    time_log.append(timestep_number*Settings.TIMESTEP)
                 
                 # Normalize the state and scale down reward
                 if Settings.NORMALIZE_STATE:
@@ -264,7 +262,7 @@ class Agent:
             ################################       
             # If this episode is being rendered, render it now.
             if self.n_agent == 1 and Settings.RECORD_VIDEO and episode_number % (Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES*Settings.VIDEO_RECORD_FREQUENCY) == 0 and not Settings.ENVIRONMENT == 'gym':                    
-                environment_file.render(np.asarray(state_log), np.asarray(action_log), time_log, episode_number, Settings.RUN_NAME)
+                environment_file.render(False, True, np.asarray(state_log), np.asarray(action_log), episode_number, Settings.RUN_NAME)
                 
             # Periodically update the agent with the learner's most recent version of the actor network parameters
             if episode_number % Settings.UPDATE_ACTORS_EVERY_NUM_EPISODES == 0:
