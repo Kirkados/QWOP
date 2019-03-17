@@ -482,7 +482,7 @@ def drawState(play_game, filename="", state_log=None, action_log=None, episode_n
                             episode_number +=1
                             this_time=0
                             #reset environment
-                            env.rest()
+                            env.reset()
                             
                     if keys[pygame.K_ESCAPE]:
                         if game_over:
