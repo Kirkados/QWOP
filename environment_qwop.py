@@ -29,7 +29,7 @@ Inputs:
 import numpy as np
 import multiprocessing
 import signal
-import animator
+
 from scipy.integrate import odeint # Numerical integrator
 
 class Environment:
@@ -567,6 +567,7 @@ def render(filename, state_log, action_log, episode_number):
         # Stephane's Animating Code #
         #print(state_log[1])
         #print(action_log)
+        import animator
         animator.drawState(play_game = False, filename = filename, state_log = state_log, action_log = action_log, episode_number = episode_number)
         
         #############################

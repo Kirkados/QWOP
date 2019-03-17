@@ -33,6 +33,7 @@ class Agent:
         self.n_agent = n_agent
         self.sess = sess
         self.replay_buffer = replay_buffer
+        self.filename = filename
         self.learner_policy_parameters = learner_policy_parameters
         self.agent_to_env = agent_to_env
         self.env_to_agent = env_to_agent
@@ -262,7 +263,7 @@ class Agent:
             ################################       
             # If this episode is being rendered, render it now.
             if self.n_agent == 1 and Settings.RECORD_VIDEO and (episode_number % (Settings.CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES*Settings.VIDEO_RECORD_FREQUENCY) == 0 or episode_number == 1) and not Settings.ENVIRONMENT == 'gym':                    
-                environment_file.render(Settings.RUN_NAME, np.asarray(state_log), np.asarray(action_log), episode_number)
+                environment_file.render(self.filename, np.asarray(state_log), np.asarray(action_log), episode_number)
                 
             # Periodically update the agent with the learner's most recent version of the actor network parameters
             if episode_number % Settings.UPDATE_ACTORS_EVERY_NUM_EPISODES == 0:

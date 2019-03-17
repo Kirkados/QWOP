@@ -5,7 +5,8 @@ Created on Thu Feb 21 18:50:29 2019
 
 @author: StephaneMagnan
 """
-
+import os
+os.environ['SDL_AUDIODRIVER'] = 'dsp'
 import numpy as np
 import pygame
 from environment_qwop import Environment
@@ -261,7 +262,10 @@ def drawState(play_game, filename="", state_log=None, action_log=None, episode_n
         if play_game:
             save_path = "frames/"+filename +"/"
         else:
-            save_path = Settings.MODEL_SAVE_DIRECTORY + filename + "/videos/"
+            save_path = Settings.MODEL_SAVE_DIRECTORY + filename + "/videos/" + str(episode_number) + "/"   
+    
+        os.makedirs(os.path.dirname(save_path), exist_ok=True) 
+    
         
     
     frame = 0
@@ -430,7 +434,6 @@ def drawState(play_game, filename="", state_log=None, action_log=None, episode_n
     pygame.display.flip()
     
     
-    
     frame_num = 0
     # -------- Main Program Loop -----------
     while running:
@@ -537,13 +540,17 @@ def drawState(play_game, filename="", state_log=None, action_log=None, episode_n
             else: #not play game
                 #look at the state vector history and figure out what to do
                 
-                #dissect actions
-                pressed_q,pressed_w,pressed_o,pressed_p = parseAction(action_log[frame_num])
+                
 
-                #dissect state
-                next_state = state_log[frame_num]
-                if frame_num == np.size(state_log, axis=0)-1:
+                
+                if frame_num == np.size(state_log, axis=0)-1:                
                     quit_game = True
+                else:                    
+                    #dissect state
+                    next_state = state_log[frame_num]
+                    #dissect actions
+                    pressed_q,pressed_w,pressed_o,pressed_p = parseAction(action_log[frame_num])
+                
                     
             
             
@@ -667,7 +674,8 @@ def drawState(play_game, filename="", state_log=None, action_log=None, episode_n
             
             #save frame to file
             if save_game:
-                im_name = save_path+ "frame_%05i.png" %frame
+                im_name = save_path+ "frame_%05i.png" %frame_num
+                #print(im_name)
                 pygame.image.save(screen,im_name)          
             
             #Check if the game is over (dynamics are complete)
@@ -687,7 +695,7 @@ def drawState(play_game, filename="", state_log=None, action_log=None, episode_n
     # Close everything down
     pygame.quit()
     
-    print("quit")
+    #print("quit")
     
     
     
