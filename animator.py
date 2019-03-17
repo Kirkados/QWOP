@@ -9,6 +9,7 @@ Created on Thu Feb 21 18:50:29 2019
 import numpy as np
 import pygame
 from environment_qwop import Environment
+from settings import Settings
 
 def runCode():
     #runfile('/Users/StephaneMagnan/Documents/GitHub/QWOP/animator.py', wdir='/Users/StephaneMagnan/Documents/GitHub/QWOP')
@@ -257,17 +258,20 @@ def drawState(play_game, filename="", state_log=None, action_log=None, episode_n
         save_game = False
     else:
         save_game = True
-    
+        if play_game:
+            save_path = "frames/"+filename +"/"
+        else:
+            save_path = Settings.MODEL_SAVE_DIRECTORY + filename + "/videos/"
+        
     
     frame = 0
     max_frame = 2000    
     
     
     # generation                best x (gen)
-    # time                      x
-    n_trial = 1
-    best_x = 20
-    best_trial = 10
+    # time      
+    best_x = 0
+    best_trial = 0
     
     
     # intialize window 
@@ -466,9 +470,14 @@ def drawState(play_game, filename="", state_log=None, action_log=None, episode_n
                             
                             game_over = False
                             #check high-score
+                            if x >=best_x:
+                                best_x = x
+                                best_trial = episode_number
+                                
                             
                             #update time and texts
-                            
+                            episode_number +=1
+                            this_time=0
                             #reset environment
                             env.rest()
                             
@@ -555,7 +564,7 @@ def drawState(play_game, filename="", state_log=None, action_log=None, episode_n
             
             
             
-            
+             
             ############################################            
             ####### DRAW THE STATE TO THE SCREEN #######            
             ############################################            
@@ -575,11 +584,12 @@ def drawState(play_game, filename="", state_log=None, action_log=None, episode_n
             text_t_w = text_time.get_rect().width
             screen.blit(text_time, [x_btn4+dx_btn-text_t_w,y_btn-dy_btn])
             
-            text_record = font_subtitles.render("%3.2fm (%i)" % (best_x, best_trial), True, TEXT)
-            screen.blit(text_record, [x_btn1,y_btn-dy_btn])
+            if play_game:
+                text_record = font_subtitles.render("%3.2fm (%i)" % (best_x, best_trial), True, TEXT)
+                screen.blit(text_record, [x_btn1,y_btn-dy_btn])
     
             # write current score title
-            text_current = font_distance.render("%3.2fm (%i)" %(x,n_trial), True, TEXT)
+            text_current = font_distance.render("%3.2fm (%i)" %(x,episode_number), True, TEXT)
             text_c_w = text_current.get_rect().width
             screen.blit(text_current, [np.rint(width/2-text_c_w/2),y_btn])
     
@@ -657,7 +667,7 @@ def drawState(play_game, filename="", state_log=None, action_log=None, episode_n
             
             #save frame to file
             if save_game:
-                im_name = "frames/frame_%05i.png" %frame
+                im_name = save_path+ "frame_%05i.png" %frame
                 pygame.image.save(screen,im_name)          
             
             #Check if the game is over (dynamics are complete)
