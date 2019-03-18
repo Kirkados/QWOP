@@ -30,7 +30,7 @@ class Saver:
         # If it fails, or we don't want to load (Settings.RESUME_TRAINING = False)
         # then we start from scratch
         
-        self.saver = tf.train.Saver() # initialize the tensorflow Saver()
+        self.saver = tf.train.Saver(max_to_keep = 2) # initialize the tensorflow Saver()
         
         if Settings.RESUME_TRAINING:            
             print("Attempting to load in previously-trained model")            
@@ -47,4 +47,4 @@ class Saver:
             return False
     
     def initialize(self):
-        self.saver = tf.train.Saver() # initialize the tensorflow Saver() without trying to load in parameters
+        self.saver = tf.train.Saver(max_to_keep = 2) # initialize the tensorflow Saver() without trying to load in parameters
