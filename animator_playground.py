@@ -9,4 +9,4 @@ Created on Sun Mar 17 16:08:47 2019
 import animator
 
 play_game=True
-animator.drawState(play_game)
+animator.drawState(play_game,"test_rec")

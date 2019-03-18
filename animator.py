@@ -7,6 +7,8 @@ Created on Thu Feb 21 18:50:29 2019
 """
 import os
 os.environ['SDL_AUDIODRIVER'] = 'dsp'
+from os.path import isfile, join
+import cv2
 import numpy as np
 import pygame
 from environment_qwop import Environment
@@ -241,7 +243,30 @@ def drawDistLine(width,hum_scale,x):
     return line_points
 
         
-
+def convert_frames_to_video(pathIn,pathOut,fps):
+    frame_array = []
+    files = [f for f in os.listdir(pathIn) if isfile(join(pathIn, f))]
+ 
+    #for sorting the file names properly
+    files.sort(key = lambda x: int(x[-9:-4]))
+ 
+    for i in range(len(files)):
+        filename=pathIn + files[i]
+        #reading each files
+        img = cv2.imread(filename)
+        height, width, layers = img.shape
+        size = (width,height)
+        #print(filename)
+        #inserting the frames into an image array
+        frame_array.append(img)
+        os.remove(filename)
+    out = cv2.VideoWriter(pathOut,cv2.VideoWriter_fourcc(*'MJPG'), fps, size)
+ 
+    for i in range(len(frame_array)):
+        # writing to a image array
+        out.write(frame_array[i])
+    out.release()  
+    
 
 def drawState(play_game, filename="", state_log=None, action_log=None, episode_number=1):
 
@@ -270,7 +295,7 @@ def drawState(play_game, filename="", state_log=None, action_log=None, episode_n
     
     frame = 0
     max_frame = 2000    
-    
+    this_time = 0
     
     # generation                best x (gen)
     # time      
@@ -586,17 +611,17 @@ def drawState(play_game, filename="", state_log=None, action_log=None, episode_n
             #Draw text
             
             # write time and record subtitles
-            this_time = (pygame.time.get_ticks() - start_time)/1000
-            text_time = font_subtitles.render("%3.2fs" %this_time, True, TEXT)
+            this_time = this_time#(pygame.time.get_ticks() - start_time)/1000
+            text_time = font_subtitles.render("%3.2f s" %this_time, True, TEXT)
             text_t_w = text_time.get_rect().width
             screen.blit(text_time, [x_btn4+dx_btn-text_t_w,y_btn-dy_btn])
             
             if play_game:
-                text_record = font_subtitles.render("%3.2fm (%i)" % (best_x, best_trial), True, TEXT)
+                text_record = font_subtitles.render("%3.2f m (%i)" % (best_x, best_trial), True, TEXT)
                 screen.blit(text_record, [x_btn1,y_btn-dy_btn])
     
             # write current score title
-            text_current = font_distance.render("%3.2fm (%i)" %(x,episode_number), True, TEXT)
+            text_current = font_distance.render("%3.2f m (%i)" %(x,episode_number), True, TEXT)
             text_c_w = text_current.get_rect().width
             screen.blit(text_current, [np.rint(width/2-text_c_w/2),y_btn])
     
@@ -690,7 +715,11 @@ def drawState(play_game, filename="", state_log=None, action_log=None, episode_n
         
             this_time += env.TIMESTEP
     #save to video
-    #avconv -f image2 -i figMatplotlib%d.png -r 76 -s 800x500 foo.avi
+    pathIn= save_path
+    pathOut = save_path + 'video.avi'
+    fps = 5
+    convert_frames_to_video(pathIn, pathOut, fps)
+    
     
     # Close everything down
     pygame.quit()
@@ -698,5 +727,5 @@ def drawState(play_game, filename="", state_log=None, action_log=None, episode_n
     #print("quit")
     
     
-    
+
  
