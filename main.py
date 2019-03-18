@@ -145,7 +145,7 @@ with tf.Session(config = config) as sess:
     ##############################    
     
     # Initializing saver class (for loading & saving data)
-    saver = saver.Saver(sess, filename) 
+    saver = saver.Saver(sess, filename, max_to_keep = 2) 
     
     # Initializing replay buffer, with the option of a prioritized replay buffer
     if Settings.PRIORITY_REPLAY_BUFFER:
