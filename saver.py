@@ -23,7 +23,7 @@ class Saver:
         print("Saving neural networks at iteration number " + str(n_iteration) + "...")
         
         os.makedirs(os.path.dirname(Settings.MODEL_SAVE_DIRECTORY + self.filename), exist_ok = True)
-        self.saver.save(self.sess, Settings.MODEL_SAVE_DIRECTORY + self.filename + "/Iteration_" + str(n_iteration) + ".ckpt")      
+        self.saver.save(self.sess, Settings.MODEL_SAVE_DIRECTORY + self.filename + "/Iteration_" + str(n_iteration) + ".ckpt", max_to_keep = 2)      
         
     def load(self):
         # Try to load in weights to the networks in the current Session.
