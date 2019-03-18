@@ -287,13 +287,10 @@ def drawState(play_game, filename="", state_log=None, action_log=None, episode_n
         if play_game:
             save_path = "frames/"+filename +"/"
         else:
-            save_path = Settings.MODEL_SAVE_DIRECTORY + filename + "/videos/" + str(episode_number) + "/"   
+            save_path = Settings.MODEL_SAVE_DIRECTORY + filename + "/videos/"  
     
         os.makedirs(os.path.dirname(save_path), exist_ok=True) 
     
-        
-    
-    frame = 0
     max_frame = 2000    
     this_time = 0
     
@@ -716,8 +713,8 @@ def drawState(play_game, filename="", state_log=None, action_log=None, episode_n
             this_time += env.TIMESTEP
     #save to video
     pathIn= save_path
-    pathOut = save_path + 'video.avi'
-    fps = 5
+    pathOut = save_path + '/episode_' + str(int(episode_number)) + '.avi'
+    fps = 1/env.TIMESTEP
     convert_frames_to_video(pathIn, pathOut, fps)
     
     
