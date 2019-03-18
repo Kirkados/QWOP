@@ -46,7 +46,8 @@ Code started: February 18, 2019
 
 # Importing libraries & other classes
 # Others'
-from shutil import copyfile
+import glob
+import shutil
 import os
 import time
 import threading
@@ -128,11 +129,11 @@ else: # Otherwise, we are starting from scratch
 # Generate writer that will log Tensorboard scalars & graph
 writer = tf.summary.FileWriter(Settings.MODEL_SAVE_DIRECTORY + filename, filename_suffix = Settings.TENSORBOARD_FILE_EXTENSION)
 
-# Saving a copy of the settings.py file in the 'Settings.MODEL_SAVE_DIRECTORY' directory, for reference
-copyfile('settings.py', Settings.MODEL_SAVE_DIRECTORY + filename + '/settings.py')
-# Saving a copy of the environment file in the 'Settings.MODEL_SAVE_DIRECTORY' directory, for reference (I may be making changes to the dynamics between runs)
-copyfile('environment_' + Settings.ENVIRONMENT + '.py', Settings.MODEL_SAVE_DIRECTORY + filename + '/environment_' + Settings.ENVIRONMENT + '.py')
-
+# Saving a copy of the all python files used in this run, for reference
+# Make directory if it doesn't already exist
+os.makedirs(os.path.dirname(Settings.MODEL_SAVE_DIRECTORY + filename + '/code/'), exist_ok=True) 
+for each_file in glob.glob('*.py'):
+    shutil.copy2(each_file, Settings.MODEL_SAVE_DIRECTORY + filename + '/code/')
 
 #######################################
 ##### Starting Tensorflow session #####
