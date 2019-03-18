@@ -26,6 +26,9 @@ def convert_frames_to_video(pathIn,pathOut,fps):
     frame_array = []
     files = [f for f in os.listdir(pathIn) if isfile(join(pathIn, f))]
  
+    for f in files:
+        if f[-4:] != ".png":
+            files.remove(f)
     #for sorting the file names properly
     files.sort(key = lambda x: int(x[-9:-4]))
  
@@ -47,8 +50,8 @@ def convert_frames_to_video(pathIn,pathOut,fps):
     out.release()
  
 def main():
-    pathIn= './frames/10.0/'
-    pathOut = './frames/10.0/10.0_video.avi'
+    pathIn= './frames/test_rec/'
+    pathOut = './frames/test_rec/video.avi'
     fps = 5
     convert_frames_to_video(pathIn, pathOut, fps)
  

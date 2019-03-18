@@ -247,6 +247,11 @@ def convert_frames_to_video(pathIn,pathOut,fps):
     frame_array = []
     files = [f for f in os.listdir(pathIn) if isfile(join(pathIn, f))]
  
+    #remove non png files
+    for f in files:
+        if f[-4:] != ".png":
+            files.remove(f)
+    
     #for sorting the file names properly
     files.sort(key = lambda x: int(x[-9:-4]))
  
