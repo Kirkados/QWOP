@@ -246,11 +246,16 @@ def drawDistLine(width,hum_scale,x):
 def convert_frames_to_video(pathIn,pathOut,fps):
     frame_array = []
     files = [f for f in os.listdir(pathIn) if isfile(join(pathIn, f))]
- 
+
     #remove non png files
-    for f in files:
-        if f[-4:] != ".png":
-            files.remove(f)
+    file_counter = 0
+    while file_counter < len(files):
+
+        if files[file_counter][-4:] != ".png":
+            #print("Removing " + files[file_counter])
+            files.remove(files[file_counter])
+        else:
+            file_counter += 1 # only increment counter if a file was not removed
     
     #for sorting the file names properly
     files.sort(key = lambda x: int(x[-9:-4]))
@@ -718,7 +723,7 @@ def drawState(play_game, filename="", state_log=None, action_log=None, episode_n
             this_time += env.TIMESTEP
     #save to video
     pathIn= save_path
-    pathOut = save_path + '/episode_' + str(int(episode_number)) + '.avi'
+    pathOut = save_path + '/episode_' + str(episode_number) + '.avi'
     fps = 1/env.TIMESTEP
     convert_frames_to_video(pathIn, pathOut, fps)
     

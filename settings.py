@@ -11,7 +11,7 @@ class Settings:
     ##### Run Settings #####
     ########################
     
-    RUN_NAME               = 'first_animation_run' # use just the name. If trying to restore from file, use name along with timestamp
+    RUN_NAME               = 'first_video_run' # use just the name. If trying to restore from file, use name along with timestamp
     ENVIRONMENT            = 'qwop'
     RECORD_VIDEO           = True
     VIDEO_RECORD_FREQUENCY = 4 # Multiples of "CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES"

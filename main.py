@@ -123,7 +123,7 @@ if Settings.RESUME_TRAINING:
 else: # Otherwise, we are starting from scratch
     # Generate a filename using Settings.RUN_NAME with the current timestamp
     filename                  = Settings.RUN_NAME + '-{:%Y-%m-%d %H-%M}'.format(datetime.datetime.now())
-    starting_episode_number   = np.ones(Settings.NUMBER_OF_ACTORS) # All actors start at episode 1
+    starting_episode_number   = np.ones(Settings.NUMBER_OF_ACTORS, dtype = int) # All actors start at episode 1
     starting_iteration_number = 1 # learner starts at iteration 1
         
 # Generate writer that will log Tensorboard scalars & graph
