@@ -67,8 +67,8 @@ class Environment:
         self.HIP_INCREMENT        = 2.*np.pi/180. # [rad/s]
         self.HIP_SPRING_STIFFNESS = 1000 # [Nm/rad]       
         self.HIP_DAMPING_STIFFNESS = 100 # [Nm/rad]
-        self.phi1                 = 30*np.pi/180
-        self.phi2                 = -30*np.pi/180
+        self.PHI1_INITIAL                 = 30*np.pi/180
+        self.PHI2_INITIAL                 = -30*np.pi/180
         
         #friction properties
         self.FLOOR_MU               = 0.3
@@ -213,6 +213,8 @@ class Environment:
             initial_xf2 = self.SEGMENT_ETA_LENGTH[0] * np.sin(initial_body_angle) + self.SEGMENT_LENGTH[1] * np.sin(initial_body_angle + initial_leg1_angle)
             initial_yf2 = initial_torso_height - self.SEGMENT_ETA_LENGTH[0] * np.cos(initial_body_angle) - self.SEGMENT_LENGTH[1] * np.cos(initial_body_angle + initial_leg1_angle)
             
+            self.phi1 = self.PHI1_INITIAL 
+            self.phi2 = self.PHI2_INITIAL 
             # Assembling into the state
             # Note: state = [x, y, theta, x1, y1, theta1, x2, y2, theta2, xdot, ydot, thetadot, x1dot, y1dot, theta1dot, x2dot, y2dot, theta2dot]
             self.state = np.array([0., initial_torso_height, initial_body_angle, initial_x1, initial_y1, initial_leg1_angle, initial_x2, initial_y2, initial_leg2_angle, initial_xf1,initial_yf1,initial_xf2,initial_yf2,0., 0., 0., 0., 0., 0., 0., 0., 0.,0., 0., 0., 0.,])
