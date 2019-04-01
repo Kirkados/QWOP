@@ -686,10 +686,18 @@ def drawState(play_game, filename="", state_log=None, action_log=None, episode_n
             
             #check if node out-of-bounds. If so, call it quits 
             if np.any(segment_points[:,0,1]>height):
-                text_GO = font_gameover.render("GAME OVER!", True, TEXT_GAMEOVER)
+                if episode_number >= 3:
+                    text_GO = font_gameover.render("WILL YOU BE ONE", True, TEXT_GAMEOVER)
+                    text_GO2 = font_gameover.render("OF MY GROOMSMEN?", True, TEXT_GAMEOVER)
+                else:
+                    text_GO = font_gameover.render("GAME OVER!", True, TEXT_GAMEOVER)
+                
                 text_GO_w = text_GO.get_rect().width
                 text_GO_h = text_GO.get_rect().height
                 screen.blit(text_GO, [np.rint(width/2-text_GO_w/2), np.rint(height/2-text_GO_h/2)])
+                
+                if episode_number >= 3:
+                    screen.blit(text_GO2, [np.rint(width/2-text_GO_w/2), np.rint(height/2+1.5*text_GO_h/2)])
                 game_over = True
                    
                 
