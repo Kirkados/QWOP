@@ -313,10 +313,10 @@ class Environment:
             self.phi1 = np.maximum(self.phi1,self.SEGMENT_PHI_MIN[1])
         if pressed_o:
             self.phi2 += self.HIP_INCREMENT
-            self.phi1 = np.minimum(self.phi2,self.SEGMENT_PHI_MAX[2])
+            self.phi2 = np.minimum(self.phi2,self.SEGMENT_PHI_MAX[2])
         if pressed_p:
             self.phi2 -= self.HIP_INCREMENT 
-            self.phi1 = np.maximum(self.phi2,self.SEGMENT_PHI_MIN[2])  
+            self.phi2 = np.maximum(self.phi2,self.SEGMENT_PHI_MIN[2])  
         
         # Choosing friction and normal force
         fF1 = 0.
