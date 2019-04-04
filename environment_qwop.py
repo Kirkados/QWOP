@@ -64,7 +64,7 @@ class Environment:
         self.y_0 = np.rint(self.HEIGHT*9/10) # 0 in y on the screen
         
         # How much the leg desired angle changes per frame when a button is pressed
-        self.HIP_INCREMENT        = 2.*np.pi/180. # [rad/s]
+        self.HIP_INCREMENT        = 5.*np.pi/180. # [rad/s]
         self.HIP_SPRING_STIFFNESS = 1000 # [Nm/rad]       
         self.HIP_DAMPING_STIFFNESS = 100 # [Nm/rad]
         self.PHI1_INITIAL                 = 30*np.pi/180
@@ -307,16 +307,16 @@ class Environment:
         # O and P control leg 2 through phi2
         if pressed_q:
             self.phi1 += self.HIP_INCREMENT
-            self.phi1 = np.minimum(self.phi1,self.SEGMENT_PHI_MAX[1])
+            #self.phi1 = np.minimum(self.phi1,self.SEGMENT_PHI_MAX[1])
         if pressed_w:
             self.phi1 -= self.HIP_INCREMENT
-            self.phi1 = np.maximum(self.phi1,self.SEGMENT_PHI_MIN[1])
+            #self.phi1 = np.maximum(self.phi1,self.SEGMENT_PHI_MIN[1])
         if pressed_o:
             self.phi2 += self.HIP_INCREMENT
-            self.phi2 = np.minimum(self.phi2,self.SEGMENT_PHI_MAX[2])
+            #self.phi2 = np.minimum(self.phi2,self.SEGMENT_PHI_MAX[2])
         if pressed_p:
             self.phi2 -= self.HIP_INCREMENT 
-            self.phi2 = np.maximum(self.phi2,self.SEGMENT_PHI_MIN[2])  
+            #self.phi2 = np.maximum(self.phi2,self.SEGMENT_PHI_MIN[2])  
         
         # Choosing friction and normal force
         fF1 = 0.
