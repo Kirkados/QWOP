@@ -11,7 +11,7 @@ class Settings:
     ##### Run Settings #####
     ########################
     
-    RUN_NAME               = '5deg_per_frame' # use just the name. If trying to restore from file, use name along with timestamp
+    RUN_NAME               = 'more_joint_stiffness_and_motion' # use just the name. If trying to restore from file, use name along with timestamp
     ENVIRONMENT            = 'qwop'
     RECORD_VIDEO           = True
     VIDEO_RECORD_FREQUENCY = 4 # Multiples of "CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES"

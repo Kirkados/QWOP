@@ -64,8 +64,8 @@ class Environment:
         self.y_0 = np.rint(self.HEIGHT*9/10) # 0 in y on the screen
         
         # How much the leg desired angle changes per frame when a button is pressed
-        self.HIP_INCREMENT        = 5.*np.pi/180. # [rad/s]
-        self.HIP_SPRING_STIFFNESS = 1000 # [Nm/rad]       
+        self.HIP_INCREMENT        = 10.*np.pi/180. # [rad/s]
+        self.HIP_SPRING_STIFFNESS = 10000 # [Nm/rad]       
         self.HIP_DAMPING_STIFFNESS = 100 # [Nm/rad]
         self.PHI1_INITIAL                 = 30*np.pi/180
         self.PHI2_INITIAL                 = -30*np.pi/180
