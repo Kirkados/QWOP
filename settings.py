@@ -11,8 +11,8 @@ class Settings:
     ##### Run Settings #####
     ########################
     
-    RUN_NAME               = 'more_joint_stiffness_and_motion' # use just the name. If trying to restore from file, use name along with timestamp
-    ENVIRONMENT            = 'qwop'
+    RUN_NAME               = 'full_qwop_run_1' # use just the name. If trying to restore from file, use name along with timestamp
+    ENVIRONMENT            = 'qwop_full'
     RECORD_VIDEO           = True
     VIDEO_RECORD_FREQUENCY = 4 # Multiples of "CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES"
     NOISELESS_AT_TEST_TIME = True # Whether or not to test noise-free (Keep at True unless debugging)
@@ -27,7 +27,7 @@ class Settings:
     #############################
     
     # Hyperparameters
-    NUMBER_OF_ACTORS        = 4
+    NUMBER_OF_ACTORS        = 1
     NUMBER_OF_EPISODES      = 1e5 # that each agent will perform
     MAX_TRAINING_ITERATIONS = 1e6
     CRITIC_LEARNING_RATE    = 0.0001

@@ -2,10 +2,15 @@
 """
 This script generates the environment for reinforcement learning agents.
 
-A simplified QWOP agent is modelled. It has one torso and two legs.
+A full QWOP agent is modeled. It has one torso, two legs, and two arms. 
+Each limb has two segments.
+Arm proximal segment is link 1
+Arm distal segment is link 2
+Leg proximal segment is link 3
+Leg distal segment is link 4
 
 The agent is encouraged to travel down the track. Its reward is proportional
-to its forward velocity.
+to the forward x velocity of the torso segment.
 
 All dynamic environments I create will have a standardized architecture. The 
 reason for this is I have one learning algorithm and many environments. All 
@@ -33,14 +38,17 @@ import signal
 from scipy.integrate import odeint # Numerical integrator
 
 class Environment:
-    # For reference
-    # state = x, y, theta, x1, y1, theta1, x2, y2, theta2, xf1, yf1, xf2, yf2, xdot, ydot, thetadot, x1dot, y1dot, theta1dot, x2dot, y2dot, theta2dot, xf1dot, yf1dot, xf2dot, yf2dot
+    """
+    For reference, the state is:
+    x,       y,    theta,    x1r,    y1r,    theta1r,    x2r,    y2r,    theta2r,    x3r,    y3r,    theta3r,    x4r,    y4r,    theta4r,    xfr,    yfr,    x1l,    y1l,    theta1l,    x2l,    y2l,    theta2l,    x3l,    y3l,    theta3l,    x4l,    y4l,    theta4l,    xfl,    yfl, \
+    xdot, ydot, thetadot, x1rdot, y1rdot, theta1rdot, x2rdot, y2rdot, theta2rdot, x3rdot, y3rdot, theta3rdot, x4rdot, y4rdot, theta4rdot, xfrdot, yfrdot, x1ldot, y1ldot, theta1ldot, x2ldot, y2ldot, theta2ldot, x3ldot, y3ldot, theta3ldot, x4ldot, y4ldot, theta4ldot, xfldot, yfldot = state
     
+    """
     def __init__(self): 
         ##################################
         ##### Environment Properties #####
         ##################################
-        self.TOTAL_STATE_SIZE        = 26 # total number of states
+        self.TOTAL_STATE_SIZE        = 62 # total number of states
         self.IRRELEVANT_STATES       = [0,3,4,6,7,9,10,11,12,16,17,19,20,22,23,24,25] # states that are irrelevant to the policy network in its decision making
         self.STATE_SIZE              = self.TOTAL_STATE_SIZE - len(self.IRRELEVANT_STATES) # total number of relevant states
         self.ACTION_SIZE             = 9
@@ -63,14 +71,44 @@ class Environment:
         self.x_0 = np.rint(self.WIDTH/2) # 0 in x on the screen
         self.y_0 = np.rint(self.HEIGHT*9/10) # 0 in y on the screen
         
-        # How much the leg desired angle changes per frame when a button is pressed
-        self.HIP_INCREMENT        = 10.*np.pi/180. # [rad/s]
-        self.HIP_SPRING_STIFFNESS = 10000 # [Nm/rad]       
-        self.HIP_DAMPING_STIFFNESS = 100 # [Nm/rad]
-        self.PHI1_INITIAL                 = 30*np.pi/180
-        self.PHI2_INITIAL                 = -30*np.pi/180
+        # Initial Conditions
+        self.INITIAL_Y       =   2.          # [m]
+        self.INITIAL_X       =   0.          # [m]
+        self.INITIAL_THETA   =   0*np.pi/180 # [rad]
+        self.INITIAL_THETA1R =  30*np.pi/180 # [rad]
+        self.INITIAL_THETA2R =  30*np.pi/180 # [rad]
+        self.INITIAL_THETA3R =  30*np.pi/180 # [rad]
+        self.INITIAL_THETA4R = -10*np.pi/180 # [rad]
+        self.INITIAL_THETA1L = -30*np.pi/180 # [rad]
+        self.INITIAL_THETA2L =  30*np.pi/180 # [rad]
+        self.INITIAL_THETA3L = -20*np.pi/180 # [rad]
+        self.INITIAL_THETA4L = -10*np.pi/180 # [rad]        
         
-        #friction properties
+        # How much the leg desired angle changes per frame when a button is pressed
+        self.HIP_INCREMENT      =   5*np.pi/180 # [rad/s]
+        self.CALF_INCREMENT     =   5*np.pi/180 # [rad/s]
+        self.SHOULDER_INCREMENT =   5*np.pi/180 # [rad/s]
+        self.ELBOW_INCREMENT    =   5*np.pi/180 # [rad/s]
+        self.PHI1R_INITIAL       =  30*np.pi/180 # [rad]
+        self.PHI2R_INITIAL       =  30*np.pi/180 # [rad]
+        self.PHI3R_INITIAL       =  30*np.pi/180 # [rad]
+        self.PHI4R_INITIAL       = -10*np.pi/180 # [rad]
+        self.PHI1L_INITIAL       = -30*np.pi/180 # [rad]
+        self.PHI2L_INITIAL       =  30*np.pi/180 # [rad]
+        self.PHI3L_INITIAL       = -20*np.pi/180 # [rad]
+        self.PHI4L_INITIAL       = -10*np.pi/180 # [rad]
+        
+        # Joint springs and dampers
+        self.HIP_SPRING_STIFFNESS      = 10000 # [Nm/rad]       
+        self.HIP_DAMPING               =   100 # [Nms/rad]
+        self.CALF_SPRING_STIFFNESS     = 10000 # [Nm/rad]
+        self.CALF_DAMPING              =   100 # [Nms/rad]
+        self.SHOULDER_SPRING_STIFFNESS = 10000 # [Nm/rad]
+        self.SHOULDER_DAMPING          =   100 # [Nms/rad]
+        self.ELBOW_SPRING_STIFFNESS    = 10000 # [Nm/rad]
+        self.ELBOW_DAMPING             =   100 # [Nms/rad]
+        
+        # Friction properties
         self.FLOOR_MU               = 0.3
         self.FLOOR_SPRING_STIFFNESS = 100000 #[N/m]
         self.FLOOR_DAMPING_COEFFICIENT = 10000 # [Ns/m]
@@ -86,7 +124,7 @@ class Environment:
         self.SEGMENT_MASS = list()# [kg]
         self.SEGMENT_MOMINERT = list()# [kg m^2]
         self.SEGMENT_LENGTH = list()# [m]
-        self.SEGMENT_ETA_LENGTH = list()# [m]
+        #self.SEGMENT_ETA_LENGTH = list()# [m]
         self.SEGMENT_GAMMA_LENGTH = list()# [m]
         self.SEGMENT_PHI_NAUGTH = list()# [rad]
         self.SEGMENT_PHI_MAX = list()# [rad]
@@ -112,7 +150,7 @@ class Environment:
         self.SEGMENT_MASS.append(m)
         self.SEGMENT_MOMINERT.append(I)
         self.SEGMENT_LENGTH.append(l)
-        self.SEGMENT_ETA_LENGTH.append(eta)
+        #self.SEGMENT_ETA_LENGTH.append(eta)
         self.SEGMENT_GAMMA_LENGTH.append(gamma)
         self.SEGMENT_PHI_NAUGTH.append(phi0)
         self.SEGMENT_PHI_MAX.append(phi_max)
@@ -142,7 +180,7 @@ class Environment:
         self.SEGMENT_MASS.append(m)
         self.SEGMENT_MOMINERT.append(I)
         self.SEGMENT_LENGTH.append(l)
-        self.SEGMENT_ETA_LENGTH.append(eta)
+        #self.SEGMENT_ETA_LENGTH.append(eta)
         self.SEGMENT_GAMMA_LENGTH.append(gamma)
         self.SEGMENT_PHI_NAUGTH.append(phi0)
         self.SEGMENT_PHI_MAX.append(phi_max)
@@ -178,7 +216,7 @@ class Environment:
         self.SEGMENT_MASS.append(m)
         self.SEGMENT_MOMINERT.append(I)
         self.SEGMENT_LENGTH.append(l)
-        self.SEGMENT_ETA_LENGTH.append(eta)
+        #self.SEGMENT_ETA_LENGTH.append(eta)
         self.SEGMENT_GAMMA_LENGTH.append(gamma)
         self.SEGMENT_PHI_NAUGTH.append(phi0)
         self.SEGMENT_PHI_MAX.append(phi_max)
@@ -199,7 +237,7 @@ class Environment:
         self.SEGMENT_MASS.append(m)
         self.SEGMENT_MOMINERT.append(I)
         self.SEGMENT_LENGTH.append(l)
-        self.SEGMENT_ETA_LENGTH.append(eta)
+        #self.SEGMENT_ETA_LENGTH.append(eta)
         self.SEGMENT_GAMMA_LENGTH.append(gamma)
         self.SEGMENT_PHI_NAUGTH.append(phi0)
         self.SEGMENT_PHI_MAX.append(phi_max)
@@ -219,7 +257,7 @@ class Environment:
         self.SEGMENT_MASS.append(m)
         self.SEGMENT_MOMINERT.append(I)
         self.SEGMENT_LENGTH.append(l)
-        self.SEGMENT_ETA_LENGTH.append(eta)
+        #self.SEGMENT_ETA_LENGTH.append(eta)
         self.SEGMENT_GAMMA_LENGTH.append(gamma)
         self.SEGMENT_PHI_NAUGTH.append(phi0)
         self.SEGMENT_PHI_MAX.append(phi_max)
@@ -227,51 +265,48 @@ class Environment:
         
         
         
-        'foot
-m_foot = 0.0145*p_mass
-h_foot = 0.43*p_height
-l_foot = 0.152*p_height
-comh_foot = 0.500*h_foot
-com_foot = 0.500*l_foot
-k_foot = 0.475*l_foot
-ic_foot = m_foot*k_foot**2
-ip_foot = m_foot*com_foot**2
-
-'leg_dist
-m_leg_dist = 0.465*p_mass
-l_leg_dist = 0.242*p_height
-com_leg_dist = 0.433*l_leg_dist
-k_leg_dist = 0.302*l_leg_dist
-ic_leg_dist = m_leg_dist*k_leg_dist**2
-ip_leg_dist = m_leg_dist*com_leg_dist**2
-
-'thigh
-m_thigh = 0.100*p_mass
-l_thigh = 0.245*p_height
-com_thigh = 0.433*l_thigh
-k_thigh = 0.323*l_thigh
-ic_thigh = m_thigh*k_thigh**2
-ip_thigh = m_thigh*com_thigh**2
-
-
-
-
-'trunk
-m_trunk = 0.497*p_mass
-l_trunk = 0.289*p_height
-com_trunk = 0.500*l_trunk
-k_trunk = 0.500*l_trunk
-ic_trunk = m_trunk*k_trunk**2
-ip_trunk = m_trunk*com_trunk**2
-
-'head+neck
-m_head = 0.181*p_mass
-l_head = 0.19*p_height
-com_head = 0.567*l_head
-k_head = 0.495*l_head
-ic_head = m_head*k_head**2
-ip_head = m_head*com_head**2
+        # foot
+        m_foot = 0.0145*p_mass
+        h_foot = 0.43*p_height
+        l_foot = 0.152*p_height
+        comh_foot = 0.500*h_foot
+        com_foot = 0.500*l_foot
+        k_foot = 0.475*l_foot
+        ic_foot = m_foot*k_foot**2
+        ip_foot = m_foot*com_foot**2
         
+        # leg_dist
+        m_leg_dist = 0.465*p_mass
+        l_leg_dist = 0.242*p_height
+        com_leg_dist = 0.433*l_leg_dist
+        k_leg_dist = 0.302*l_leg_dist
+        ic_leg_dist = m_leg_dist*k_leg_dist**2
+        ip_leg_dist = m_leg_dist*com_leg_dist**2
+        
+        # thigh
+        m_thigh = 0.100*p_mass
+        l_thigh = 0.245*p_height
+        com_thigh = 0.433*l_thigh
+        k_thigh = 0.323*l_thigh
+        ic_thigh = m_thigh*k_thigh**2
+        ip_thigh = m_thigh*com_thigh**2
+        
+        # trunk
+        m_trunk = 0.497*p_mass
+        l_trunk = 0.289*p_height
+        com_trunk = 0.500*l_trunk
+        k_trunk = 0.500*l_trunk
+        ic_trunk = m_trunk*k_trunk**2
+        ip_trunk = m_trunk*com_trunk**2
+        
+        # head+neck
+        m_head = 0.181*p_mass
+        l_head = 0.19*p_height
+        com_head = 0.567*l_head
+        k_head = 0.495*l_head
+        ic_head = m_head*k_head**2
+        ip_head = m_head*com_head**2
+                
     ###################################
     ##### Seeding the environment #####
     ###################################
@@ -287,39 +322,107 @@ ip_head = m_head*com_head**2
         
         # If we are randomizing the initial consitions and state
         if self.RANDOMIZE: 
-            # Randomizing initial conditions 
+            # Randomizing initial conditions for each episode
             pass # to be completed later
             
         else:
-            # Consistent initial conditions
-            # Define the initial angles and torso height and the remainder is calculated
-            initial_body_angle = 0.
-            initial_leg1_angle = np.pi/6
-            initial_leg2_angle = -np.pi/6
-            initial_torso_height = 2. # [m] above ground
+            # Constant initial conditions on each episode
             
-            # Calculating leg initial positions
-            initial_x1 = self.SEGMENT_ETA_LENGTH[0] * np.sin(initial_body_angle) + self.SEGMENT_GAMMA_LENGTH[1] * np.sin(initial_body_angle + initial_leg1_angle)
-            initial_y1 = initial_torso_height - self.SEGMENT_ETA_LENGTH[0] * np.cos(initial_body_angle) - self.SEGMENT_GAMMA_LENGTH[1] * np.cos(initial_body_angle + initial_leg1_angle)
-            initial_x2 = self.SEGMENT_ETA_LENGTH[0] * np.sin(initial_body_angle) + self.SEGMENT_GAMMA_LENGTH[2] * np.sin(initial_body_angle + initial_leg2_angle)
-            initial_y2 = initial_torso_height - self.SEGMENT_ETA_LENGTH[0] * np.cos(initial_body_angle) - self.SEGMENT_GAMMA_LENGTH[2] * np.cos(initial_body_angle + initial_leg2_angle)
+            # Torso
+            initial_x = self.INITIAL_X
+            initial_y = self.INITIAL_Y
+            initial_theta = self.INITIAL_THETA
             
-            initial_xf1 = self.SEGMENT_ETA_LENGTH[0] * np.sin(initial_body_angle) + self.SEGMENT_LENGTH[1] * np.sin(initial_body_angle + initial_leg1_angle)
-            initial_yf1 = initial_torso_height - self.SEGMENT_ETA_LENGTH[0] * np.cos(initial_body_angle) - self.SEGMENT_LENGTH[1] * np.cos(initial_body_angle + initial_leg1_angle)
-            initial_xf2 = self.SEGMENT_ETA_LENGTH[0] * np.sin(initial_body_angle) + self.SEGMENT_LENGTH[1] * np.sin(initial_body_angle + initial_leg1_angle)
-            initial_yf2 = initial_torso_height - self.SEGMENT_ETA_LENGTH[0] * np.cos(initial_body_angle) - self.SEGMENT_LENGTH[1] * np.cos(initial_body_angle + initial_leg1_angle)
+            # Right proximal arm segment
+            initial_x1r = initial_x - self.SEGMENT_GAMMA_LENGTH[0] * np.sin(self.initial_theta) + self.SEGMENT_GAMMA_LENGTH[1] * np.sin(self.INITIAL_THETA1R)
+            initial_y1r = initial_y + self.SEGMENT_GAMMA_LENGTH[0] * np.cos(self.initial_theta) - self.SEGMENT_GAMMA_LENGTH[1] * np.cos(self.INITIAL_THETA1R)
+            initial_theta1r = self.INITIAL_THETA1R
             
-            self.phi1 = self.PHI1_INITIAL 
-            self.phi2 = self.PHI2_INITIAL 
+            # Right distal arm segment
+            initial_x2r = initial_x1r + (self.SEGMENT_LENGTH[1] - self.SEGMENT_GAMMA_LENGTH[1]) * np.sin(self.INITIAL_THETA1R) + self.SEGMENT_GAMMA_LENGTH[2] * np.sin(self.INITIAL_THETA2R)
+            initial_y2r = initial_y1r - (self.SEGMENT_LENGTH[1] - self.SEGMENT_GAMMA_LENGTH[1]) * np.cos(self.INITIAL_THETA1R) - self.SEGMENT_GAMMA_LENGTH[2] * np.cos(self.INITIAL_THETA2R)
+            initial_theta2r = self.INITIAL_THETA2R
+            
+            # Left proximal arm segment
+            initial_x1l = initial_x - self.SEGMENT_GAMMA_LENGTH[0] * np.sin(self.initial_theta) - self.SEGMENT_GAMMA_LENGTH[1] * np.sin(self.INITIAL_THETA1L)
+            initial_y1l = initial_y + self.SEGMENT_GAMMA_LENGTH[0] * np.cos(self.initial_theta) - self.SEGMENT_GAMMA_LENGTH[1] * np.cos(self.INITIAL_THETA1L)
+            initial_theta1l = self.INITIAL_THETA1L
+            
+            # Left distal arm segment
+            initial_x2l = initial_x1l - (self.SEGMENT_LENGTH[1] - self.SEGMENT_GAMMA_LENGTH[1]) * np.sin(self.INITIAL_THETA1L) - self.SEGMENT_GAMMA_LENGTH[2] * np.sin(self.INITIAL_THETA2L)
+            initial_y2l = initial_y1l - (self.SEGMENT_LENGTH[1] - self.SEGMENT_GAMMA_LENGTH[1]) * np.cos(self.INITIAL_THETA1L) - self.SEGMENT_GAMMA_LENGTH[2] * np.cos(self.INITIAL_THETA2L)
+            initial_theta2l = self.INITIAL_THETA2L   
+            
+            # Right proximal leg segment
+            initial_x3r = initial_x + (self.SEGMENT_LENGTH[0] - self.SEGMENT_GAMMA_LENGTH[0]) * np.sin(self.initial_theta) + self.SEGMENT_GAMMA_LENGTH[3] * np.sin(self.INITIAL_THETA3R)
+            initial_y3r = initial_y - (self.SEGMENT_LENGTH[0] - self.SEGMENT_GAMMA_LENGTH[0]) * np.cos(self.initial_theta) - self.SEGMENT_GAMMA_LENGTH[3] * np.cos(self.INITIAL_THETA3R)
+            initial_theta3r = self.INITIAL_THETA3R
+            
+            # Right distal leg segment
+            initial_x4r = initial_x3r + (self.SEGMENT_LENGTH[3] - self.SEGMENT_GAMMA_LENGTH[3]) * np.sin(initial_theta3r) + self.SEGMENT_GAMMA_LENGTH[4] * np.sin(self.INITIAL_THETA4R)
+            initial_y4r = initial_y3r - (self.SEGMENT_LENGTH[3] - self.SEGMENT_GAMMA_LENGTH[3]) * np.cos(initial_theta3r) - self.SEGMENT_GAMMA_LENGTH[4] * np.cos(self.INITIAL_THETA4R)
+            initial_theta4r = self.INITIAL_THETA4R
+            
+            # Right foot
+            initial_xfr = initial_x4r + (self.SEGMENT_LENGTH[4] - self.SEGMENT_GAMMA_LENGTH[4]) * np.sin(initial_theta4r)
+            initial_yfr = initial_y4r - (self.SEGMENT_LENGTH[4] - self.SEGMENT_GAMMA_LENGTH[4]) * np.cos(initial_theta4r)
+            
+            # Left proximal leg segment
+            initial_x3l = initial_x + (self.SEGMENT_LENGTH[0] - self.SEGMENT_GAMMA_LENGTH[0]) * np.sin(self.initial_theta) - self.SEGMENT_GAMMA_LENGTH[3] * np.sin(self.INITIAL_THETA3L)
+            initial_y3l = initial_y - (self.SEGMENT_LENGTH[0] - self.SEGMENT_GAMMA_LENGTH[0]) * np.cos(self.initial_theta) - self.SEGMENT_GAMMA_LENGTH[3] * np.cos(self.INITIAL_THETA3L)
+            initial_theta3l = self.INITIAL_THETA3L
+            
+            # Left distal leg segment
+            initial_x4l = initial_x3l - (self.SEGMENT_LENGTH[3] - self.SEGMENT_GAMMA_LENGTH[3]) * np.sin(initial_theta3l) - self.SEGMENT_GAMMA_LENGTH[4] * np.sin(self.INITIAL_THETA4L)
+            initial_y4l = initial_y3l - (self.SEGMENT_LENGTH[3] - self.SEGMENT_GAMMA_LENGTH[3]) * np.cos(initial_theta3l) - self.SEGMENT_GAMMA_LENGTH[4] * np.cos(self.INITIAL_THETA4L)
+            initial_theta4l = self.INITIAL_THETA4L
+            
+            # Left foot
+            initial_xfl = initial_x4l - (self.SEGMENT_LENGTH[4] - self.SEGMENT_GAMMA_LENGTH[4]) * np.sin(initial_theta4l)
+            initial_yfl = initial_y4l - (self.SEGMENT_LENGTH[4] - self.SEGMENT_GAMMA_LENGTH[4]) * np.cos(initial_theta4l)
+            
+            # Resetting joint angle setpoints
+            self.phi1r = self.PHI1L_INITIAL 
+            self.phi2r = self.PHI2L_INITIAL 
+            self.phi3r = self.PHI3L_INITIAL
+            self.phi4r = self.PHI4L_INITIAL
+            self.phi1l = self.PHI1L_INITIAL 
+            self.phi2l = self.PHI2L_INITIAL 
+            self.phi3l = self.PHI3L_INITIAL
+            self.phi4l = self.PHI4L_INITIAL
+            
             # Assembling into the state
-            # Note: state = [x, y, theta, x1, y1, theta1, x2, y2, theta2, xdot, ydot, thetadot, x1dot, y1dot, theta1dot, x2dot, y2dot, theta2dot]
-            self.state = np.array([0., initial_torso_height, initial_body_angle, initial_x1, initial_y1, initial_leg1_angle, initial_x2, initial_y2, initial_leg2_angle, initial_xf1,initial_yf1,initial_xf2,initial_yf2,0., 0., 0., 0., 0., 0., 0., 0., 0.,0., 0., 0., 0.,])
-
+            self.state = np.array([  initial_x,   initial_y,   initial_theta,\
+                                   initial_x1r, initial_y1r, initial_theta1r,\
+                                   initial_x2r, initial_y2r, initial_theta2r,\
+                                   initial_x3r, initial_y3r, initial_theta3r,\
+                                   initial_x4r, initial_y4r, initial_theta4r,\
+                                   initial_xfr, initial_yfr, \
+                                   initial_x1l, initial_y1l, initial_theta1l,\
+                                   initial_x2l, initial_y2l, initial_theta2l,\
+                                   initial_x3l, initial_y3l, initial_theta3l,\
+                                   initial_x4l, initial_y4l, initial_theta4l,\
+                                   initial_xfl, initial_yfl, \
+                                            0.,          0.,              0.,\
+                                            0.,          0.,              0.,\
+                                            0.,          0.,              0.,\
+                                            0.,          0.,              0.,\
+                                            0.,          0.,              0.,\
+                                            0.,          0., \
+                                            0.,          0.,              0.,\
+                                            0.,          0.,              0.,\
+                                            0.,          0.,              0.,\
+                                            0.,          0.,              0.,\
+                                            0.,          0.                    ])
+        """
+        For reference, the state is:
+        x,       y,    theta,    x1r,    y1r,    theta1r,    x2r,    y2r,    theta2r,    x3r,    y3r,    theta3r,    x4r,    y4r,    theta4r,    xfr,    yfr,    x1l,    y1l,    theta1l,    x2l,    y2l,    theta2l,    x3l,    y3l,    theta3l,    x4l,    y4l,    theta4l,    xfl,    yfl, \
+        xdot, ydot, thetadot, x1rdot, y1rdot, theta1rdot, x2rdot, y2rdot, theta2rdot, x3rdot, y3rdot, theta3rdot, x4rdot, y4rdot, theta4rdot, xfrdot, yfrdot, x1ldot, y1ldot, theta1ldot, x2ldot, y2ldot, theta2ldot, x3ldot, y3ldot, theta3ldot, x4ldot, y4ldot, theta4ldot, xfldot, yfldot = state
+        
+        """
+        
         # Resetting the time
         self.time = 0.0  
-        
-        # Return the state
-        return self.state
         
     
     def parse_action(self,action):
@@ -399,30 +502,39 @@ ip_head = m_head*com_head**2
         pressed_q, pressed_w, pressed_o, pressed_p = self.parse_action(action)
 
         # Incrementing the desired leg angles
-        # Q and W control leg 1 through phi1
-        # O and P control leg 2 through phi2
+        # Q and W control the shoulders and hips through phi1 and phi3
+        # O and P control the elbows and calves through phi2 and phi4
         if pressed_q:
-            self.phi1 += self.HIP_INCREMENT
-            #self.phi1 = np.minimum(self.phi1,self.SEGMENT_PHI_MAX[1])
+            self.phi1r += self.SHOULDER_INCREMENT
+            self.phi1l -= self.SHOULDER_INCREMENT
+            self.phi3r -= self.HIP_INCREMENT
+            self.phi3l += self.HIP_INCREMENT
         if pressed_w:
-            self.phi1 -= self.HIP_INCREMENT
-            #self.phi1 = np.maximum(self.phi1,self.SEGMENT_PHI_MIN[1])
+            self.phi1r -= self.SHOULDER_INCREMENT
+            self.phi1l += self.SHOULDER_INCREMENT
+            self.phi3r += self.HIP_INCREMENT
+            self.phi3l -= self.HIP_INCREMENT
         if pressed_o:
-            self.phi2 += self.HIP_INCREMENT
-            #self.phi2 = np.minimum(self.phi2,self.SEGMENT_PHI_MAX[2])
+            self.phi2r += self.ELBOW_INCREMENT
+            self.phi2l -= self.ELBOW_INCREMENT
+            self.phi4r -= self.CALF_INCREMENT
+            self.phi4l += self.CALF_INCREMENT
         if pressed_p:
-            self.phi2 -= self.HIP_INCREMENT 
-            #self.phi2 = np.maximum(self.phi2,self.SEGMENT_PHI_MIN[2])  
-        
-        # Choosing friction and normal force
-        fF1 = 0.
-        fF2 = 0.
-        fN1 = 0.
-        fN2 = 0.
+            self.phi2r -= self.ELBOW_INCREMENT
+            self.phi2l += self.ELBOW_INCREMENT
+            self.phi4r += self.CALF_INCREMENT
+            self.phi4l -= self.CALF_INCREMENT 
         
         # Packing up the parameters the equations of motion need
-        parameters = np.array([self.SEGMENT_MASS[0],self.SEGMENT_MASS[1],self.SEGMENT_MASS[2], self.SEGMENT_LENGTH[0],self.SEGMENT_LENGTH[1],self.SEGMENT_LENGTH[2],self.SEGMENT_ETA_LENGTH[0],self.SEGMENT_ETA_LENGTH[1],self.SEGMENT_ETA_LENGTH[2], self.SEGMENT_GAMMA_LENGTH[0],self.SEGMENT_GAMMA_LENGTH[1],self.SEGMENT_GAMMA_LENGTH[2], self.SEGMENT_MOMINERT[0], self.SEGMENT_MOMINERT[1], self.SEGMENT_MOMINERT[2], self.g, fF1, fF2, self.phi1, self.phi2, fN1, fN2, self.HIP_SPRING_STIFFNESS, self.HIP_DAMPING_STIFFNESS, self.FLOOR_SPRING_STIFFNESS,self.FLOOR_FRICTION_STIFFNESS, self.FLOOR_MU, self.ATANDEL,self.ATANGAIN, self.FLOOR_DAMPING_COEFFICIENT], dtype = 'float64')
-
+        parameters = np.array([self.SEGMENT_MASS[0], self.SEGMENT_MASS[1], self.SEGMENT_MASS[2], self.SEGMENT_MASS[3], self.SEGMENT_MASS[4], \
+                               self.SEGMENT_LENGTH[0], self.SEGMENT_LENGTH[1], self.SEGMENT_LENGTH[2], self.SEGMENT_LENGTH[3], self.SEGMENT_LENGTH[4], \
+                               self.SEGMENT_GAMMA_LENGTH[0], self.SEGMENT_GAMMA_LENGTH[1], self.SEGMENT_GAMMA_LENGTH[2], self.SEGMENT_GAMMA_LENGTH[3], self.SEGMENT_GAMMA_LENGTH[4], \
+                               self.SEGMENT_MOMINERT[0], self.SEGMENT_MOMINERT[1], self.SEGMENT_MOMINERT[2], self.SEGMENT_MOMINERT[3], self.SEGMENT_MOMINERT[4], \
+                               self.HIP_SPRING_STIFFNESS, self.HIP_DAMPING, self.CALF_SPRING_STIFFNESS, self.CALF_DAMPING, \
+                               self.SHOULDER_SPRING_STIFFNESS, self.SHOULDER_DAMPING, self.ELBOW_SPRING_STIFFNESS, self.ELBOW_DAMPING, \
+                               self.g, self.FLOOR_SPRING_STIFFNESS, self.FLOOR_DAMPING_COEFFICIENT, self.FLOOR_FRICTION_STIFFNESS, self.FLOOR_MU, self.ATANDEL, self.ATANGAIN, \
+                               self.phi1r, self.phi2r, self.phi3r, self.phi4r, self.phi1l, self.phi2l, self.phi3l, self.phi4l], dtype = 'float64')
+    
         # Integrating forward one time step. 
         # Returns initial condition on first row then next timestep on the next row
         ##############################
@@ -485,9 +597,9 @@ ip_head = m_head*com_head**2
             
             if type(action) == bool:                
                 # The signal to reset the environment was received
-                state = self.reset()
+                self.reset()
                 # Return the results
-                self.env_to_agent.put(state)
+                self.env_to_agent.put(self.state)
             
             else:            
                 ################################
@@ -507,71 +619,93 @@ def equations_of_motion(state, t, parameters):
     # From the state, it returns the first derivative of the state
     
     # Unpacking the state
-    x, y, theta, x1, y1, theta1, x2, y2, theta2, xf1,yf1,xf2,yf2, xdot, ydot, thetadot, x1dot, y1dot, theta1dot, x2dot, y2dot, theta2dot,xf1dot,yf1dot,xf2dot,yf2dot = state
+    x,       y,    theta,    x1r,    y1r,    theta1r,    x2r,    y2r,    theta2r,    x3r,    y3r,    theta3r,    x4r,    y4r,    theta4r,    xfr,    yfr,    x1l,    y1l,    theta1l,    x2l,    y2l,    theta2l,    x3l,    y3l,    theta3l,    x4l,    y4l,    theta4l,    xfl,    yfl, \
+    xdot, ydot, thetadot, x1rdot, y1rdot, theta1rdot, x2rdot, y2rdot, theta2rdot, x3rdot, y3rdot, theta3rdot, x4rdot, y4rdot, theta4rdot, xfrdot, yfrdot, x1ldot, y1ldot, theta1ldot, x2ldot, y2ldot, theta2ldot, x3ldot, y3ldot, theta3ldot, x4ldot, y4ldot, theta4ldot, xfldot, yfldot = state
     
     # Unpacking parameters
-    m, m1, m2, l, l1, l2, eta, eta1, eta2, gamma, gamma1, gamma2, I, I1, I2, g, fF1, fF2, phi1, phi2, fN1, fN2, HIP_SPRING_STIFFNESS,HIP_DAMPING_STIFFNESS, FLOOR_SPRING_STIFFNESS, FLOOR_FRICTION_STIFFNESS, FLOOR_MU, ATANDEL, ATANGAIN, FLOOR_DAMPING_COEFFICIENT  = parameters 
+    m, m1, m2, m3, m4, \
+    l, l1, l2, l3, l4, \
+    gamma, gamma1, gamma2, gamma3, gamma4,\
+    I, I1, I2, I3, I4, \
+    k3, c3, k4, c4, \
+    k1, c1, k2, c2, \
+    g, FLOOR_SPRING_STIFFNESS, FLOOR_DAMPING_COEFFICIENT, FLOOR_FRICTION_STIFFNESS, FLOOR_MU, ATANDEL, ATANGAIN, \
+    phi1r, phi2r, phi3r, phi4r, phi1l, phi2l, phi3l, phi4l = parameters 
     
-    first_derivatives = np.array([xdot, ydot, thetadot, x1dot, y1dot, theta1dot, x2dot, y2dot, theta2dot, xf1dot, yf1dot, xf2dot, yf2dot])
+    first_derivatives = np.array([xdot, ydot, thetadot, x1rdot, y1rdot, theta1rdot, x2rdot, y2rdot, theta2rdot, x3rdot, y3rdot, theta3rdot, x4rdot, y4rdot, theta4rdot, xfrdot, yfrdot, x1ldot, y1ldot, theta1ldot, x2ldot, y2ldot, theta2ldot, x3ldot, y3ldot, theta3ldot, x4ldot, y4ldot, theta4ldot, xfldot, yfldot]) 
+    
+    M = np.matrix([
+                    [m	,	0	,	0	,	m1	,	0	,	0	,	m2	,	0	,	0	,	m3	,	0	,	0	,	m4	,	0	,	0	,	0	,	0	,	m1	,	0	,	0	,	m2	,	0	,	0	,	m3	,	0	,	0	,	m4	,	0	,	0	,	0	,	0	],
+                    [	0	,	m	,	0	,	0	,	m1	,	0	,	0	,	m2	,	0	,	0	,	m3	,	0	,	0	,	m4	,	0	,	0	,	0	,	0	,	m1	,	0	,	0	,	m2	,	0	,	0	,	m3	,	0	,	0	,	m4	,	0	,	0	,	0	],
+                    [	0	,	0	,	I	,	-m1*gamma*np.cos(theta)	,	-m1*gamma*np.sin(theta)	,	0	,	-m2*gamma*np.cos(theta)	,	-m2*gamma*np.sin(theta)	,	0	,	m3*(l-gamma)*np.cos(theta)	,	m3*(l-gamma)*np.sin(theta)	,	0	,	m4*(l-gamma)*np.cos(theta)	,	m4*(l-gamma)*np.sin(theta)	,	0	,	0	,	0	,	-m1*gamma*np.cos(theta)	,	-m1*gamma*np.sin(theta)	,	0	,	-m2*gamma*np.cos(theta)	,	-m2*gamma*np.sin(theta)	,	0	,	m3*(l-gamma)*np.cos(theta)	,	m3*(l-gamma)*np.sin(theta)	,	0	,	m4*(l-gamma)*np.cos(theta)	,	m4*(l-gamma)*np.sin(theta)	,	0	,	0	,	0	],
+                    [	0	,	0	,	0	,	m1*gamma1*np.cos(theta1r)	,	m1*gamma1*np.sin(theta1r)	,	I1	,	m2*gamma1*np.cos(theta1r)+m2*(l1-gamma1)*np.cos(theta1r)	,	m2*gamma1*np.sin(theta1r)+m2*(l1-gamma1)*np.sin(theta1r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	0	,	0	,	0	,	0	,	0	,	m2*gamma2*np.cos(theta2r)	,	m2*gamma2*np.sin(theta2r)	,	I2	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	m3*gamma3*np.cos(theta3r)	,	m3*gamma3*np.sin(theta3r)	,	I3	,	m4*gamma3*np.cos(theta3r)+m4*(l3-gamma3)*np.cos(theta3r)	,	m4*gamma3*np.sin(theta3r)+m4*(l3-gamma3)*np.sin(theta3r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	m4*gamma4*np.cos(theta4r)	,	m4*gamma4*np.sin(theta4r)	,	I4	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	-1	,	0	,	gamma*np.cos(theta)	,	1	,	0	,	-gamma1*np.cos(theta1r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	-1	,	gamma*np.sin(theta)	,	0	,	1	,	-gamma1*np.sin(theta1r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	0	,	0	,	-1	,	0	,	-(l1-gamma1)*np.cos(theta1r)	,	1	,	0	,	-gamma2*np.cos(theta2r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	0	,	0	,	0	,	-1	,	-(l1-gamma1)*np.sin(theta1r)	,	0	,	1	,	-gamma2*np.sin(theta2r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	0	,	-(l-gamma)*np.cos(theta)	,	1	,	0	,	-gamma3*np.cos(theta3r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	-(l-gamma)*np.sin(theta)	,	0	,	1	,	-gamma3*np.sin(theta3r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	0	,	-(l3-gamma3)*np.cos(theta3r)	,	1	,	0	,	-gamma4*np.cos(theta4r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	-(l3-gamma3)*np.sin(theta3r)	,	0	,	1	,	-gamma4*np.sin(theta4r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	0	,	-(l4-gamma4)*np.cos(theta4r)	,	1	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	-(l4-gamma4)*np.sin(theta4r)	,	0	,	1	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	m1*gamma1*np.cos(theta1l)	,	m1*gamma1*np.sin(theta1l)	,	I1	,	m2*gamma1*np.cos(theta1l)+m2*(l1-gamma1)*np.cos(theta1l)	,	m2*gamma1*np.sin(theta1l)+m2*(l1-gamma1)*np.sin(theta1l)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	m2*gamma2*np.cos(theta2l)	,	m2*gamma2*np.sin(theta2l)	,	I2	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	m3*gamma3*np.cos(theta3l)	,	m3*gamma3*np.sin(theta3l)	,	I3	,	m4*gamma3*np.cos(theta3l)+m4*(l3-gamma3)*np.cos(theta3l)	,	m4*gamma3*np.sin(theta3l)+m4*(l3-gamma3)*np.sin(theta3l)	,	0	,	0	,	0	],
+                    [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	m4*gamma4*np.cos(theta4l)	,	m4*gamma4*np.sin(theta4l)	,	I4	,	0	,	0	],
+                    [	-1	,	0	,	gamma*np.cos(theta)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	1	,	0	,	-gamma1*np.cos(theta1l)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	-1	,	gamma*np.sin(theta)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	1	,	-gamma1*np.sin(theta1l)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	0	,	-(l1-gamma1)*np.cos(theta1l)	,	1	,	0	,	-gamma2*np.cos(theta2l)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	-(l1-gamma1)*np.sin(theta1l)	,	0	,	1	,	-gamma2*np.sin(theta2l)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	0	,	-(l-gamma)*np.cos(theta)	,	1	,	0	,	-gamma3*np.cos(theta3l)	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	-(l-gamma)*np.sin(theta)	,	0	,	1	,	-gamma3*np.sin(theta3l)	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	0	,	-(l3-gamma3)*np.cos(theta3l)	,	1	,	0	,	-gamma4*np.cos(theta4l)	,	0	,	0	],
+                    [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	-(l3-gamma3)*np.sin(theta3l)	,	0	,	1	,	-gamma4*np.sin(theta4l)	,	0	,	0	],
+                    [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	0	,	-(l4-gamma4)*np.cos(theta4l)	,	1	,	0	],
+                    [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	-(l4-gamma4)*np.sin(theta4l)	,	0	,	1	]])
+    
+    # Calculating floor reaction forces
+    fNr = np.maximum(0,-FLOOR_SPRING_STIFFNESS*yfr - (FLOOR_DAMPING_COEFFICIENT*yfrdot if yfr <= 0 else 0))
+    fNl = np.maximum(0,-FLOOR_SPRING_STIFFNESS*yfl - (FLOOR_DAMPING_COEFFICIENT*yfldot if yfl <= 0 else 0))
+    fFr = (-FLOOR_MU*fNr*2/np.pi*np.arctan(xfrdot*ATANGAIN/ATANDEL))
+    fFl = (-FLOOR_MU*fNl*2/np.pi*np.arctan(xfldot*ATANGAIN/ATANDEL))
+    
+    C = np.matrix([ [	fFr+fFl	],
+                    [	-m*g-2*m1*g-2*m2*g-2*m3*g-2*m4*g+fNr+fNl	],
+                    [	2*m1*g*gamma*np.sin(theta)+2*m2*g*gamma*np.sin(theta)+fFr*(l-gamma)*np.cos(theta)+fFl*(l-gamma)*np.cos(theta)-2*m3*g*(l-gamma)*np.sin(theta)-2*m4*g*(l-gamma)*np.sin(theta)+fNr*(l-gamma)*np.sin(theta)+fNl*(l-gamma)*np.sin(theta)-k1*(theta+phi1l-theta1l)-c1*(thetadot-theta1ldot)-k1*(theta+phi1r-theta1r)-c1*(thetadot-theta1rdot)-k3*(theta+phi3l-theta3l)-c3*(thetadot-theta3ldot)-k3*(theta+phi3r-theta3r)-c3*(thetadot-theta3rdot)	],
+                    [	-m1*g*gamma1*np.sin(theta1r)-m2*g*gamma1*np.sin(theta1r)-m2*g*(l1-gamma1)*np.sin(theta1r)-k2*(theta1r+phi2r-theta2r)-c2*(theta1rdot-theta2rdot)+k1*(theta+phi1r-theta1r)+c1*(thetadot-theta1rdot)	],
+                    [	-m2*g*gamma2*np.sin(theta2r)+k2*(theta1r+phi2r-theta2r)+c2*(theta1rdot-theta2rdot)	],
+                    [	-m3*g*gamma3*np.sin(theta3r)-m4*g*gamma3*np.sin(theta3r)-m4*g*(l3-gamma3)*np.sin(theta3r)-k4*(theta3r+phi4r-theta4r)-c4*(theta3rdot-theta4rdot)+k3*(theta+phi3r-theta3r)+c3*(thetadot-theta3rdot)+fFr*gamma3*np.cos(theta3r)+fNr*gamma3*np.sin(theta3r)+fFr*(l3-gamma3)*np.cos(theta3r)+fNr*(l3-gamma3)*np.sin(theta3r)	],
+                    [	-m4*g*gamma4*np.sin(theta4r)+k4*(theta3r+phi4r-theta4r)+c4*(theta3rdot-theta4rdot)+fFr*gamma4*np.cos(theta4r)+fNr*gamma4*np.sin(theta4r)+fFr*(l4-gamma4)*np.cos(theta4r)+fNr*(l4-gamma4)*np.sin(theta4r)	],
+                    [	gamma*thetadot**2*np.sin(theta)-gamma1*theta1rdot**2*np.sin(theta1r)	],
+                    [	-gamma*thetadot**2*np.cos(theta)+gamma1*theta1rdot**2*np.cos(theta1r)	],
+                    [	-(l1-gamma1)*theta1rdot**2*np.sin(theta1r)-gamma2*theta2rdot**2*np.sin(theta2r)	],
+                    [	(l1-gamma1)*theta1rdot**2*np.cos(theta1r)+gamma2*theta2rdot**2*np.cos(theta2r)	],
+                    [	-(l-gamma)*thetadot**2*np.sin(theta)-gamma3*theta3rdot**2*np.sin(theta3r)	],
+                    [	(l-gamma)*thetadot**2*np.cos(theta)+gamma3*theta3rdot**2*np.cos(theta3r)	],
+                    [	-(l3-gamma3)*theta3rdot**2*np.sin(theta3r)-gamma4*theta4rdot**2*np.sin(theta4r)	],
+                    [	(l3-gamma3)*theta3rdot**2*np.cos(theta3r)+gamma4*theta4rdot**2*np.cos(theta4r)	],
+                    [	-(l4-gamma4)*theta4rdot**2*np.sin(theta4r)	],
+                    [	(l4-gamma4)*theta4rdot**2*np.cos(theta4r)	],
+                    [	-m1*g*gamma1*np.sin(theta1l)-m2*g*gamma1*np.sin(theta1l)-m2*g*(l1-gamma1)*np.sin(theta1l)-k2*(theta1l+phi2l-theta2l)-c2*(theta1ldot-theta2ldot)+k1*(theta+phi1l-theta1l)+c1*(thetadot-theta1ldot)	],
+                    [	-m2*g*gamma2*np.sin(theta2l)+k2*(theta1l+phi2l-theta2l)+c2*(theta1ldot-theta2ldot)	],
+                    [	-m3*g*gamma3*np.sin(theta3l)-m4*g*gamma3*np.sin(theta3l)-m4*g*(l3-gamma3)*np.sin(theta3l)-k4*(theta3l+phi4l-theta4l)-c4*(theta3ldot-theta4ldot)+k3*(theta+phi3l-theta3l)+c3*(thetadot-theta3ldot)+fFl*gamma3*np.cos(theta3l)+fNl*gamma3*np.sin(theta3l)+fFl*(l3-gamma3)*np.cos(theta3l)+fNl*(l3-gamma3)*np.sin(theta3l)	],
+                    [	-m4*g*gamma4*np.sin(theta4l)+k4*(theta3l+phi4l-theta4l)+c4*(theta3ldot-theta4ldot)+fFl*gamma4*np.cos(theta4l)+fNl*gamma4*np.sin(theta4l)+fFl*(l4-gamma4)*np.cos(theta4l)+fNl*(l4-gamma4)*np.sin(theta4l)	],
+                    [	gamma*thetadot**2*np.sin(theta)-gamma1*theta1ldot**2*np.sin(theta1l)	],
+                    [	-gamma*thetadot**2*np.cos(theta)+gamma1*theta1ldot**2*np.cos(theta1l)	],
+                    [	-(l1-gamma1)*theta1ldot**2*np.sin(theta1l)-gamma2*theta2ldot**2*np.sin(theta2l)	],
+                    [	(l1-gamma1)*theta1ldot**2*np.cos(theta1l)+gamma2*theta2ldot**2*np.cos(theta2l)	],
+                    [	-(l-gamma)*thetadot**2*np.sin(theta)-gamma3*theta3ldot**2*np.sin(theta3l)	],
+                    [	(l-gamma)*thetadot**2*np.cos(theta)+gamma3*theta3ldot**2*np.cos(theta3l)	],
+                    [	-(l3-gamma3)*theta3ldot**2*np.sin(theta3l)-gamma4*theta4ldot**2*np.sin(theta4l)	],
+                    [	(l3-gamma3)*theta3ldot**2*np.cos(theta3l)+gamma4*theta4ldot**2*np.cos(theta4l)	],
+                    [	-(l4-gamma4)*theta4ldot**2*np.sin(theta4l)	],
+                    [	(l4-gamma4)*theta4ldot**2*np.cos(theta4l)	]])
 
-    # Mass matrix
-    M = np.matrix([#                    x                    y                                                 theta                              x1                                y1                             theta1                            x2                                y2                             theta2                           xf1                            yf1                              xf2                            yf2
-                   [                    m,                   0.,                                                0.,                               m1,                               0.,                            0.,                               m2,                               0.,                            0.,                              0.,                            0.,                               0.,                            0.],
-                   [                   0.,                   m ,                                                0.,                               0.,                               m1,                            0.,                               0.,                               m2,                            0.,                              0.,                            0.,                               0.,                            0.],
-                   [ -m*eta*np.cos(theta), -m*eta*np.sin(theta),                                                 I,                               0.,                               0.,                            0.,                               0.,                               0.,                            0.,                              0.,                            0.,                               0.,                            0.],
-                   [                   1.,                   0., eta*np.cos(theta) + gamma1*np.cos(theta + theta1),                              -1.,                               0., gamma1*np.cos(theta + theta1),                               0.,                               0.,                            0.,                              0.,                            0.,                               0.,                            0.],
-                   [                   0.,                   1., eta*np.sin(theta) + gamma1*np.sin(theta + theta1),                               0.,                              -1., gamma1*np.sin(theta + theta1),                               0.,                               0.,                            0.,                              0.,                            0.,                               0.,                            0.],
-                   [                   0.,                   0.,                                                0., m1*gamma1*np.cos(theta + theta1), m1*gamma1*np.sin(theta + theta1),                            I1,                               0.,                               0.,                            0.,                              0.,                            0.,                               0.,                            0.],
-                   [                   1.,                   0., eta*np.cos(theta) + gamma2*np.cos(theta + theta2),                               0.,                               0.,                            0.,                              -1.,                               0., gamma2*np.cos(theta + theta2),                              0.,                            0.,                               0.,                            0.],
-                   [                   0.,                   1., eta*np.sin(theta) + gamma2*np.sin(theta + theta2),                               0.,                               0.,                            0.,                               0.,                              -1., gamma2*np.sin(theta + theta2),                              0.,                            0.,                               0.,                            0.],
-                   [                   0.,                   0.,                                                0.,                               0.,                               0.,                            0., m2*gamma2*np.cos(theta + theta2), m2*gamma2*np.sin(theta + theta2),                            I2,                              0.,                            0.,                               0.,                            0.],
-                   [                   0.,                   0.,                      -eta1*np.cos(theta + theta1),                               -1,                               0.,  -eta1*np.cos(theta + theta1),                               0.,                               0.,                            0.,                              1 ,                            0.,                               0.,                            0.],
-                   [                   0.,                   0.,                      -eta1*np.sin(theta + theta1),                               0.,                               -1,  -eta1*np.sin(theta + theta1),                               0.,                               0.,                            0.,                              0.,                            1 ,                               0.,                            0.],
-                   [                   0.,                   0.,                      -eta2*np.cos(theta + theta2),                               0.,                               0.,                            0.,                               -1,                               0.,  -eta2*np.cos(theta + theta2),                              0.,                            0.,                               1 ,                            0.],
-                   [                   0.,                   0.,                      -eta2*np.sin(theta + theta2),                               0.,                               0.,                            0.,                               0.,                               -1,  -eta2*np.sin(theta + theta2),                              0.,                            0.,                               0.,                            1 ]])
-    
-    fN1 = np.maximum(0,-FLOOR_SPRING_STIFFNESS*yf1 - (FLOOR_DAMPING_COEFFICIENT*yf1dot if yf1 <= 0 else 0))
-    fN2 = np.maximum(0,-FLOOR_SPRING_STIFFNESS*yf2 - (FLOOR_DAMPING_COEFFICIENT*yf2dot if yf2 <= 0 else 0))
-    fF1 = (-FLOOR_MU*fN1*2/np.pi*np.arctan(xf1dot*ATANGAIN/ATANDEL))
-    fF2 = (-FLOOR_MU*fN2*2/np.pi*np.arctan(xf2dot*ATANGAIN/ATANDEL))
-    
-    C = np.matrix([[fF1 + fF2],
-                   [fN1 + fN2 - (m + m1 + m2)*g],
-                   [-HIP_SPRING_STIFFNESS*(phi1 - theta1 + phi2 - theta2) -HIP_DAMPING_STIFFNESS*( -theta1dot - theta2dot) + m*g*eta*np.sin(theta)],
-                   [ thetadot**2*eta*np.sin(theta) + (thetadot + theta1dot)**2*gamma1*np.sin(theta + theta1)],
-                   [-thetadot**2*eta*np.cos(theta) - (thetadot + theta1dot)**2*gamma1*np.cos(theta + theta1)],
-                   [-m1*g*gamma1*np.sin(theta + theta1) + fN1*(l1*np.sin(theta + theta1)) + fF1*(l1*np.cos(theta + theta1)) + HIP_SPRING_STIFFNESS*(phi1 - theta1)+ HIP_DAMPING_STIFFNESS*(-theta1dot)],
-                   [ thetadot**2*eta*np.sin(theta) + (thetadot + theta2dot)**2*gamma2*np.sin(theta + theta2)],
-                   [-thetadot**2*eta*np.cos(theta) - (thetadot + theta2dot)**2*gamma2*np.cos(theta + theta2)],
-                   [-m2*g*gamma2*np.sin(theta + theta2) + fN2*(l2*np.sin(theta + theta2)) + fF2*(l2*np.cos(theta + theta2)) + HIP_SPRING_STIFFNESS*(phi2 - theta2)+ HIP_DAMPING_STIFFNESS*(-theta2dot)],
-                   [-eta1*(thetadot + theta1dot)**2*np.sin(theta + theta1)],
-                   [ eta1*(thetadot + theta1dot)**2*np.cos(theta + theta1)],
-                   [-eta2*(thetadot + theta2dot)**2*np.sin(theta + theta2)],
-                   [ eta2*(thetadot + theta2dot)**2*np.cos(theta + theta2)]])    
-    
-    #test 3 - continuous simoird-like function
-    #fN1 = FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf1)
-    #fN2 = FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf2)
-    #fF1 = (-FLOOR_MU*FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf1)*2/np.pi*np.arctan(xf1dot*ATANGAIN/ATANDEL))
-    #fF2 = (-FLOOR_MU*FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf2)*2/np.pi*np.arctan(xf2dot*ATANGAIN/ATANDEL))
-    
-    #(np.minimum(FLOOR_MU*FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf1),np.maximum(-FLOOR_MU*FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf1), -xf1dot*FLOOR_FRICTION_STIFFNESS)))
-    #fF2 = (np.minimum(FLOOR_MU*FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf2),np.maximum(-FLOOR_MU*FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf2), -xf2dot*FLOOR_FRICTION_STIFFNESS)))
-     
-    #test 2 - exact min/max with spring in x
-    #fN1 = FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf1)
-    #fN2 = FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf2)
-    #fF1 = (np.minimum(FLOOR_MU*FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf1),np.maximum(-FLOOR_MU*FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf1), -xf1dot*FLOOR_FRICTION_STIFFNESS)))
-    #fF2 = (np.minimum(FLOOR_MU*FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf2),np.maximum(-FLOOR_MU*FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf2), -xf2dot*FLOOR_FRICTION_STIFFNESS)))
-    
-    #test 1 - min/max with spring in x
-    #fN1 = FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf1)
-    #fN2 = FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf2)
-    #fF1 = (-np.sign(xf1dot)*np.minimum(FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf1)*FLOOR_MU,np.abs(xf1dot)*FLOOR_FRICTION_STIFFNESS)) 
-    #fF2 = (-np.sign(xf2dot)*np.minimum(FLOOR_SPRING_STIFFNESS*np.maximum(0,-yf2)*FLOOR_MU,np.abs(xf2dot)*FLOOR_FRICTION_STIFFNESS)) 
-    
-    # Calculating angular rate derivatives
-    #x3dx4d = np.array(np.linalg.inv(M)*(action.reshape(2,1) - C - friction*np.matrix([[x3],[x4]]))).squeeze() 
+    # Calculating second derivatives
     second_derivatives = np.array(np.linalg.inv(M)*(C)).squeeze() 
     
     # Building the derivative matrix d[state]/dt = [first_derivatives, second_derivatives]
@@ -581,73 +715,6 @@ def equations_of_motion(state, t, parameters):
 
     return derivatives
 
-# Working, pre-normal force
-#    # Mass matrix
-#    M = np.matrix([#                    x                    y                                                 theta                              x1                                y1                             theta1                            x2                                y2                             theta2 
-#                   [                    m,                   0.,                                                0.,                               m1,                               0.,                            0.,                               m2,                               0.,                            0.],
-#                   [                   0.,                   m ,                                                0.,                               0.,                               m1,                            0.,                               0.,                               m2,                            0.],
-#                   [ -m*eta*np.cos(theta), -m*eta*np.sin(theta),                                                 I,                               0.,                               0.,                            0.,                               0.,                               0.,                            0.],
-#                   [                  -1.,                   0., eta*np.sin(theta) + gamma1*np.sin(theta + theta1),                               1.,                               0., gamma1*np.sin(theta + theta1),                               0.,                               0.,                            0.],
-#                   [                   0.,                  -1., eta*np.cos(theta) + gamma1*np.cos(theta + theta1),                               0.,                               1., gamma1*np.cos(theta + theta1),                               0.,                               0.,                            0.],
-#                   [                   0.,                   0.,                                                0., m1*gamma1*np.cos(theta + theta1), m1*gamma1*np.sin(theta + theta1),                            I1,                               0.,                               0.,                            0.],
-#                   [                  -1.,                   0., eta*np.sin(theta) + gamma2*np.sin(theta + theta2),                               0.,                               0.,                            0.,                               1.,                               0., gamma2*np.sin(theta + theta2)],
-#                   [                   0.,                  -1., eta*np.cos(theta) + gamma2*np.cos(theta + theta2),                               0.,                               0.,                            0.,                               0.,                               1., gamma2*np.cos(theta + theta2)],
-#                   [                   0.,                   0.,                                                0.,                               0.,                               0.,                            0., m2*gamma2*np.cos(theta + theta2), m2*gamma2*np.sin(theta + theta2),                            I2]])
-#    
-#    # C matrix
-#    C = np.matrix([[fF1 + fF2],
-#                   [fN1 + fN2 - (m + m1 + m2)*g],
-#                   [-HIP_SPRING_STIFFNESS*(phi1 - theta1 + phi2 - theta2) + m*g*eta*np.sin(theta)],
-#                   [-thetadot**2*eta*np.cos(theta) - (thetadot + theta1dot)**2*gamma1*np.cos(theta + theta1)],
-#                   [ thetadot**2*eta*np.sin(theta) + (thetadot + theta1dot)**2*gamma1*np.sin(theta + theta1)],
-#                   [-m1*g*gamma1*np.sin(theta+theta1) + fN1*(eta1*np.sin(theta+theta1) + gamma1*np.sin(theta+theta1)) + fF1*(eta1*np.cos(theta+theta1) + gamma1*np.cos(theta + theta1)) + HIP_SPRING_STIFFNESS*(phi1 - theta1)],
-#                   [-thetadot**2*eta*np.cos(theta) - (thetadot + theta2dot)**2*gamma2*np.cos(theta+theta2)],
-#                   [ thetadot**2*eta*np.sin(theta) + (thetadot + theta2dot)**2*gamma2*np.sin(theta + theta2)],
-#                   [-m2*g*gamma2*np.sin(theta + theta2) + fN2*(eta2*np.sin(theta + theta2) + gamma2*np.sin(theta + theta2)) + fF2*(eta2*np.cos(theta + theta2) + gamma2*np.cos(theta + theta2)) + HIP_SPRING_STIFFNESS*(phi2 - theta2)]])    
-#    
-
-
-
-# Mass matrix
-#    M = np.matrix([[1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
-#                   [0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
-#                   [0., 0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
-#                   [0., 0., 0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
-#                   [0., 0., 0., 0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
-#                   [0., 0., 0., 0., 0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
-#                   [0., 0., 0., 0., 0., 0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
-#                   [0., 0., 0., 0., 0., 0., 0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
-#                   [0., 0., 0., 0., 0., 0., 0., 0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
-#                   [0., 0., 0., 0., 0., 0., 0., 0., 0.,                    m,                   0.,                                                0.,                               m1,                               0.,                            0.,                               m2,                               0.,                            0.],
-#                   [0., 0., 0., 0., 0., 0., 0., 0., 0.,                   0.,                   m ,                                                0.,                               0.,                               m1,                            0.,                               0.,                               m2,                            0.],
-#                   [0., 0., 0., 0., 0., 0., 0., 0., 0., -m*eta*np.cos(theta), -m*eta*np.sin(theta),                                                 I,                               0.,                               0.,                            0.,                               0.,                               0.,                            0.],
-#                   [0., 0., 0., 0., 0., 0., 0., 0., 0.,                  -1.,                   0.,          eta*np.sin(theta) + gamma1*np.cos(theta),                               1.,                               0., gamma1*np.sin(theta + theta1),                               0.,                               0.,                            0.],
-#                   [0., 0., 0., 0., 0., 0., 0., 0., 0.,                   0.,                  -1., eta*np.cos(theta) + gamma1*np.cos(theta + theta1),                               0.,                               1., gamma1*np.cos(theta + theta1),                               0.,                               0.,                            0.],
-#                   [0., 0., 0., 0., 0., 0., 0., 0., 0.,                   0.,                   0.,                                                0., m1*gamma1*np.cos(theta + theta1), m1*gamma1*np.sin(theta + theta1),                            I1,                               0.,                               0.,                            0.],
-#                   [0., 0., 0., 0., 0., 0., 0., 0., 0.,                  -1.,                   0., eta*np.sin(theta) + gamma2*np.sin(theta + theta2),                               0.,                               0.,                            0.,                               1.,                               0., gamma2*np.sin(theta + theta2)],
-#                   [0., 0., 0., 0., 0., 0., 0., 0., 0.,                   0.,                  -1., eta*np.cos(theta) + gamma2*np.cos(theta + theta2),                               0.,                               0.,                            0.,                               0.,                               1., gamma2*np.cos(theta + theta2)],
-#                   [0., 0., 0., 0., 0., 0., 0., 0., 0.,                   0.,                   0.,                                                0.,                               0.,                               0.,                            0., m2*gamma2*np.cos(theta + theta2), m2*gamma2*np.sin(theta + theta2),                            I2]])
- 
-# C matrix
-#    C = np.matrix([[xdot],
-#                   [ydot],
-#                   [thetadot],
-#                   [x1dot],
-#                   [y1dot],
-#                   [theta1dot],
-#                   [x2dot],
-#                   [y2dot],
-#                   [theta2dot],
-#                   [fF1 + fF2],
-#                   [fN1 + fN2 - (m + m1 + m2)*g],
-#                   [-K*(phi1 - theta1 + phi2 - theta2) + m*g*np.sin(theta)],
-#                   [-thetadot**2*eta*np.cos(theta) - (thetadot + theta1dot)**2*gamma1*np.cos(theta + theta1)],
-#                   [ thetadot**2*eta*np.sin(theta) + (thetadot + theta1dot)**2*gamma1*np.sin(theta + theta1)],
-#                   [-g*gamma1*np.sin(theta+theta1) + fN1*(eta1*np.sin(theta+theta1) + gamma1*np.sin(theta+theta1)) + fF1*(eta1*np.cos(theta+theta1) + gamma1*np.cos(theta + theta1)) + K*(phi1 - theta1)],
-#                   [-thetadot**2*eta*np.cos(theta) - (thetadot + theta2dot)**2*gamma2*np.cos(theta+theta2)],
-#                   [thetadot**2*eta*np.sin(theta) + (thetadot + theta2dot)**2*gamma2*np.sin(theta + theta2)],
-#                   [-g*gamma2*np.sin(theta + theta2) + fN2*(eta2*np.sin(theta + theta2) + gamma2*np.sin(theta + theta2)) + fF2*(eta2*np.cos(theta + theta2) + gamma2*np.cos(theta + theta2)) + K*(phi2 - theta2)]])    
-    
 def render(filename, state_log, action_log, episode_number):
         """
         This function animates the motion of one episode. It receives the 
@@ -670,8 +737,8 @@ def render(filename, state_log, action_log, episode_number):
         # Stephane's Animating Code #
         #print(state_log[1])
         #print(action_log)
-        import animator
-        animator.drawState(play_game = False, filename = filename, state_log = state_log, action_log = action_log, episode_number = episode_number)
+        import animator_full
+        animator_full.drawState(play_game = False, filename = filename, state_log = state_log, action_log = action_log, episode_number = episode_number)
         
         #############################
         
