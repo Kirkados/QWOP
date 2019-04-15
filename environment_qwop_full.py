@@ -99,19 +99,19 @@ class Environment:
 
         # body 0, main body
         m = 0.497*p_mass
-        L = 0.289*p_height
-        eta = 0.5*L
-        gamma = L-eta
+        l = 0.289*p_height
+        eta = 0.5*l
+        gamma = l-eta
         phi0 = 0 
         phi_min = -1000000
         phi_max =  1000000
-        k = 0.5*L
+        k = 0.5*l
         I = m*k**2
         
          
         self.SEGMENT_MASS.append(m)
         self.SEGMENT_MOMINERT.append(I)
-        self.SEGMENT_LENGTH.append(L)
+        self.SEGMENT_LENGTH.append(l)
         self.SEGMENT_ETA_LENGTH.append(eta)
         self.SEGMENT_GAMMA_LENGTH.append(gamma)
         self.SEGMENT_PHI_NAUGTH.append(phi0)
@@ -120,18 +120,18 @@ class Environment:
         
         # body 1, right leg
         m = 0.0465*p_mass+0.100*p_mass
-        L = 0.242*p_height+0.245*p_height
+        l = 0.242*p_height+0.245*p_height
         eta = (0.433*0.245*p_height*0.100*p_mass+(0.245*p_height+0.433*0.242*p_height)*0.0465*p_mass)/m
-        gamma = L-eta
+        gamma = l-eta
         phi0 = np.pi/6 
         phi_min = -np.pi/4
         phi_max =  np.pi/2
-        k = 0.5*L
+        k = 0.5*l
         I = 0.0465*p_mass*(0.302*0.245*p_height**2)+0.0465*p_mass*(0.323*0.242*p_height**2)
        
         self.SEGMENT_MASS.append(m)
         self.SEGMENT_MOMINERT.append(I)
-        self.SEGMENT_LENGTH.append(L)
+        self.SEGMENT_LENGTH.append(l)
         self.SEGMENT_ETA_LENGTH.append(eta)
         self.SEGMENT_GAMMA_LENGTH.append(gamma)
         self.SEGMENT_PHI_NAUGTH.append(phi0)
@@ -140,40 +140,31 @@ class Environment:
         
         # body 2, left leg
         m = 0.0465*p_mass+0.100*p_mass
-        L = 0.242*p_height+0.245*p_height
+        l = 0.242*p_height+0.245*p_height
         eta = (0.433*0.245*p_height*0.100*p_mass+(0.245*p_height+0.433*0.242*p_height)*0.0465*p_mass)/m
-        gamma = L-eta
+        gamma = l-eta
         phi0 = -np.pi/6 
         phi_min = -np.pi/4
         phi_max =  np.pi/2
-        k = 0.5*L
+        k = 0.5*l
         I = 0.0465*p_mass*(0.302*0.245*p_height**2)+0.0465*p_mass*(0.323*0.242*p_height**2)
         
         self.SEGMENT_MASS.append(m)
         self.SEGMENT_MOMINERT.append(I)
-        self.SEGMENT_LENGTH.append(L)
+        self.SEGMENT_LENGTH.append(l)
         self.SEGMENT_ETA_LENGTH.append(eta)
         self.SEGMENT_GAMMA_LENGTH.append(gamma)
         self.SEGMENT_PHI_NAUGTH.append(phi0)
         self.SEGMENT_PHI_MAX.append(phi_max)
         self.SEGMENT_PHI_MIN.append(phi_min)
         
-#        self.m = 10.          
-#        self.m1 = 5.          # [kg]
-#        self.m2 = 5.          # [kg]
-#        self.eta = 0.5 
-#        self.eta1 = 0.5
-#        self.eta2 = 0.5
-#        self.gamma1 = 0.5
-#        self.gamma2 = 0.5
-#        self.I = 10.          
-#        self.I1 = 7.          # [kg m^2]
-#        self.I2 = 7.          # [kg m^2]
-#        self.body_length = 1. 
-#        self.leg1_length = 1. # [m]
-#        self.leg2_length = 1. # [m]
-#        self.phi1 = np.pi/6   # [rad]
-#        self.phi2 = -np.pi/6  # [rad]
+
+
+
+
+
+
+
 
         
     ###################################
