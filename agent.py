@@ -169,7 +169,7 @@ class Agent:
             
             # Stepping through time until we reach the max time length or until episode completes.
             while timestep_number < Settings.MAX_NUMBER_OF_TIMESTEPS and not done:
-                
+                print("Timestep number %i" %timestep_number)
                 # Should we try explore on this timestep?
                 if np.random.uniform() < exploration_rate:
                     # Time to explore! 

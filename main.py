@@ -139,7 +139,7 @@ for each_file in glob.glob('*.py'):
 ##### Starting Tensorflow session #####
 #######################################
 with tf.Session(config = config) as sess:
-    
+    print("\nThis run is named " + filename + '\n')
     ##############################
     ##### Initializing items #####
     ##############################    
