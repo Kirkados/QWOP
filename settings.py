@@ -13,7 +13,7 @@ class Settings:
     
     RUN_NAME               = 'full_qwop_run_1' # use just the name. If trying to restore from file, use name along with timestamp
     ENVIRONMENT            = 'qwop_full'
-    RECORD_VIDEO           = True
+    RECORD_VIDEO           = False
     VIDEO_RECORD_FREQUENCY = 4 # Multiples of "CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES"
     NOISELESS_AT_TEST_TIME = True # Whether or not to test noise-free (Keep at True unless debugging)
     LEARN_FROM_PIXELS      = False # False = learn from state (fully observed); True = learn from pixels (partially observed)
@@ -106,8 +106,7 @@ class Settings:
     STATE_SIZE              = env.STATE_SIZE
     UPPER_STATE_BOUND       = env.UPPER_STATE_BOUND
     ACTION_SIZE             = env.ACTION_SIZE 
-    NORMALIZE_STATE         = env.NORMALIZE_STATE # Normalize state on each timestep to avoid vanishing gradients    
-    REWARD_SCALING          = env.REWARD_SCALING # Amount to scale down the reward signal
+    NORMALIZE_STATE         = env.NORMALIZE_STATE # Normalize state on each timestep to avoid vanishing gradients  
     MIN_Q                   = env.MIN_Q
     MAX_Q                   = env.MAX_Q
     TIMESTEP                = env.TIMESTEP

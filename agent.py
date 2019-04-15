@@ -203,10 +203,9 @@ class Agent:
                     state_log.append(next_state)
                     action_log.append(action)
                 
-                # Normalize the state and scale down reward
+                # Normalize the state
                 if Settings.NORMALIZE_STATE:
                     next_state = next_state/Settings.UPPER_STATE_BOUND
-                reward = reward/Settings.REWARD_SCALING
                 # Discarding irrelevant states
                 next_state = np.delete(next_state, Settings.IRRELEVANT_STATES)
                 

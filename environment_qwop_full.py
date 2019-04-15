@@ -28,7 +28,11 @@ Outputs:
 Inputs:
     Action input is of shape (action_size,)   
 
-
+**************
+TO IMPLEMENT
+- Episode done checking
+- Animation
+**************
 @author: Kirk Hovell (khovell@gmail.com)
 """
 import numpy as np
@@ -49,18 +53,18 @@ class Environment:
         ##### Environment Properties #####
         ##################################
         self.TOTAL_STATE_SIZE        = 62 # total number of states
-        self.IRRELEVANT_STATES       = [0,3,4,6,7,9,10,11,12,16,17,19,20,22,23,24,25] # states that are irrelevant to the policy network in its decision making
+        self.IRRELEVANT_STATES       = [0,3,4,6,7,9,10,12,13,15,16,17,18,20,21,23,24,26,27,29,30,34,35,37,38,40,41,43,44,46,47,48,49,51,52,54,55,57,58,60,61] # states that are irrelevant to the policy network in its decision making
         self.STATE_SIZE              = self.TOTAL_STATE_SIZE - len(self.IRRELEVANT_STATES) # total number of relevant states
         self.ACTION_SIZE             = 9
         self.TIMESTEP                = 0.05 # [s]        
-        self.MAX_NUMBER_OF_TIMESTEPS = 1200 # per episode
+        self.MAX_NUMBER_OF_TIMESTEPS = 10 # per episode
         self.NUM_FRAMES              = 100 # total animation is cut into this many frames
         self.RANDOMIZE               = False # whether or not to randomize the state & target location
-        self.UPPER_STATE_BOUND       = np.array([np.inf, 2., 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, np.inf, np.inf, 1., 1., 1., np.inf, np.inf, 1., np.inf, np.inf, 1., np.inf, np.inf, np.inf, np.inf])
+        self.UPPER_STATE_BOUND       = np.array([np.inf, 4., 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, np.inf, np.inf, 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf,\
+                                                 np.inf, np.inf, 1., np.inf, np.inf, 1., np.inf, np.inf, 1., np.inf, np.inf, 1., np.inf, np.inf, 1., np.inf, np.inf, np.inf, np.inf, 1., np.inf, np.inf, 1., np.inf, np.inf, 1., np.inf, np.inf, 1., np.inf, np.inf])
         self.NORMALIZE_STATE         = True # Normalize state on each timestep to avoid vanishing gradients
-        self.REWARD_SCALING          = 1000.0 # Amount to scale down the reward signal
-        self.MIN_Q                   = -5.0
-        self.MAX_Q                   = 15.0
+        self.MIN_Q                   = -5000.0
+        self.MAX_Q                   = 15000.0
         self.DONE_ON_FALL            = True # whether or not falling down ends the episode
         
         # Rendering parameters
@@ -334,8 +338,8 @@ class Environment:
             initial_theta = self.INITIAL_THETA
             
             # Right proximal arm segment
-            initial_x1r = initial_x - self.SEGMENT_GAMMA_LENGTH[0] * np.sin(self.initial_theta) + self.SEGMENT_GAMMA_LENGTH[1] * np.sin(self.INITIAL_THETA1R)
-            initial_y1r = initial_y + self.SEGMENT_GAMMA_LENGTH[0] * np.cos(self.initial_theta) - self.SEGMENT_GAMMA_LENGTH[1] * np.cos(self.INITIAL_THETA1R)
+            initial_x1r = initial_x - self.SEGMENT_GAMMA_LENGTH[0] * np.sin(initial_theta) + self.SEGMENT_GAMMA_LENGTH[1] * np.sin(self.INITIAL_THETA1R)
+            initial_y1r = initial_y + self.SEGMENT_GAMMA_LENGTH[0] * np.cos(initial_theta) - self.SEGMENT_GAMMA_LENGTH[1] * np.cos(self.INITIAL_THETA1R)
             initial_theta1r = self.INITIAL_THETA1R
             
             # Right distal arm segment
@@ -344,8 +348,8 @@ class Environment:
             initial_theta2r = self.INITIAL_THETA2R
             
             # Left proximal arm segment
-            initial_x1l = initial_x - self.SEGMENT_GAMMA_LENGTH[0] * np.sin(self.initial_theta) - self.SEGMENT_GAMMA_LENGTH[1] * np.sin(self.INITIAL_THETA1L)
-            initial_y1l = initial_y + self.SEGMENT_GAMMA_LENGTH[0] * np.cos(self.initial_theta) - self.SEGMENT_GAMMA_LENGTH[1] * np.cos(self.INITIAL_THETA1L)
+            initial_x1l = initial_x - self.SEGMENT_GAMMA_LENGTH[0] * np.sin(initial_theta) - self.SEGMENT_GAMMA_LENGTH[1] * np.sin(self.INITIAL_THETA1L)
+            initial_y1l = initial_y + self.SEGMENT_GAMMA_LENGTH[0] * np.cos(initial_theta) - self.SEGMENT_GAMMA_LENGTH[1] * np.cos(self.INITIAL_THETA1L)
             initial_theta1l = self.INITIAL_THETA1L
             
             # Left distal arm segment
@@ -354,8 +358,8 @@ class Environment:
             initial_theta2l = self.INITIAL_THETA2L   
             
             # Right proximal leg segment
-            initial_x3r = initial_x + (self.SEGMENT_LENGTH[0] - self.SEGMENT_GAMMA_LENGTH[0]) * np.sin(self.initial_theta) + self.SEGMENT_GAMMA_LENGTH[3] * np.sin(self.INITIAL_THETA3R)
-            initial_y3r = initial_y - (self.SEGMENT_LENGTH[0] - self.SEGMENT_GAMMA_LENGTH[0]) * np.cos(self.initial_theta) - self.SEGMENT_GAMMA_LENGTH[3] * np.cos(self.INITIAL_THETA3R)
+            initial_x3r = initial_x + (self.SEGMENT_LENGTH[0] - self.SEGMENT_GAMMA_LENGTH[0]) * np.sin(initial_theta) + self.SEGMENT_GAMMA_LENGTH[3] * np.sin(self.INITIAL_THETA3R)
+            initial_y3r = initial_y - (self.SEGMENT_LENGTH[0] - self.SEGMENT_GAMMA_LENGTH[0]) * np.cos(initial_theta) - self.SEGMENT_GAMMA_LENGTH[3] * np.cos(self.INITIAL_THETA3R)
             initial_theta3r = self.INITIAL_THETA3R
             
             # Right distal leg segment
@@ -368,8 +372,8 @@ class Environment:
             initial_yfr = initial_y4r - (self.SEGMENT_LENGTH[4] - self.SEGMENT_GAMMA_LENGTH[4]) * np.cos(initial_theta4r)
             
             # Left proximal leg segment
-            initial_x3l = initial_x + (self.SEGMENT_LENGTH[0] - self.SEGMENT_GAMMA_LENGTH[0]) * np.sin(self.initial_theta) - self.SEGMENT_GAMMA_LENGTH[3] * np.sin(self.INITIAL_THETA3L)
-            initial_y3l = initial_y - (self.SEGMENT_LENGTH[0] - self.SEGMENT_GAMMA_LENGTH[0]) * np.cos(self.initial_theta) - self.SEGMENT_GAMMA_LENGTH[3] * np.cos(self.INITIAL_THETA3L)
+            initial_x3l = initial_x + (self.SEGMENT_LENGTH[0] - self.SEGMENT_GAMMA_LENGTH[0]) * np.sin(initial_theta) - self.SEGMENT_GAMMA_LENGTH[3] * np.sin(self.INITIAL_THETA3L)
+            initial_y3l = initial_y - (self.SEGMENT_LENGTH[0] - self.SEGMENT_GAMMA_LENGTH[0]) * np.cos(initial_theta) - self.SEGMENT_GAMMA_LENGTH[3] * np.cos(self.INITIAL_THETA3L)
             initial_theta3l = self.INITIAL_THETA3L
             
             # Left distal leg segment
@@ -478,9 +482,9 @@ class Environment:
         x, y, theta, x1, y1, theta1, x2, y2, theta2, *_ = self.state
 
         #Get point coordinates for each segment
-        segment_points[0,:,:] = self.returnPointCoords(x,y,theta,self.SEGMENT_GAMMA_LENGTH[0],self.SEGMENT_ETA_LENGTH[0],x,self.x_0,self.y_0,self.HUMAN_SCALE)
-        segment_points[1,:,:] = self.returnPointCoords(x1,y1,theta+theta1,self.SEGMENT_GAMMA_LENGTH[1],self.SEGMENT_ETA_LENGTH[1],x,self.x_0,self.y_0,self.HUMAN_SCALE)
-        segment_points[2,:,:] = self.returnPointCoords(x2,y2,theta+theta2,self.SEGMENT_GAMMA_LENGTH[2],self.SEGMENT_ETA_LENGTH[2],x,self.x_0,self.y_0,self.HUMAN_SCALE)
+        #segment_points[0,:,:] = self.returnPointCoords(x,y,theta,self.SEGMENT_GAMMA_LENGTH[0],self.SEGMENT_ETA_LENGTH[0],x,self.x_0,self.y_0,self.HUMAN_SCALE)
+        #segment_points[1,:,:] = self.returnPointCoords(x1,y1,theta+theta1,self.SEGMENT_GAMMA_LENGTH[1],self.SEGMENT_ETA_LENGTH[1],x,self.x_0,self.y_0,self.HUMAN_SCALE)
+        #segment_points[2,:,:] = self.returnPointCoords(x2,y2,theta+theta2,self.SEGMENT_GAMMA_LENGTH[2],self.SEGMENT_ETA_LENGTH[2],x,self.x_0,self.y_0,self.HUMAN_SCALE)
         
         # Check if any node is out-of-bounds. If so, this episode is done
         if np.any(segment_points[:,0,1] > self.HEIGHT) and self.DONE_ON_FALL:
@@ -727,9 +731,12 @@ def render(filename, state_log, action_log, episode_number):
             episode_number - Which episode produced these results
             filename - Please save the animation in: 'TensorBoard/' + filename + '/videos/episode_' + str(episode_number)
             
+        
         For reference, the state is:
-            state = x, y, theta, x1, y1, theta1, x2, y2, theta2, xdot, ydot, thetadot, x1dot, y1dot, theta1dot, x2dot, y2dot, theta2dot                
+        x,       y,    theta,    x1r,    y1r,    theta1r,    x2r,    y2r,    theta2r,    x3r,    y3r,    theta3r,    x4r,    y4r,    theta4r,    xfr,    yfr,    x1l,    y1l,    theta1l,    x2l,    y2l,    theta2l,    x3l,    y3l,    theta3l,    x4l,    y4l,    theta4l,    xfl,    yfl, \
+        xdot, ydot, thetadot, x1rdot, y1rdot, theta1rdot, x2rdot, y2rdot, theta2rdot, x3rdot, y3rdot, theta3rdot, x4rdot, y4rdot, theta4rdot, xfrdot, yfrdot, x1ldot, y1ldot, theta1ldot, x2ldot, y2ldot, theta2ldot, x3ldot, y3ldot, theta3ldot, x4ldot, y4ldot, theta4ldot, xfldot, yfldot = state
         """
+        
         
       
         

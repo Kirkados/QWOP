@@ -11,8 +11,9 @@ from os.path import isfile, join
 import cv2
 import numpy as np
 import pygame
-from environment_qwop import Environment
 from settings import Settings
+# Importing the environment
+Environment = __import__('environment_' + Settings.ENVIRONMENT).Environment
 
 def runCode():
     #runfile('/Users/StephaneMagnan/Documents/GitHub/QWOP/animator.py', wdir='/Users/StephaneMagnan/Documents/GitHub/QWOP')
