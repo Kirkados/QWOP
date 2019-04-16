@@ -572,8 +572,7 @@ def equations_of_motion(state, t, parameters):
     
     first_derivatives = np.array([xdot, ydot, thetadot, x1rdot, y1rdot, theta1rdot, x2rdot, y2rdot, theta2rdot, x3rdot, y3rdot, theta3rdot, x4rdot, y4rdot, theta4rdot, xfrdot, yfrdot, x1ldot, y1ldot, theta1ldot, x2ldot, y2ldot, theta2ldot, x3ldot, y3ldot, theta3ldot, x4ldot, y4ldot, theta4ldot, xfldot, yfldot]) 
     
-    M = np.matrix([
-                    [m	,	0	,	0	,	m1	,	0	,	0	,	m2	,	0	,	0	,	m3	,	0	,	0	,	m4	,	0	,	0	,	0	,	0	,	m1	,	0	,	0	,	m2	,	0	,	0	,	m3	,	0	,	0	,	m4	,	0	,	0	,	0	,	0	],
+    M = np.matrix([[	m	,	0	,	0	,	m1	,	0	,	0	,	m2	,	0	,	0	,	m3	,	0	,	0	,	m4	,	0	,	0	,	0	,	0	,	m1	,	0	,	0	,	m2	,	0	,	0	,	m3	,	0	,	0	,	m4	,	0	,	0	,	0	,	0	],
                     [	0	,	m	,	0	,	0	,	m1	,	0	,	0	,	m2	,	0	,	0	,	m3	,	0	,	0	,	m4	,	0	,	0	,	0	,	0	,	m1	,	0	,	0	,	m2	,	0	,	0	,	m3	,	0	,	0	,	m4	,	0	,	0	,	0	],
                     [	0	,	0	,	I	,	-m1*gamma*np.cos(theta)	,	-m1*gamma*np.sin(theta)	,	0	,	-m2*gamma*np.cos(theta)	,	-m2*gamma*np.sin(theta)	,	0	,	m3*(l-gamma)*np.cos(theta)	,	m3*(l-gamma)*np.sin(theta)	,	0	,	m4*(l-gamma)*np.cos(theta)	,	m4*(l-gamma)*np.sin(theta)	,	0	,	0	,	0	,	-m1*gamma*np.cos(theta)	,	-m1*gamma*np.sin(theta)	,	0	,	-m2*gamma*np.cos(theta)	,	-m2*gamma*np.sin(theta)	,	0	,	m3*(l-gamma)*np.cos(theta)	,	m3*(l-gamma)*np.sin(theta)	,	0	,	m4*(l-gamma)*np.cos(theta)	,	m4*(l-gamma)*np.sin(theta)	,	0	,	0	,	0	],
                     [	0	,	0	,	0	,	m1*gamma1*np.cos(theta1r)	,	m1*gamma1*np.sin(theta1r)	,	I1	,	m2*gamma1*np.cos(theta1r)+m2*(l1-gamma1)*np.cos(theta1r)	,	m2*gamma1*np.sin(theta1r)+m2*(l1-gamma1)*np.sin(theta1r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
@@ -584,8 +583,8 @@ def equations_of_motion(state, t, parameters):
                     [	0	,	-1	,	gamma*np.sin(theta)	,	0	,	1	,	-gamma1*np.sin(theta1r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
                     [	0	,	0	,	0	,	-1	,	0	,	-(l1-gamma1)*np.cos(theta1r)	,	1	,	0	,	-gamma2*np.cos(theta2r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
                     [	0	,	0	,	0	,	0	,	-1	,	-(l1-gamma1)*np.sin(theta1r)	,	0	,	1	,	-gamma2*np.sin(theta2r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
-                    [	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	0	,	-(l-gamma)*np.cos(theta)	,	1	,	0	,	-gamma3*np.cos(theta3r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
-                    [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	-(l-gamma)*np.sin(theta)	,	0	,	1	,	-gamma3*np.sin(theta3r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	-1	,	0	,	-(l-gamma)*np.cos(theta)	,	0	,	0	,	0	,	0	,	0	,	0	,	1	,	0	,	-gamma3*np.cos(theta3r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	-1	,	-(l-gamma)*np.sin(theta)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	1	,	-gamma3*np.sin(theta3r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
                     [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	0	,	-(l3-gamma3)*np.cos(theta3r)	,	1	,	0	,	-gamma4*np.cos(theta4r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
                     [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	-(l3-gamma3)*np.sin(theta3r)	,	0	,	1	,	-gamma4*np.sin(theta4r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
                     [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	0	,	-(l4-gamma4)*np.cos(theta4r)	,	1	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
@@ -598,13 +597,12 @@ def equations_of_motion(state, t, parameters):
                     [	0	,	-1	,	gamma*np.sin(theta)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	1	,	-gamma1*np.sin(theta1l)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
                     [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	0	,	-(l1-gamma1)*np.cos(theta1l)	,	1	,	0	,	-gamma2*np.cos(theta2l)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
                     [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	-(l1-gamma1)*np.sin(theta1l)	,	0	,	1	,	-gamma2*np.sin(theta2l)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
-                    [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	0	,	-(l-gamma)*np.cos(theta)	,	1	,	0	,	-gamma3*np.cos(theta3l)	,	0	,	0	,	0	,	0	,	0	],
-                    [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	-(l-gamma)*np.sin(theta)	,	0	,	1	,	-gamma3*np.sin(theta3l)	,	0	,	0	,	0	,	0	,	0	],
+                    [	-1	,	0	,	-(l-gamma)*np.cos(theta)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	1	,	0	,	-gamma3*np.cos(theta3l)	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	-1	,	-(l-gamma)*np.sin(theta)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	1	,	-gamma3*np.sin(theta3l)	,	0	,	0	,	0	,	0	,	0	],
                     [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	0	,	-(l3-gamma3)*np.cos(theta3l)	,	1	,	0	,	-gamma4*np.cos(theta4l)	,	0	,	0	],
                     [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	-(l3-gamma3)*np.sin(theta3l)	,	0	,	1	,	-gamma4*np.sin(theta4l)	,	0	,	0	],
                     [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	0	,	-(l4-gamma4)*np.cos(theta4l)	,	1	,	0	],
                     [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	-(l4-gamma4)*np.sin(theta4l)	,	0	,	1	]])
-    
     # Calculating floor reaction forces
     fNr = np.maximum(0,-FLOOR_SPRING_STIFFNESS*yfr - (FLOOR_DAMPING_COEFFICIENT*yfrdot if yfr <= 0 else 0))
     fNl = np.maximum(0,-FLOOR_SPRING_STIFFNESS*yfl - (FLOOR_DAMPING_COEFFICIENT*yfldot if yfl <= 0 else 0))
