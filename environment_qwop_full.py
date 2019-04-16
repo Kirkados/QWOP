@@ -139,12 +139,29 @@ class Environment:
         p_mass = 75#kg
         p_height = 1.80#m
 
+#lengths from page 14 Conti http://www.oandplibrary.org/al/pdf/1972_01_001.pdf
+#gamma from page 11, NYU for completeness
+#radius of gyration from table 10, page 12, weighted average   
+        
+        # trunk
+        l_trunk = 0.289*p_height
+        com_trunk = 0.500*l_trunk
+        k_trunk = 0.500*l_trunk
+        ic_trunk = m_trunk*k_trunk**2
+        ip_trunk = m_trunk*com_trunk**2
+        
+        # head+neck
+        l_head = 0.19*p_height
+        com_head = 0.567*l_head
+        k_head = 0.495*l_head
+        ic_head = m_head*k_head**2
+        ip_head = m_head*com_head**2
+        
         # segment 0, main body (+ head and neck contributions)
-        m = 0.497*p_mass
+        m = (0.497+0.181)*p_mass
         l = 0.289*p_height
-        eta = 0.5*l
-        gamma = l-eta
-        phi0 = 0 
+        gamma = 0.5*l
+        #phi0 = 0 
         phi_min = -1000000
         phi_max =  1000000
         k = 0.5*l
@@ -154,162 +171,88 @@ class Environment:
         self.SEGMENT_MASS.append(m)
         self.SEGMENT_MOMINERT.append(I)
         self.SEGMENT_LENGTH.append(l)
-        #self.SEGMENT_ETA_LENGTH.append(eta)
         self.SEGMENT_GAMMA_LENGTH.append(gamma)
-        self.SEGMENT_PHI_NAUGTH.append(phi0)
+        #self.SEGMENT_PHI_NAUGTH.append(phi0)
         self.SEGMENT_PHI_MAX.append(phi_max)
         self.SEGMENT_PHI_MIN.append(phi_min)
         
         
-        
-#'arm
-#m_arm = 0.028*p_mass
-#l_arm = 0.189*p_height
-#com_arm = 0.530*l_arm
-#k_arm = 0.368*l_arm
-#ic_arm = m_arm*k_arm**2
-#ip_arm = m_arm*com_arm**2
-
         # segment 1, proximal arm
         m = 0.028*p_mass
         l = 0.189*p_height
-        eta = (0.433*0.245*p_height*0.100*p_mass+(0.245*p_height+0.433*0.242*p_height)*0.0465*p_mass)/m
-        gamma = l-eta
-        phi0 = np.pi/6 
+        gamma = 0.449*l
+        #phi0 = -np.pi/6 
         phi_min = -np.pi/4
-        phi_max =  np.pi/2
-        k = 0.368*l
-        I = 0.0465*p_mass*(0.302*0.245*p_height**2)+0.0465*p_mass*(0.323*0.242*p_height**2)
+        phi_max =  np.pi/4
+        k = 0.268*l
+        I =  k**2*m
        
         self.SEGMENT_MASS.append(m)
         self.SEGMENT_MOMINERT.append(I)
         self.SEGMENT_LENGTH.append(l)
-        #self.SEGMENT_ETA_LENGTH.append(eta)
         self.SEGMENT_GAMMA_LENGTH.append(gamma)
-        self.SEGMENT_PHI_NAUGTH.append(phi0)
+        #self.SEGMENT_PHI_NAUGTH.append(phi0)
         self.SEGMENT_PHI_MAX.append(phi_max)
         self.SEGMENT_PHI_MIN.append(phi_min)
+              
         
-#'hand
-#m_hand = 0.006*p_mass
-#l_hand = 0.128*p_height
-#com_hand = 0.506*l_hand
-#k_hand = 0.297*l_hand
-#ic_hand = m_hand*k_hand**2
-#ip_hand = m_hand*com_hand**2
-#
-#'forearm
-#m_forearm = 0.016*p_mass
-#l_forearm = 0.145*p_height
-#com_forearm = 0.430*l_forearm
-#k_forearm = 0.303*l_forearm
-#ic_forearm = m_forearm*k_forearm**2
-#ip_forearm = m_forearm*com_forearm**2        
-        
-        # segment 2, distal arm
+        # segment 2, distal arm (+hand)
         m = 0.0465*p_mass+0.100*p_mass
-        l = 0.242*p_height+0.245*p_height
-        eta = (0.433*0.245*p_height*0.100*p_mass+(0.245*p_height+0.433*0.242*p_height)*0.0465*p_mass)/m
-        gamma = l-eta
-        phi0 = -np.pi/6 
-        phi_min = -np.pi/4
-        phi_max =  np.pi/2
-        k = 0.5*l
-        I = 0.0465*p_mass*(0.302*0.245*p_height**2)+0.0465*p_mass*(0.323*0.242*p_height**2)
+        l = 0.273*p_height
+        gamma = 0.382*l
+        #phi0 = np.pi/2 
+        phi_min = 0
+        phi_max =  5*np.pi/6
+        k = 0.263*l
+        I =  k**2*m
         
         self.SEGMENT_MASS.append(m)
         self.SEGMENT_MOMINERT.append(I)
         self.SEGMENT_LENGTH.append(l)
-        #self.SEGMENT_ETA_LENGTH.append(eta)
         self.SEGMENT_GAMMA_LENGTH.append(gamma)
-        self.SEGMENT_PHI_NAUGTH.append(phi0)
+        #self.SEGMENT_PHI_NAUGTH.append(phi0)
         self.SEGMENT_PHI_MAX.append(phi_max)
         self.SEGMENT_PHI_MIN.append(phi_min)
         
 
         # segment 3, proximal leg
         m = 0.0465*p_mass+0.100*p_mass
-        l = 0.245*p_height+0.043*p_height
-        eta = (0.433*0.245*p_height*0.100*p_mass+(0.245*p_height+0.433*0.242*p_height)*0.0465*p_mass)/m
-        gamma = l-eta
-        phi0 = -np.pi/6 
-        phi_min = -np.pi/4
-        phi_max =  np.pi/2
-        k = 0.5*l
-        I = 0.0465*p_mass*(0.302*0.245*p_height**2)+0.0465*p_mass*(0.323*0.242*p_height**2)
+        l = 0.245*p_height
+        gamma = 0.41*l
+        #phi0 = -np.pi/6 
+        phi_min = -np.pi/2
+        phi_max =  0
+        k = 0.25*l
+        I = k**2*m
         
         self.SEGMENT_MASS.append(m)
         self.SEGMENT_MOMINERT.append(I)
         self.SEGMENT_LENGTH.append(l)
-        #self.SEGMENT_ETA_LENGTH.append(eta)
         self.SEGMENT_GAMMA_LENGTH.append(gamma)
-        self.SEGMENT_PHI_NAUGTH.append(phi0)
+        #self.SEGMENT_PHI_NAUGTH.append(phi0)
         self.SEGMENT_PHI_MAX.append(phi_max)
         self.SEGMENT_PHI_MIN.append(phi_min)
         
-        # segment 4, distal leg
+        # segment 4, distal leg (+foot)
         m = 0.0465*p_mass+0.100*p_mass
-        l = 0.242*p_height
-        eta = (0.433*0.245*p_height*0.100*p_mass+(0.245*p_height+0.433*0.242*p_height)*0.0465*p_mass)/m
-        gamma = l-eta
-        phi0 = -np.pi/6 
+        l = 0.328*p_height
+        gamma = 0.45*l
+        #phi0 = -np.pi/6 
         phi_min = -np.pi/4
         phi_max =  np.pi/2
-        k = 0.5*l
-        I = 0.0465*p_mass*(0.302*0.245*p_height**2)+0.0465*p_mass*(0.323*0.242*p_height**2)
+        k = 0.303*l
+        I = k**2*m
         
         self.SEGMENT_MASS.append(m)
         self.SEGMENT_MOMINERT.append(I)
         self.SEGMENT_LENGTH.append(l)
-        #self.SEGMENT_ETA_LENGTH.append(eta)
         self.SEGMENT_GAMMA_LENGTH.append(gamma)
-        self.SEGMENT_PHI_NAUGTH.append(phi0)
+        #self.SEGMENT_PHI_NAUGTH.append(phi0)
         self.SEGMENT_PHI_MAX.append(phi_max)
         self.SEGMENT_PHI_MIN.append(phi_min)
         
         
-        
-        # foot
-        m_foot = 0.0145*p_mass
-        h_foot = 0.43*p_height
-        l_foot = 0.152*p_height
-        comh_foot = 0.500*h_foot
-        com_foot = 0.500*l_foot
-        k_foot = 0.475*l_foot
-        ic_foot = m_foot*k_foot**2
-        ip_foot = m_foot*com_foot**2
-        
-        # leg_dist
-        m_leg_dist = 0.465*p_mass
-        l_leg_dist = 0.242*p_height
-        com_leg_dist = 0.433*l_leg_dist
-        k_leg_dist = 0.302*l_leg_dist
-        ic_leg_dist = m_leg_dist*k_leg_dist**2
-        ip_leg_dist = m_leg_dist*com_leg_dist**2
-        
-        # thigh
-        m_thigh = 0.100*p_mass
-        l_thigh = 0.245*p_height
-        com_thigh = 0.433*l_thigh
-        k_thigh = 0.323*l_thigh
-        ic_thigh = m_thigh*k_thigh**2
-        ip_thigh = m_thigh*com_thigh**2
-        
-        # trunk
-        m_trunk = 0.497*p_mass
-        l_trunk = 0.289*p_height
-        com_trunk = 0.500*l_trunk
-        k_trunk = 0.500*l_trunk
-        ic_trunk = m_trunk*k_trunk**2
-        ip_trunk = m_trunk*com_trunk**2
-        
-        # head+neck
-        m_head = 0.181*p_mass
-        l_head = 0.19*p_height
-        com_head = 0.567*l_head
-        k_head = 0.495*l_head
-        ic_head = m_head*k_head**2
-        ip_head = m_head*com_head**2
+
                 
     ###################################
     ##### Seeding the environment #####
