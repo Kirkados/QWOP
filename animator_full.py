@@ -418,7 +418,7 @@ def drawState(play_game, filename="", state_log=None, action_log=None, episode_n
     #define the body (segment coordinates)
     segment_count = 9
     segment_points = np.zeros((segment_count,3,2))
-
+    print(state)
     x,y,theta = state[0:3]
     x1r,y1r,theta1r = state[3:6]
     x2r,y2r,theta2r = state[6:9]
@@ -429,7 +429,7 @@ def drawState(play_game, filename="", state_log=None, action_log=None, episode_n
     x2l,y2l,theta2l = state[20:23]
     x3l,y3l,theta3l = state[23:26]
     x4l,y4l,theta4l = state[26:29]
-    xfl,yfl = state[29:]
+    xfl,yfl = state[29:31]
     
     
     # DRAW INITIAL STATE 
@@ -614,7 +614,7 @@ def drawState(play_game, filename="", state_log=None, action_log=None, episode_n
             x2l,y2l,theta2l = next_state[20:23]
             x3l,y3l,theta3l = next_state[23:26]
             x4l,y4l,theta4l = next_state[26:29]
-            xfl,yfl = next_state[29:]
+            xfl,yfl = next_state[29:31]
 
             #Get point coordinates for each segment
             segment_points[0,:,:] = returnPointCoords(x,  y,  theta,  l, gamma,  x,x_0,y_0,hum_scale)

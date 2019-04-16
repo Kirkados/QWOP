@@ -57,7 +57,7 @@ class Environment:
         self.STATE_SIZE              = self.TOTAL_STATE_SIZE - len(self.IRRELEVANT_STATES) # total number of relevant states
         self.ACTION_SIZE             = 9
         self.TIMESTEP                = 0.05 # [s]        
-        self.MAX_NUMBER_OF_TIMESTEPS = 3 # per episode
+        self.MAX_NUMBER_OF_TIMESTEPS = 200 # per episode
         self.NUM_FRAMES              = 100 # total animation is cut into this many frames
         self.RANDOMIZE               = False # whether or not to randomize the state & target location
         self.UPPER_STATE_BOUND       = np.array([np.inf, 4., 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, np.inf, np.inf, 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf,\
@@ -361,6 +361,7 @@ class Environment:
         # Resetting the time
         self.time = 0.0  
         
+        return self.state
     
     def parse_action(self,action):
         #0: No buttons pressed; 1: Q only; 2: QO; 3: QP; 4: W only; 5: WO; 6: WP; 7: O only; 8: P only
@@ -534,9 +535,9 @@ class Environment:
             
             if type(action) == bool:                
                 # The signal to reset the environment was received
-                self.reset()
+                state = self.reset()
                 # Return the results
-                self.env_to_agent.put(self.state)
+                self.env_to_agent.put(state)
             
             else:            
                 ################################
