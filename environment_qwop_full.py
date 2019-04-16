@@ -143,19 +143,6 @@ class Environment:
 #gamma from page 11, NYU for completeness
 #radius of gyration from table 10, page 12, weighted average   
         
-        # trunk
-        l_trunk = 0.289*p_height
-        com_trunk = 0.500*l_trunk
-        k_trunk = 0.500*l_trunk
-        ic_trunk = m_trunk*k_trunk**2
-        ip_trunk = m_trunk*com_trunk**2
-        
-        # head+neck
-        l_head = 0.19*p_height
-        com_head = 0.567*l_head
-        k_head = 0.495*l_head
-        ic_head = m_head*k_head**2
-        ip_head = m_head*com_head**2
         
         # segment 0, main body (+ head and neck contributions)
         m = (0.497+0.181)*p_mass
@@ -165,9 +152,12 @@ class Environment:
         phi_min = -1000000
         phi_max =  1000000
         k = 0.5*l
-        I = m*k**2
+        I = (0.497*p_mass)*k**2+(0.181*p_mass)*(0.495*0.181*p_height)**2+(0.181*p_mass)*((0.567*0.181*p_height)+gamma)**2
         
-         
+        
+        self.HEAD_DIAM = 0.13*p_height
+        self.NECK_LENGTH = 0.116*p_height
+        
         self.SEGMENT_MASS.append(m)
         self.SEGMENT_MOMINERT.append(I)
         self.SEGMENT_LENGTH.append(l)
