@@ -78,15 +78,15 @@ class Environment:
         # Initial Conditions
         self.INITIAL_Y       =   2.          # [m]
         self.INITIAL_X       =   0.          # [m]
-        self.INITIAL_THETA   =   0*np.pi/180 # [rad]
+        self.INITIAL_THETA   =   10*np.pi/180 # [rad]
         self.INITIAL_THETA1R =  30*np.pi/180 # [rad]
-        self.INITIAL_THETA2R =  30*np.pi/180 # [rad]
+        self.INITIAL_THETA2R =  135*np.pi/180 # [rad]
         self.INITIAL_THETA3R =  30*np.pi/180 # [rad]
         self.INITIAL_THETA4R = -10*np.pi/180 # [rad]
         self.INITIAL_THETA1L = -30*np.pi/180 # [rad]
         self.INITIAL_THETA2L =  30*np.pi/180 # [rad]
-        self.INITIAL_THETA3L = -20*np.pi/180 # [rad]
-        self.INITIAL_THETA4L = -10*np.pi/180 # [rad]        
+        self.INITIAL_THETA3L = 10*np.pi/180 # [rad]
+        self.INITIAL_THETA4L = -45*np.pi/180 # [rad]        
         
         # How much the leg desired angle changes per frame when a button is pressed
         self.HIP_INCREMENT      =   5*np.pi/180 # [rad/s]
@@ -94,13 +94,13 @@ class Environment:
         self.SHOULDER_INCREMENT =   5*np.pi/180 # [rad/s]
         self.ELBOW_INCREMENT    =   5*np.pi/180 # [rad/s]
         self.PHI1R_INITIAL       =  30*np.pi/180 # [rad]
-        self.PHI2R_INITIAL       =  30*np.pi/180 # [rad]
+        self.PHI2R_INITIAL       =  135*np.pi/180 # [rad]
         self.PHI3R_INITIAL       =  30*np.pi/180 # [rad]
         self.PHI4R_INITIAL       = -10*np.pi/180 # [rad]
         self.PHI1L_INITIAL       = -30*np.pi/180 # [rad]
         self.PHI2L_INITIAL       =  30*np.pi/180 # [rad]
-        self.PHI3L_INITIAL       = -20*np.pi/180 # [rad]
-        self.PHI4L_INITIAL       = -10*np.pi/180 # [rad]
+        self.PHI3L_INITIAL       = 10*np.pi/180 # [rad]
+        self.PHI4L_INITIAL       = -45*np.pi/180 # [rad]
         
         # Joint springs and dampers
         self.HIP_SPRING_STIFFNESS      = 10000 # [Nm/rad]       
@@ -281,12 +281,12 @@ class Environment:
             initial_theta2r = self.INITIAL_THETA2R
             
             # Left proximal arm segment
-            initial_x1l = initial_x - self.SEGMENT_GAMMA_LENGTH[0] * np.sin(initial_theta) - self.SEGMENT_GAMMA_LENGTH[1] * np.sin(self.INITIAL_THETA1L)
+            initial_x1l = initial_x - self.SEGMENT_GAMMA_LENGTH[0] * np.sin(initial_theta) + self.SEGMENT_GAMMA_LENGTH[1] * np.sin(self.INITIAL_THETA1L)
             initial_y1l = initial_y + self.SEGMENT_GAMMA_LENGTH[0] * np.cos(initial_theta) - self.SEGMENT_GAMMA_LENGTH[1] * np.cos(self.INITIAL_THETA1L)
             initial_theta1l = self.INITIAL_THETA1L
             
             # Left distal arm segment
-            initial_x2l = initial_x1l - (self.SEGMENT_LENGTH[1] - self.SEGMENT_GAMMA_LENGTH[1]) * np.sin(self.INITIAL_THETA1L) - self.SEGMENT_GAMMA_LENGTH[2] * np.sin(self.INITIAL_THETA2L)
+            initial_x2l = initial_x1l + (self.SEGMENT_LENGTH[1] - self.SEGMENT_GAMMA_LENGTH[1]) * np.sin(self.INITIAL_THETA1L) + self.SEGMENT_GAMMA_LENGTH[2] * np.sin(self.INITIAL_THETA2L)
             initial_y2l = initial_y1l - (self.SEGMENT_LENGTH[1] - self.SEGMENT_GAMMA_LENGTH[1]) * np.cos(self.INITIAL_THETA1L) - self.SEGMENT_GAMMA_LENGTH[2] * np.cos(self.INITIAL_THETA2L)
             initial_theta2l = self.INITIAL_THETA2L   
             
@@ -305,17 +305,17 @@ class Environment:
             initial_yfr = initial_y4r - (self.SEGMENT_LENGTH[4] - self.SEGMENT_GAMMA_LENGTH[4]) * np.cos(initial_theta4r)
             
             # Left proximal leg segment
-            initial_x3l = initial_x + (self.SEGMENT_LENGTH[0] - self.SEGMENT_GAMMA_LENGTH[0]) * np.sin(initial_theta) - self.SEGMENT_GAMMA_LENGTH[3] * np.sin(self.INITIAL_THETA3L)
+            initial_x3l = initial_x + (self.SEGMENT_LENGTH[0] - self.SEGMENT_GAMMA_LENGTH[0]) * np.sin(initial_theta) + self.SEGMENT_GAMMA_LENGTH[3] * np.sin(self.INITIAL_THETA3L)
             initial_y3l = initial_y - (self.SEGMENT_LENGTH[0] - self.SEGMENT_GAMMA_LENGTH[0]) * np.cos(initial_theta) - self.SEGMENT_GAMMA_LENGTH[3] * np.cos(self.INITIAL_THETA3L)
             initial_theta3l = self.INITIAL_THETA3L
             
             # Left distal leg segment
-            initial_x4l = initial_x3l - (self.SEGMENT_LENGTH[3] - self.SEGMENT_GAMMA_LENGTH[3]) * np.sin(initial_theta3l) - self.SEGMENT_GAMMA_LENGTH[4] * np.sin(self.INITIAL_THETA4L)
+            initial_x4l = initial_x3l + (self.SEGMENT_LENGTH[3] - self.SEGMENT_GAMMA_LENGTH[3]) * np.sin(initial_theta3l) + self.SEGMENT_GAMMA_LENGTH[4] * np.sin(self.INITIAL_THETA4L)
             initial_y4l = initial_y3l - (self.SEGMENT_LENGTH[3] - self.SEGMENT_GAMMA_LENGTH[3]) * np.cos(initial_theta3l) - self.SEGMENT_GAMMA_LENGTH[4] * np.cos(self.INITIAL_THETA4L)
             initial_theta4l = self.INITIAL_THETA4L
             
             # Left foot
-            initial_xfl = initial_x4l - (self.SEGMENT_LENGTH[4] - self.SEGMENT_GAMMA_LENGTH[4]) * np.sin(initial_theta4l)
+            initial_xfl = initial_x4l + (self.SEGMENT_LENGTH[4] - self.SEGMENT_GAMMA_LENGTH[4]) * np.sin(initial_theta4l)
             initial_yfl = initial_y4l - (self.SEGMENT_LENGTH[4] - self.SEGMENT_GAMMA_LENGTH[4]) * np.cos(initial_theta4l)
             
             # Resetting joint angle setpoints

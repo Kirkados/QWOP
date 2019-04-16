@@ -418,7 +418,7 @@ def drawState(play_game, filename="", state_log=None, action_log=None, episode_n
     #define the body (segment coordinates)
     segment_count = 9
     segment_points = np.zeros((segment_count,3,2))
-    print(state)
+    #print(state)
     x,y,theta = state[0:3]
     x1r,y1r,theta1r = state[3:6]
     x2r,y2r,theta2r = state[6:9]
@@ -666,33 +666,25 @@ def drawState(play_game, filename="", state_log=None, action_log=None, episode_n
                 text_q = font_qwop.render("Q", True, TEXT_PRESSED)
                 screen.blit(text_q, [x_btnq, y_btnqwop])
                 if print_out:
-                    x+=0.01
-                    x1+=0.01
-                    x2+=0.01
+                    print("Q pressed")
             if pressed_w:
                 pygame.draw.rect(screen, PRESSED, [x_btn2,y_btn,dx_btn,dy_btn])
                 text_w = font_qwop.render("W", True, TEXT_PRESSED)
                 screen.blit(text_w, [x_btnw, y_btnqwop])
                 if print_out:
-                    x-=0.01
-                    x1-=0.01
-                    x2-=0.01
+                    print("W pressed")
             if pressed_o:
                 pygame.draw.rect(screen, PRESSED, [x_btn3,y_btn,dx_btn,dy_btn])
                 text_o = font_qwop.render("O", True, TEXT_PRESSED)
                 screen.blit(text_o, [x_btno, y_btnqwop])
                 if print_out:
-                    x+=0.05
-                    x1+=0.05
-                    x2+=0.05
+                    print("O pressed")
             if pressed_p:
                 pygame.draw.rect(screen, PRESSED, [x_btn4,y_btn,dx_btn,dy_btn]) 
                 text_p = font_qwop.render("P", True, TEXT_PRESSED)
                 screen.blit(text_p, [x_btnp, y_btnqwop])
                 if print_out:
-                    x-=0.05
-                    x1-=0.05
-                    x2-=0.05
+                    print("P pressed")
                 
                 
             #Draw distance ticks
