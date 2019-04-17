@@ -44,26 +44,27 @@ from scipy.integrate import odeint # Numerical integrator
 class Environment:
     """
     For reference, the state is:
-    x,       y,    theta,    x1r,    y1r,    theta1r,    x2r,    y2r,    theta2r,    x3r,    y3r,    theta3r,    x4r,    y4r,    theta4r,    xfr,    yfr,    x1l,    y1l,    theta1l,    x2l,    y2l,    theta2l,    x3l,    y3l,    theta3l,    x4l,    y4l,    theta4l,    xfl,    yfl, \
-    xdot, ydot, thetadot, x1rdot, y1rdot, theta1rdot, x2rdot, y2rdot, theta2rdot, x3rdot, y3rdot, theta3rdot, x4rdot, y4rdot, theta4rdot, xfrdot, yfrdot, x1ldot, y1ldot, theta1ldot, x2ldot, y2ldot, theta2ldot, x3ldot, y3ldot, theta3ldot, x4ldot, y4ldot, theta4ldot, xfldot, yfldot = state
+    x,       y,    theta,    x1r,    y1r,    theta1r,    x2r,    y2r,    theta2r,    x3r,    y3r,    theta3r,    x4r,    y4r,    theta4r,    x1l,    y1l,    theta1l,    x2l,    y2l,    theta2l,    x3l,    y3l,    theta3l,    x4l,    y4l,    theta4l, \
+    xdot, ydot, thetadot, x1rdot, y1rdot, theta1rdot, x2rdot, y2rdot, theta2rdot, x3rdot, y3rdot, theta3rdot, x4rdot, y4rdot, theta4rdot, x1ldot, y1ldot, theta1ldot, x2ldot, y2ldot, theta2ldot, x3ldot, y3ldot, theta3ldot, x4ldot, y4ldot, theta4ldot = state
     
     """
     def __init__(self): 
         ##################################
         ##### Environment Properties #####
         ##################################
-        self.TOTAL_STATE_SIZE        = 62 # total number of states
-        self.IRRELEVANT_STATES       = [0,3,4,6,7,9,10,12,13,15,16,17,18,20,21,23,24,26,27,29,30,34,35,37,38,40,41,43,44,46,47,48,49,51,52,54,55,57,58,60,61] # states that are irrelevant to the policy network in its decision making
+        self.TOTAL_STATE_SIZE        = 54 # total number of states
+        self.IRRELEVANT_STATES       = [0,3,4,6,7,9,10,12,13,15,16,18,19,21,22,24,25, \
+                                        30,31,33,34,36,37,39,40,42,43,45,46,48,49,51,52] # states that are irrelevant to the policy network in its decision making
         self.STATE_SIZE              = self.TOTAL_STATE_SIZE - len(self.IRRELEVANT_STATES) # total number of relevant states
         self.ACTION_SIZE             = 9
         self.TIMESTEP                = 0.05 # [s]        
         self.MAX_NUMBER_OF_TIMESTEPS = 200 # per episode
         self.NUM_FRAMES              = 100 # total animation is cut into this many frames
         self.RANDOMIZE               = False # whether or not to randomize the state & target location
-        self.UPPER_STATE_BOUND       = np.array([np.inf, 4., 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, np.inf, np.inf, 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf,\
-                                                 np.inf, np.inf, 1., np.inf, np.inf, 1., np.inf, np.inf, 1., np.inf, np.inf, 1., np.inf, np.inf, 1., np.inf, np.inf, np.inf, np.inf, 1., np.inf, np.inf, 1., np.inf, np.inf, 1., np.inf, np.inf, 1., np.inf, np.inf])
+        self.UPPER_STATE_BOUND       = np.array([np.inf, 4., 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, 2*np.pi, \
+                                                     5., 2.,      1., np.inf, np.inf,      1., np.inf, np.inf,      1., np.inf, np.inf,      1., np.inf, np.inf,      1., np.inf, np.inf,      1., np.inf, np.inf,      1., np.inf, np.inf,      1., np.inf, np.inf,      1.])
         self.NORMALIZE_STATE         = True # Normalize state on each timestep to avoid vanishing gradients
-        self.MIN_Q                   = -5000.0
+        self.MIN_Q                   = -500.0
         self.MAX_Q                   = 15000.0
         self.DONE_ON_FALL            = True # whether or not falling down ends the episode
         
@@ -78,14 +79,14 @@ class Environment:
         # Initial Conditions
         self.INITIAL_Y       =   2.          # [m]
         self.INITIAL_X       =   0.          # [m]
-        self.INITIAL_THETA   =   10*np.pi/180 # [rad]
+        self.INITIAL_THETA   =  0*np.pi/180 # [rad]
         self.INITIAL_THETA1R =  30*np.pi/180 # [rad]
-        self.INITIAL_THETA2R =  135*np.pi/180 # [rad]
+        self.INITIAL_THETA2R = 135*np.pi/180 # [rad]
         self.INITIAL_THETA3R =  30*np.pi/180 # [rad]
         self.INITIAL_THETA4R = -10*np.pi/180 # [rad]
         self.INITIAL_THETA1L = -30*np.pi/180 # [rad]
         self.INITIAL_THETA2L =  30*np.pi/180 # [rad]
-        self.INITIAL_THETA3L = 10*np.pi/180 # [rad]
+        self.INITIAL_THETA3L =  10*np.pi/180 # [rad]
         self.INITIAL_THETA4L = -45*np.pi/180 # [rad]        
         
         # How much the leg desired angle changes per frame when a button is pressed
@@ -94,12 +95,12 @@ class Environment:
         self.SHOULDER_INCREMENT =   5*np.pi/180 # [rad/s]
         self.ELBOW_INCREMENT    =   5*np.pi/180 # [rad/s]
         self.PHI1R_INITIAL       =  30*np.pi/180 # [rad]
-        self.PHI2R_INITIAL       =  135*np.pi/180 # [rad]
+        self.PHI2R_INITIAL       = 135*np.pi/180 # [rad]
         self.PHI3R_INITIAL       =  30*np.pi/180 # [rad]
         self.PHI4R_INITIAL       = -10*np.pi/180 # [rad]
         self.PHI1L_INITIAL       = -30*np.pi/180 # [rad]
         self.PHI2L_INITIAL       =  30*np.pi/180 # [rad]
-        self.PHI3L_INITIAL       = 10*np.pi/180 # [rad]
+        self.PHI3L_INITIAL       =  10*np.pi/180 # [rad]
         self.PHI4L_INITIAL       = -45*np.pi/180 # [rad]
         
         # Joint springs and dampers
@@ -301,8 +302,8 @@ class Environment:
             initial_theta4r = self.INITIAL_THETA4R
             
             # Right foot
-            initial_xfr = initial_x4r + (self.SEGMENT_LENGTH[4] - self.SEGMENT_GAMMA_LENGTH[4]) * np.sin(initial_theta4r)
-            initial_yfr = initial_y4r - (self.SEGMENT_LENGTH[4] - self.SEGMENT_GAMMA_LENGTH[4]) * np.cos(initial_theta4r)
+            #initial_xfr = initial_x4r + (self.SEGMENT_LENGTH[4] - self.SEGMENT_GAMMA_LENGTH[4]) * np.sin(initial_theta4r)
+            #initial_yfr = initial_y4r - (self.SEGMENT_LENGTH[4] - self.SEGMENT_GAMMA_LENGTH[4]) * np.cos(initial_theta4r)
             
             # Left proximal leg segment
             initial_x3l = initial_x + (self.SEGMENT_LENGTH[0] - self.SEGMENT_GAMMA_LENGTH[0]) * np.sin(initial_theta) + self.SEGMENT_GAMMA_LENGTH[3] * np.sin(self.INITIAL_THETA3L)
@@ -315,14 +316,14 @@ class Environment:
             initial_theta4l = self.INITIAL_THETA4L
             
             # Left foot
-            initial_xfl = initial_x4l + (self.SEGMENT_LENGTH[4] - self.SEGMENT_GAMMA_LENGTH[4]) * np.sin(initial_theta4l)
-            initial_yfl = initial_y4l - (self.SEGMENT_LENGTH[4] - self.SEGMENT_GAMMA_LENGTH[4]) * np.cos(initial_theta4l)
+            #initial_xfl = initial_x4l + (self.SEGMENT_LENGTH[4] - self.SEGMENT_GAMMA_LENGTH[4]) * np.sin(initial_theta4l)
+            #initial_yfl = initial_y4l - (self.SEGMENT_LENGTH[4] - self.SEGMENT_GAMMA_LENGTH[4]) * np.cos(initial_theta4l)
             
             # Resetting joint angle setpoints
-            self.phi1r = self.PHI1L_INITIAL 
-            self.phi2r = self.PHI2L_INITIAL 
-            self.phi3r = self.PHI3L_INITIAL
-            self.phi4r = self.PHI4L_INITIAL
+            self.phi1r = self.PHI1R_INITIAL 
+            self.phi2r = self.PHI2R_INITIAL 
+            self.phi3r = self.PHI3R_INITIAL
+            self.phi4r = self.PHI4R_INITIAL
             self.phi1l = self.PHI1L_INITIAL 
             self.phi2l = self.PHI2L_INITIAL 
             self.phi3l = self.PHI3L_INITIAL
@@ -334,27 +335,23 @@ class Environment:
                                    initial_x2r, initial_y2r, initial_theta2r,\
                                    initial_x3r, initial_y3r, initial_theta3r,\
                                    initial_x4r, initial_y4r, initial_theta4r,\
-                                   initial_xfr, initial_yfr, \
                                    initial_x1l, initial_y1l, initial_theta1l,\
                                    initial_x2l, initial_y2l, initial_theta2l,\
                                    initial_x3l, initial_y3l, initial_theta3l,\
                                    initial_x4l, initial_y4l, initial_theta4l,\
-                                   initial_xfl, initial_yfl, \
                                             0.,          0.,              0.,\
                                             0.,          0.,              0.,\
                                             0.,          0.,              0.,\
                                             0.,          0.,              0.,\
                                             0.,          0.,              0.,\
-                                            0.,          0., \
                                             0.,          0.,              0.,\
                                             0.,          0.,              0.,\
                                             0.,          0.,              0.,\
-                                            0.,          0.,              0.,\
-                                            0.,          0.                    ])
+                                            0.,          0.,              0.,  ])
         """
         For reference, the state is:
-        x,       y,    theta,    x1r,    y1r,    theta1r,    x2r,    y2r,    theta2r,    x3r,    y3r,    theta3r,    x4r,    y4r,    theta4r,    xfr,    yfr,    x1l,    y1l,    theta1l,    x2l,    y2l,    theta2l,    x3l,    y3l,    theta3l,    x4l,    y4l,    theta4l,    xfl,    yfl, \
-        xdot, ydot, thetadot, x1rdot, y1rdot, theta1rdot, x2rdot, y2rdot, theta2rdot, x3rdot, y3rdot, theta3rdot, x4rdot, y4rdot, theta4rdot, xfrdot, yfrdot, x1ldot, y1ldot, theta1ldot, x2ldot, y2ldot, theta2ldot, x3ldot, y3ldot, theta3ldot, x4ldot, y4ldot, theta4ldot, xfldot, yfldot = state
+        x,       y,    theta,    x1r,    y1r,    theta1r,    x2r,    y2r,    theta2r,    x3r,    y3r,    theta3r,    x4r,    y4r,    theta4r,    x1l,    y1l,    theta1l,    x2l,    y2l,    theta2l,    x3l,    y3l,    theta3l,    x4l,    y4l,    theta4l, \
+        xdot, ydot, thetadot, x1rdot, y1rdot, theta1rdot, x2rdot, y2rdot, theta2rdot, x3rdot, y3rdot, theta3rdot, x4rdot, y4rdot, theta4rdot, x1ldot, y1ldot, theta1ldot, x2ldot, y2ldot, theta2ldot, x3ldot, y3ldot, theta3ldot, x4ldot, y4ldot, theta4ldot = state
         
         """
         
@@ -395,10 +392,10 @@ class Environment:
         return pressed_q, pressed_w, pressed_o, pressed_p
        
     # Returns the point coordinates for each member 
-    def returnPointCoords(self, x, y, theta_cum, gamma, eta, x_c, x_0, y_0, hum_scale):
+    def returnPointCoords(self,x,y,theta,l,gamma,x_c,x_0,y_0,hum_scale):
         #gamma is "above", eta is "below" CG
         
-        pointCoords = np.array([[x-gamma*np.sin(theta_cum),y+gamma*np.cos(theta_cum)],[x,y],[x+eta*np.sin(theta_cum),y-eta*np.cos(theta_cum)]])      
+        pointCoords = np.array([[x-gamma*np.sin(theta),y+gamma*np.cos(theta)],[x,y],[x+(l-gamma)*np.sin(theta),y-(l-gamma)*np.cos(theta)]])      
         
         pointCoords[:,0]=(pointCoords[:,0]-x_c)*hum_scale+x_0
         pointCoords[:,1]=y_0-(pointCoords[:,1])*hum_scale
@@ -409,16 +406,30 @@ class Environment:
         # Determines whether this episode is done
         
         # Define the body
-        segment_count = 3
+        segment_count = 9
         segment_points = np.zeros((segment_count,3,2))
         
         # Unpacking the state
-        x, y, theta, x1, y1, theta1, x2, y2, theta2, *_ = self.state
-
+        x,       y,    theta, \
+        x1r,    y1r,    theta1r,\
+        x2r,    y2r,    theta2r, \
+        x3r,    y3r,    theta3r,  \
+        x4r,    y4r,    theta4r,  \
+        x1l,    y1l,    theta1l, \
+        x2l,    y2l,    theta2l, \
+        x3l,    y3l,    theta3l,  \
+        x4l,    y4l,    theta4l, *_ = self.state
+        
         #Get point coordinates for each segment
-        #segment_points[0,:,:] = self.returnPointCoords(x,y,theta,self.SEGMENT_GAMMA_LENGTH[0],self.SEGMENT_ETA_LENGTH[0],x,self.x_0,self.y_0,self.HUMAN_SCALE)
-        #segment_points[1,:,:] = self.returnPointCoords(x1,y1,theta+theta1,self.SEGMENT_GAMMA_LENGTH[1],self.SEGMENT_ETA_LENGTH[1],x,self.x_0,self.y_0,self.HUMAN_SCALE)
-        #segment_points[2,:,:] = self.returnPointCoords(x2,y2,theta+theta2,self.SEGMENT_GAMMA_LENGTH[2],self.SEGMENT_ETA_LENGTH[2],x,self.x_0,self.y_0,self.HUMAN_SCALE)
+        segment_points[0,:,:] = self.returnPointCoords(  x,  y,  theta,self.SEGMENT_LENGTH[0],self.SEGMENT_GAMMA_LENGTH[0],x,self.x_0,self.y_0,self.HUMAN_SCALE)
+        segment_points[1,:,:] = self.returnPointCoords(x1r,y1r,theta1r,self.SEGMENT_LENGTH[1],self.SEGMENT_GAMMA_LENGTH[1],x,self.x_0,self.y_0,self.HUMAN_SCALE)
+        segment_points[2,:,:] = self.returnPointCoords(x2r,y2r,theta2r,self.SEGMENT_LENGTH[2],self.SEGMENT_GAMMA_LENGTH[2],x,self.x_0,self.y_0,self.HUMAN_SCALE)
+        segment_points[3,:,:] = self.returnPointCoords(x3r,y3r,theta3r,self.SEGMENT_LENGTH[3],self.SEGMENT_GAMMA_LENGTH[3],x,self.x_0,self.y_0,self.HUMAN_SCALE)
+        segment_points[4,:,:] = self.returnPointCoords(x4r,y4r,theta4r,self.SEGMENT_LENGTH[4],self.SEGMENT_GAMMA_LENGTH[4],x,self.x_0,self.y_0,self.HUMAN_SCALE)
+        segment_points[5,:,:] = self.returnPointCoords(x1l,y1l,theta1l,self.SEGMENT_LENGTH[1],self.SEGMENT_GAMMA_LENGTH[1],x,self.x_0,self.y_0,self.HUMAN_SCALE)
+        segment_points[6,:,:] = self.returnPointCoords(x2l,y2l,theta2l,self.SEGMENT_LENGTH[2],self.SEGMENT_GAMMA_LENGTH[2],x,self.x_0,self.y_0,self.HUMAN_SCALE)
+        segment_points[7,:,:] = self.returnPointCoords(x3l,y3l,theta3l,self.SEGMENT_LENGTH[3],self.SEGMENT_GAMMA_LENGTH[3],x,self.x_0,self.y_0,self.HUMAN_SCALE)
+        segment_points[8,:,:] = self.returnPointCoords(x4l,y4l,theta4l,self.SEGMENT_LENGTH[4],self.SEGMENT_GAMMA_LENGTH[4],x,self.x_0,self.y_0,self.HUMAN_SCALE)
         
         # Check if any node is out-of-bounds. If so, this episode is done
         if np.any(segment_points[:,0,1] > self.HEIGHT) and self.DONE_ON_FALL:
@@ -487,8 +498,7 @@ class Environment:
         done = self.is_done()
         
         self.state = next_states[1,:] # remembering the current state
-        self.time += self.TIMESTEP # updating the stored time
-        
+        self.time += self.TIMESTEP # updating the stored time        
 
         # Return the (state, reward, done)
         return self.state, reward, done
@@ -557,8 +567,8 @@ def equations_of_motion(state, t, parameters):
     # From the state, it returns the first derivative of the state
     
     # Unpacking the state
-    x,       y,    theta,    x1r,    y1r,    theta1r,    x2r,    y2r,    theta2r,    x3r,    y3r,    theta3r,    x4r,    y4r,    theta4r,    xfr,    yfr,    x1l,    y1l,    theta1l,    x2l,    y2l,    theta2l,    x3l,    y3l,    theta3l,    x4l,    y4l,    theta4l,    xfl,    yfl, \
-    xdot, ydot, thetadot, x1rdot, y1rdot, theta1rdot, x2rdot, y2rdot, theta2rdot, x3rdot, y3rdot, theta3rdot, x4rdot, y4rdot, theta4rdot, xfrdot, yfrdot, x1ldot, y1ldot, theta1ldot, x2ldot, y2ldot, theta2ldot, x3ldot, y3ldot, theta3ldot, x4ldot, y4ldot, theta4ldot, xfldot, yfldot = state
+    x,       y,    theta,    x1r,    y1r,    theta1r,    x2r,    y2r,    theta2r,    x3r,    y3r,    theta3r,    x4r,    y4r,    theta4r,    x1l,    y1l,    theta1l,    x2l,    y2l,    theta2l,    x3l,    y3l,    theta3l,    x4l,    y4l,    theta4l,  \
+    xdot, ydot, thetadot, x1rdot, y1rdot, theta1rdot, x2rdot, y2rdot, theta2rdot, x3rdot, y3rdot, theta3rdot, x4rdot, y4rdot, theta4rdot, x1ldot, y1ldot, theta1ldot, x2ldot, y2ldot, theta2ldot, x3ldot, y3ldot, theta3ldot, x4ldot, y4ldot, theta4ldot = state
     
     # Unpacking parameters
     m, m1, m2, m3, m4, \
@@ -570,48 +580,48 @@ def equations_of_motion(state, t, parameters):
     g, FLOOR_SPRING_STIFFNESS, FLOOR_DAMPING_COEFFICIENT, FLOOR_FRICTION_STIFFNESS, FLOOR_MU, ATANDEL, ATANGAIN, \
     phi1r, phi2r, phi3r, phi4r, phi1l, phi2l, phi3l, phi4l = parameters 
     
-    first_derivatives = np.array([xdot, ydot, thetadot, x1rdot, y1rdot, theta1rdot, x2rdot, y2rdot, theta2rdot, x3rdot, y3rdot, theta3rdot, x4rdot, y4rdot, theta4rdot, xfrdot, yfrdot, x1ldot, y1ldot, theta1ldot, x2ldot, y2ldot, theta2ldot, x3ldot, y3ldot, theta3ldot, x4ldot, y4ldot, theta4ldot, xfldot, yfldot]) 
+    first_derivatives = np.array([xdot, ydot, thetadot, x1rdot, y1rdot, theta1rdot, x2rdot, y2rdot, theta2rdot, x3rdot, y3rdot, theta3rdot, x4rdot, y4rdot, theta4rdot, x1ldot, y1ldot, theta1ldot, x2ldot, y2ldot, theta2ldot, x3ldot, y3ldot, theta3ldot, x4ldot, y4ldot, theta4ldot]) 
     
     M = np.matrix([[	m	,	0	,	0	,	m1	,	0	,	0	,	m2	,	0	,	0	,	m3	,	0	,	0	,	m4	,	0	,	0	,	m1	,	0	,	0	,	m2	,	0	,	0	,	m3	,	0	,	0	,	m4	,	0	,	0	],
-[	0	,	m	,	0	,	0	,	m1	,	0	,	0	,	m2	,	0	,	0	,	m3	,	0	,	0	,	m4	,	0	,	0	,	m1	,	0	,	0	,	m2	,	0	,	0	,	m3	,	0	,	0	,	m4	,	0	],
-[	0	,	0	,	I	,	-m1*gamma*np.cos(theta)	,	-m1*gamma*np.sin(theta)	,	0	,	-m2*gamma*np.cos(theta)	,	-m2*gamma*np.sin(theta)	,	0	,	m3*(l-gamma)*np.cos(theta)	,	m3*(l-gamma)*np.sin(theta)	,	0	,	m4*(l-gamma)*np.cos(theta)	,	m4*(l-gamma)*np.sin(theta)	,	0	,	-m1*gamma*np.cos(theta)	,	-m1*gamma*np.sin(theta)	,	0	,	-m2*gamma*np.cos(theta)	,	-m2*gamma*np.sin(theta)	,	0	,	m3*(l-gamma)*np.cos(theta)	,	m3*(l-gamma)*np.sin(theta)	,	0	,	m4*(l-gamma)*np.cos(theta)	,	m4*(l-gamma)*np.sin(theta)	,	0	],
-[	0	,	0	,	0	,	m1*gamma1*np.cos(theta1r)	,	m1*gamma1*np.sin(theta1r)	,	I1	,	m2*(l1)*np.cos(theta1r)	,	m2*(l1)*np.sin(theta1r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
-[	0	,	0	,	0	,	0	,	0	,	0	,	m2*gamma2*np.cos(theta2r)	,	m2*gamma2*np.sin(theta2r)	,	I2	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
-[	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	m3*gamma3*np.cos(theta3r)	,	m3*gamma3*np.sin(theta3r)	,	I3	,	m4*(l3)*np.cos(theta3r)	,	m4*(l3)*np.sin(theta3r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
-[	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	m4*gamma4*np.cos(theta4r)	,	m4*gamma4*np.sin(theta4r)	,	I4	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
-[	-1	,	0	,	gamma*np.cos(theta)	,	1	,	0	,	-gamma1*np.cos(theta1r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
-[	0	,	-1	,	gamma*np.sin(theta)	,	0	,	1	,	-gamma1*np.sin(theta1r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
-[	0	,	0	,	0	,	-1	,	0	,	-(l1-gamma1)*np.cos(theta1r)	,	1	,	0	,	-gamma2*np.cos(theta2r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
-[	0	,	0	,	0	,	0	,	-1	,	-(l1-gamma1)*np.sin(theta1r)	,	0	,	1	,	-gamma2*np.sin(theta2r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
-[	-1	,	0	,	-(l-gamma)*np.cos(theta)	,	0	,	0	,	0	,	0	,	0	,	0	,	1	,	0	,	-gamma3*np.cos(theta3r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
-[	0	,	-1	,	-(l-gamma)*np.sin(theta)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	1	,	-gamma3*np.sin(theta3r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
-[	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	0	,	-(l3-gamma3)*np.cos(theta3r)	,	1	,	0	,	-gamma4*np.cos(theta4r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
-[	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	-(l3-gamma3)*np.sin(theta3r)	,	0	,	1	,	-gamma4*np.sin(theta4r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
-[	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	m1*gamma1*np.cos(theta1l)	,	m1*gamma1*np.sin(theta1l)	,	I1	,	m2*(l1)*np.cos(theta1l)	,	m2*(l1)*np.sin(theta1l)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
-[	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	m2*gamma2*np.cos(theta2l)	,	m2*gamma2*np.sin(theta2l)	,	I2	,	0	,	0	,	0	,	0	,	0	,	0	],
-[	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	m3*gamma3*np.cos(theta3l)	,	m3*gamma3*np.sin(theta3l)	,	I3	,	m4*(l3)*np.cos(theta3l)	,	m4*(l3)*np.sin(theta3l)	,	0	],
-[	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	m4*gamma4*np.cos(theta4l)	,	m4*gamma4*np.sin(theta4l)	,	I4	],
-[	-1	,	0	,	gamma*np.cos(theta)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	1	,	0	,	-gamma1*np.cos(theta1l)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
-[	0	,	-1	,	gamma*np.sin(theta)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	1	,	-gamma1*np.sin(theta1l)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
-[	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	0	,	-(l1-gamma1)*np.cos(theta1l)	,	1	,	0	,	-gamma2*np.cos(theta2l)	,	0	,	0	,	0	,	0	,	0	,	0	],
-[	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	-(l1-gamma1)*np.sin(theta1l)	,	0	,	1	,	-gamma2*np.sin(theta2l)	,	0	,	0	,	0	,	0	,	0	,	0	],
-[	-1	,	0	,	-(l-gamma)*np.cos(theta)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	1	,	0	,	-gamma3*np.cos(theta3l)	,	0	,	0	,	0	],
-[	0	,	-1	,	-(l-gamma)*np.sin(theta)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	1	,	-gamma3*np.sin(theta3l)	,	0	,	0	,	0	],
-[	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	0	,	-(l3-gamma3)*np.cos(theta3l)	,	1	,	0	,	-gamma4*np.cos(theta4l)	],
-[	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	-(l3-gamma3)*np.sin(theta3l)	,	0	,	1	,	-gamma4*np.sin(theta4l)	]])
+                    [	0	,	m	,	0	,	0	,	m1	,	0	,	0	,	m2	,	0	,	0	,	m3	,	0	,	0	,	m4	,	0	,	0	,	m1	,	0	,	0	,	m2	,	0	,	0	,	m3	,	0	,	0	,	m4	,	0	],
+                    [	0	,	0	,	I	,	-m1*gamma*np.cos(theta)	,	-m1*gamma*np.sin(theta)	,	0	,	-m2*gamma*np.cos(theta)	,	-m2*gamma*np.sin(theta)	,	0	,	m3*(l-gamma)*np.cos(theta)	,	m3*(l-gamma)*np.sin(theta)	,	0	,	m4*(l-gamma)*np.cos(theta)	,	m4*(l-gamma)*np.sin(theta)	,	0	,	-m1*gamma*np.cos(theta)	,	-m1*gamma*np.sin(theta)	,	0	,	-m2*gamma*np.cos(theta)	,	-m2*gamma*np.sin(theta)	,	0	,	m3*(l-gamma)*np.cos(theta)	,	m3*(l-gamma)*np.sin(theta)	,	0	,	m4*(l-gamma)*np.cos(theta)	,	m4*(l-gamma)*np.sin(theta)	,	0	],
+                    [	0	,	0	,	0	,	m1*gamma1*np.cos(theta1r)	,	m1*gamma1*np.sin(theta1r)	,	I1	,	m2*(l1)*np.cos(theta1r)	,	m2*(l1)*np.sin(theta1r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	0	,	0	,	0	,	0	,	0	,	m2*gamma2*np.cos(theta2r)	,	m2*gamma2*np.sin(theta2r)	,	I2	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	m3*gamma3*np.cos(theta3r)	,	m3*gamma3*np.sin(theta3r)	,	I3	,	m4*(l3)*np.cos(theta3r)	,	m4*(l3)*np.sin(theta3r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	m4*gamma4*np.cos(theta4r)	,	m4*gamma4*np.sin(theta4r)	,	I4	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	-1	,	0	,	gamma*np.cos(theta)	,	1	,	0	,	-gamma1*np.cos(theta1r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	-1	,	gamma*np.sin(theta)	,	0	,	1	,	-gamma1*np.sin(theta1r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	0	,	0	,	-1	,	0	,	-(l1-gamma1)*np.cos(theta1r)	,	1	,	0	,	-gamma2*np.cos(theta2r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	0	,	0	,	0	,	-1	,	-(l1-gamma1)*np.sin(theta1r)	,	0	,	1	,	-gamma2*np.sin(theta2r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	-1	,	0	,	-(l-gamma)*np.cos(theta)	,	0	,	0	,	0	,	0	,	0	,	0	,	1	,	0	,	-gamma3*np.cos(theta3r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	-1	,	-(l-gamma)*np.sin(theta)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	1	,	-gamma3*np.sin(theta3r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	0	,	-(l3-gamma3)*np.cos(theta3r)	,	1	,	0	,	-gamma4*np.cos(theta4r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	-(l3-gamma3)*np.sin(theta3r)	,	0	,	1	,	-gamma4*np.sin(theta4r)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	m1*gamma1*np.cos(theta1l)	,	m1*gamma1*np.sin(theta1l)	,	I1	,	m2*(l1)*np.cos(theta1l)	,	m2*(l1)*np.sin(theta1l)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	m2*gamma2*np.cos(theta2l)	,	m2*gamma2*np.sin(theta2l)	,	I2	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	m3*gamma3*np.cos(theta3l)	,	m3*gamma3*np.sin(theta3l)	,	I3	,	m4*(l3)*np.cos(theta3l)	,	m4*(l3)*np.sin(theta3l)	,	0	],
+                    [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	m4*gamma4*np.cos(theta4l)	,	m4*gamma4*np.sin(theta4l)	,	I4	],
+                    [	-1	,	0	,	gamma*np.cos(theta)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	1	,	0	,	-gamma1*np.cos(theta1l)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	-1	,	gamma*np.sin(theta)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	1	,	-gamma1*np.sin(theta1l)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	0	,	-(l1-gamma1)*np.cos(theta1l)	,	1	,	0	,	-gamma2*np.cos(theta2l)	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	-(l1-gamma1)*np.sin(theta1l)	,	0	,	1	,	-gamma2*np.sin(theta2l)	,	0	,	0	,	0	,	0	,	0	,	0	],
+                    [	-1	,	0	,	-(l-gamma)*np.cos(theta)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	1	,	0	,	-gamma3*np.cos(theta3l)	,	0	,	0	,	0	],
+                    [	0	,	-1	,	-(l-gamma)*np.sin(theta)	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	1	,	-gamma3*np.sin(theta3l)	,	0	,	0	,	0	],
+                    [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	0	,	-(l3-gamma3)*np.cos(theta3l)	,	1	,	0	,	-gamma4*np.cos(theta4l)	],
+                    [	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,	-1	,	-(l3-gamma3)*np.sin(theta3l)	,	0	,	1	,	-gamma4*np.sin(theta4l)	]])
+                        
+
+    #xfr = x4r + (l4 - gamma4)*np.sin(theta4r)
+    #xfl = x4l - (l4 - gamma4)*np.sin(theta4l)
     
-    #xfr = x+(l-gamma)*np.sin(theta)+l3*np.sin(theta3r)+l4*np.sin(theta4r)
-    #xfl = x+(l-gamma)*np.sin(theta)+l3*np.sin(theta3l)+l4*np.sin(theta4l)
+    xfrdot = x4rdot + (l4 - gamma4)*theta4rdot*np.cos(theta4r)
+    xfldot = x4ldot - (l4 - gamma4)*theta4ldot*np.cos(theta4l)
     
-    xfrdot = xdot+(l-gamma)*thetadot*np.cos(theta)+l3*theta3rdot*np.cos(theta3r)+l4*theta4rdot*np.cos(theta4r)
-    xfldot = xdot+(l-gamma)*thetadot*np.cos(theta)+l3*theta3ldot*np.cos(theta3l)+l4*theta4ldot*np.cos(theta4l)
+    yfr = y4r - (l4 - gamma4)*np.cos(theta4r)
+    yfl = y4l - (l4 - gamma4)*np.cos(theta4l)   
     
-    yfr = y-(l-gamma)*np.cos(theta)+l3*np.cos(theta3r)-l4*np.cos(theta4r)
-    yfr = y-(l-gamma)*np.cos(theta)+l3*np.cos(theta3l)-l4*np.cos(theta4l)   
-    
-    yfrdot = ydot+(l-gamma)*thetadot*np.sin(theta)+l3*theta3rdot*np.sin(theta3r)+l4*theta4rdot*np.sin(theta4r)
-    yfldot = ydot+(l-gamma)*thetadot*np.sin(theta)+l3*theta3ldot*np.sin(theta3l)+l4*theta4ldot*np.sin(theta4l)
-    
+    yfrdot = y4rdot + (l4 - gamma4)*theta4rdot*np.sin(theta4r)
+    yfldot = y4ldot + (l4 - gamma4)*theta4ldot*np.sin(theta4l  )  
     
     # Calculating floor reaction forces
     fNr = np.maximum(0,-FLOOR_SPRING_STIFFNESS*yfr - (FLOOR_DAMPING_COEFFICIENT*yfrdot if yfr <= 0 else 0))
@@ -620,39 +630,37 @@ def equations_of_motion(state, t, parameters):
     fFl = (-FLOOR_MU*fNl*2/np.pi*np.arctan(xfldot*ATANGAIN/ATANDEL))
     
     C = np.matrix([[	fFr+fFl	],
-[	-m*g-2*m1*g-2*m2*g-2*m3*g-2*m4*g+fNr+fNl	],
-[	2*m1*g*gamma*np.sin(theta)+2*m2*g*gamma*np.sin(theta)+fFr*(l-gamma)*np.cos(theta)+fFl*(l-gamma)*np.cos(theta)-2*m3*g*(l-gamma)*np.sin(theta)-2*m4*g*(l-gamma)*np.sin(theta)+fNr*(l-gamma)*np.sin(theta)+fNl*(l-gamma)*np.sin(theta)-k1*(theta+phi1l-theta1l)-c1*(thetadot-theta1ldot)-k1*(theta+phi1r-theta1r)-c1*(thetadot-theta1rdot)-k3*(theta+phi3l-theta3l)-c3*(thetadot-theta3ldot)-k3*(theta+phi3r-theta3r)-c3*(thetadot-theta3rdot)	],
-[	-m1*g*gamma1*np.sin(theta1r)-m2*g*(l1)*np.sin(theta1r)-k2*(theta1r+phi2r-theta2r)-c2*(theta1rdot-theta2rdot)+k1*(theta+phi1r-theta1r)+c1*(thetadot-theta1rdot)	],
-[	-m2*g*gamma2*np.sin(theta2r)+k2*(theta1r+phi2r-theta2r)+c2*(theta1rdot-theta2rdot)	],
-[	-m3*g*gamma3*np.sin(theta3r)-m4*g*(l3)*np.sin(theta3r)-k4*(theta3r+phi4r-theta4r)-c4*(theta3rdot-theta4rdot)+k3*(theta+phi3r-theta3r)+c3*(thetadot-theta3rdot)+fFr*(l3)*np.cos(theta3r)+fNr*(l3)*np.sin(theta3r)	],
-[	-m4*g*gamma4*np.sin(theta4r)+k4*(theta3r+phi4r-theta4r)+c4*(theta3rdot-theta4rdot)+fFr*(l4)*np.cos(theta4r)+fNr*(l4)*np.sin(theta4r)	],
-[	gamma*thetadot**2*np.sin(theta)-gamma1*theta1rdot**2*np.sin(theta1r)	],
-[	-gamma*thetadot**2*np.cos(theta)+gamma1*theta1rdot**2*np.cos(theta1r)	],
-[	-(l1-gamma1)*theta1rdot**2*np.sin(theta1r)-gamma2*theta2rdot**2*np.sin(theta2r)	],
-[	(l1-gamma1)*theta1rdot**2*np.cos(theta1r)+gamma2*theta2rdot**2*np.cos(theta2r)	],
-[	-(l-gamma)*thetadot**2*np.sin(theta)-gamma3*theta3rdot**2*np.sin(theta3r)	],
-[	(l-gamma)*thetadot**2*np.cos(theta)+gamma3*theta3rdot**2*np.cos(theta3r)	],
-[	-(l3-gamma3)*theta3rdot**2*np.sin(theta3r)-gamma4*theta4rdot**2*np.sin(theta4r)	],
-[	(l3-gamma3)*theta3rdot**2*np.cos(theta3r)+gamma4*theta4rdot**2*np.cos(theta4r)	],
-[	-m1*g*gamma1*np.sin(theta1l)-m2*g*(l1)*np.sin(theta1l)-k2*(theta1l+phi2l-theta2l)-c2*(theta1ldot-theta2ldot)+k1*(theta+phi1l-theta1l)+c1*(thetadot-theta1ldot)	],
-[	-m2*g*gamma2*np.sin(theta2l)+k2*(theta1l+phi2l-theta2l)+c2*(theta1ldot-theta2ldot)	],
-[	-m3*g*gamma3*np.sin(theta3l)-m4*g*(l3)*np.sin(theta3l)-k4*(theta3l+phi4l-theta4l)-c4*(theta3ldot-theta4ldot)+k3*(theta+phi3l-theta3l)+c3*(thetadot-theta3ldot)+fFl*(l3)*np.cos(theta3l)+fNl*(l3)*np.sin(theta3l)	],
-[	-m4*g*gamma4*np.sin(theta4l)+k4*(theta3l+phi4l-theta4l)+c4*(theta3ldot-theta4ldot)+fFl*(l4)*np.cos(theta4l)+fNl*(l4)*np.sin(theta4l)	],
-[	gamma*thetadot**2*np.sin(theta)-gamma1*theta1ldot**2*np.sin(theta1l)	],
-[	-gamma*thetadot**2*np.cos(theta)+gamma1*theta1ldot**2*np.cos(theta1l)	],
-[	-(l1-gamma1)*theta1ldot**2*np.sin(theta1l)-gamma2*theta2ldot**2*np.sin(theta2l)	],
-[	(l1-gamma1)*theta1ldot**2*np.cos(theta1l)+gamma2*theta2ldot**2*np.cos(theta2l)	],
-[	-(l-gamma)*thetadot**2*np.sin(theta)-gamma3*theta3ldot**2*np.sin(theta3l)	],
-[	(l-gamma)*thetadot**2*np.cos(theta)+gamma3*theta3ldot**2*np.cos(theta3l)	],
-[	-(l3-gamma3)*theta3ldot**2*np.sin(theta3l)-gamma4*theta4ldot**2*np.sin(theta4l)	],
-[	(l3-gamma3)*theta3ldot**2*np.cos(theta3l)+gamma4*theta4ldot**2*np.cos(theta4l)	]])
+                    [	-m*g-2*m1*g-2*m2*g-2*m3*g-2*m4*g+fNr+fNl	],
+                    [	2*m1*g*gamma*np.sin(theta)+2*m2*g*gamma*np.sin(theta)+fFr*(l-gamma)*np.cos(theta)+fFl*(l-gamma)*np.cos(theta)-2*m3*g*(l-gamma)*np.sin(theta)-2*m4*g*(l-gamma)*np.sin(theta)+fNr*(l-gamma)*np.sin(theta)+fNl*(l-gamma)*np.sin(theta)-k1*(theta+phi1l-theta1l)-c1*(thetadot-theta1ldot)-k1*(theta+phi1r-theta1r)-c1*(thetadot-theta1rdot)-k3*(theta+phi3l-theta3l)-c3*(thetadot-theta3ldot)-k3*(theta+phi3r-theta3r)-c3*(thetadot-theta3rdot)	],
+                    [	-m1*g*gamma1*np.sin(theta1r)-m2*g*(l1)*np.sin(theta1r)-k2*(theta1r+phi2r-theta2r)-c2*(theta1rdot-theta2rdot)+k1*(theta+phi1r-theta1r)+c1*(thetadot-theta1rdot)	],
+                    [	-m2*g*gamma2*np.sin(theta2r)+k2*(theta1r+phi2r-theta2r)+c2*(theta1rdot-theta2rdot)	],
+                    [	-m3*g*gamma3*np.sin(theta3r)-m4*g*(l3)*np.sin(theta3r)-k4*(theta3r+phi4r-theta4r)-c4*(theta3rdot-theta4rdot)+k3*(theta+phi3r-theta3r)+c3*(thetadot-theta3rdot)+fFr*(l3)*np.cos(theta3r)+fNr*(l3)*np.sin(theta3r)	],
+                    [	-m4*g*gamma4*np.sin(theta4r)+k4*(theta3r+phi4r-theta4r)+c4*(theta3rdot-theta4rdot)+fFr*(l4)*np.cos(theta4r)+fNr*(l4)*np.sin(theta4r)	],
+                    [	gamma*thetadot**2*np.sin(theta)-gamma1*theta1rdot**2*np.sin(theta1r)	],
+                    [	-gamma*thetadot**2*np.cos(theta)+gamma1*theta1rdot**2*np.cos(theta1r)	],
+                    [	-(l1-gamma1)*theta1rdot**2*np.sin(theta1r)-gamma2*theta2rdot**2*np.sin(theta2r)	],
+                    [	(l1-gamma1)*theta1rdot**2*np.cos(theta1r)+gamma2*theta2rdot**2*np.cos(theta2r)	],
+                    [	-(l-gamma)*thetadot**2*np.sin(theta)-gamma3*theta3rdot**2*np.sin(theta3r)	],
+                    [	(l-gamma)*thetadot**2*np.cos(theta)+gamma3*theta3rdot**2*np.cos(theta3r)	],
+                    [	-(l3-gamma3)*theta3rdot**2*np.sin(theta3r)-gamma4*theta4rdot**2*np.sin(theta4r)	],
+                    [	(l3-gamma3)*theta3rdot**2*np.cos(theta3r)+gamma4*theta4rdot**2*np.cos(theta4r)	],
+                    [	-m1*g*gamma1*np.sin(theta1l)-m2*g*(l1)*np.sin(theta1l)-k2*(theta1l+phi2l-theta2l)-c2*(theta1ldot-theta2ldot)+k1*(theta+phi1l-theta1l)+c1*(thetadot-theta1ldot)	],
+                    [	-m2*g*gamma2*np.sin(theta2l)+k2*(theta1l+phi2l-theta2l)+c2*(theta1ldot-theta2ldot)	],
+                    [	-m3*g*gamma3*np.sin(theta3l)-m4*g*(l3)*np.sin(theta3l)-k4*(theta3l+phi4l-theta4l)-c4*(theta3ldot-theta4ldot)+k3*(theta+phi3l-theta3l)+c3*(thetadot-theta3ldot)+fFl*(l3)*np.cos(theta3l)+fNl*(l3)*np.sin(theta3l)	],
+                    [	-m4*g*gamma4*np.sin(theta4l)+k4*(theta3l+phi4l-theta4l)+c4*(theta3ldot-theta4ldot)+fFl*(l4)*np.cos(theta4l)+fNl*(l4)*np.sin(theta4l)	],
+                    [	gamma*thetadot**2*np.sin(theta)-gamma1*theta1ldot**2*np.sin(theta1l)	],
+                    [	-gamma*thetadot**2*np.cos(theta)+gamma1*theta1ldot**2*np.cos(theta1l)	],
+                    [	-(l1-gamma1)*theta1ldot**2*np.sin(theta1l)-gamma2*theta2ldot**2*np.sin(theta2l)	],
+                    [	(l1-gamma1)*theta1ldot**2*np.cos(theta1l)+gamma2*theta2ldot**2*np.cos(theta2l)	],
+                    [	-(l-gamma)*thetadot**2*np.sin(theta)-gamma3*theta3ldot**2*np.sin(theta3l)	],
+                    [	(l-gamma)*thetadot**2*np.cos(theta)+gamma3*theta3ldot**2*np.cos(theta3l)	],
+                    [	-(l3-gamma3)*theta3ldot**2*np.sin(theta3l)-gamma4*theta4ldot**2*np.sin(theta4l)	],
+                    [	(l3-gamma3)*theta3ldot**2*np.cos(theta3l)+gamma4*theta4ldot**2*np.cos(theta4l)	]])
 
     # Calculating second derivatives
     second_derivatives = np.array(np.linalg.inv(M)*(C)).squeeze() 
     
     # Building the derivative matrix d[state]/dt = [first_derivatives, second_derivatives]
-    #print(np.concatenate((first_derivatives, second_derivatives)))
-    #raise SystemExit
     derivatives = np.concatenate((first_derivatives, second_derivatives)) 
 
     return derivatives
@@ -671,17 +679,11 @@ def render(filename, state_log, action_log, episode_number):
             
         
         For reference, the state is:
-        x,       y,    theta,    x1r,    y1r,    theta1r,    x2r,    y2r,    theta2r,    x3r,    y3r,    theta3r,    x4r,    y4r,    theta4r,    xfr,    yfr,    x1l,    y1l,    theta1l,    x2l,    y2l,    theta2l,    x3l,    y3l,    theta3l,    x4l,    y4l,    theta4l,    xfl,    yfl, \
-        xdot, ydot, thetadot, x1rdot, y1rdot, theta1rdot, x2rdot, y2rdot, theta2rdot, x3rdot, y3rdot, theta3rdot, x4rdot, y4rdot, theta4rdot, xfrdot, yfrdot, x1ldot, y1ldot, theta1ldot, x2ldot, y2ldot, theta2ldot, x3ldot, y3ldot, theta3ldot, x4ldot, y4ldot, theta4ldot, xfldot, yfldot = state
+        x,       y,    theta,    x1r,    y1r,    theta1r,    x2r,    y2r,    theta2r,    x3r,    y3r,    theta3r,    x4r,    y4r,    theta4r, x1l,    y1l,    theta1l,    x2l,    y2l,    theta2l,    x3l,    y3l,    theta3l,    x4l,    y4l,    theta4l, \
+        xdot, ydot, thetadot, x1rdot, y1rdot, theta1rdot, x2rdot, y2rdot, theta2rdot, x3rdot, y3rdot, theta3rdot, x4rdot, y4rdot, theta4rdot, x1ldot, y1ldot, theta1ldot, x2ldot, y2ldot, theta2ldot, x3ldot, y3ldot, theta3ldot, x4ldot, y4ldot, theta4ldot = state
         """
-        
-        
-      
-        
-        
+
         # Stephane's Animating Code #
-        #print(state_log[1])
-        #print(action_log)
         import animator_full
         animator_full.drawState(play_game = False, filename = filename, state_log = state_log, action_log = action_log, episode_number = episode_number)
         
