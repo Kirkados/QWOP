@@ -169,7 +169,7 @@ class Agent:
             
             # Stepping through time until we reach the max time length or until episode completes.
             while timestep_number < Settings.MAX_NUMBER_OF_TIMESTEPS and not done:
-                print("Timestep number %i" %timestep_number)
+                #print("Timestep number %i" %timestep_number)
                 # Should we try explore on this timestep?
                 if np.random.uniform() < exploration_rate:
                     # Time to explore! 
@@ -185,6 +185,7 @@ class Agent:
                     q_values = np.sum(self.bins * q_distribution, axis = 1) # [# actions, 1]                    
                     # Choosing the most lucrative action
                     action = np.argmax(q_values, axis = 0) # [1]
+
                 
 
                 ################################################
