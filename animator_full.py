@@ -609,12 +609,12 @@ def drawState(play_game, filename="", state_log=None, action_log=None, episode_n
             x2r,y2r,theta2r = next_state[6:9]
             x3r,y3r,theta3r = next_state[9:12]
             x4r,y4r,theta4r = next_state[12:15]
-            xfr,yfr = next_state[15:17]
-            x1l,y1l,theta1l = next_state[17:20]
-            x2l,y2l,theta2l = next_state[20:23]
-            x3l,y3l,theta3l = next_state[23:26]
-            x4l,y4l,theta4l = next_state[26:29]
-            xfl,yfl = next_state[29:31]
+            #xfr,yfr = next_state[15:17]
+            x1l,y1l,theta1l = next_state[15:18]
+            x2l,y2l,theta2l = next_state[18:21]
+            x3l,y3l,theta3l = next_state[21:24]
+            x4l,y4l,theta4l = next_state[24:27]
+            #xfl,yfl = next_state[29:31]
 
             #Get point coordinates for each segment
             segment_points[0,:,:] = returnPointCoords(x,  y,  theta,  l, gamma,  x,x_0,y_0,hum_scale)
