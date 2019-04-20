@@ -58,14 +58,14 @@ class Environment:
         self.STATE_SIZE              = self.TOTAL_STATE_SIZE - len(self.IRRELEVANT_STATES) # total number of relevant states
         self.ACTION_SIZE             = 9
         self.TIMESTEP                = 0.05 # [s]        
-        self.MAX_NUMBER_OF_TIMESTEPS = 200 # per episode
+        self.MAX_NUMBER_OF_TIMESTEPS = 600 # per episode
         self.NUM_FRAMES              = 100 # total animation is cut into this many frames
         self.RANDOMIZE               = False # whether or not to randomize the state & target location
         self.UPPER_STATE_BOUND       = np.array([np.inf, 4., 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, 2*np.pi, np.inf, np.inf, 2*np.pi, \
                                                      5., 2.,      1., np.inf, np.inf,      1., np.inf, np.inf,      1., np.inf, np.inf,      1., np.inf, np.inf,      1., np.inf, np.inf,      1., np.inf, np.inf,      1., np.inf, np.inf,      1., np.inf, np.inf,      1.])
         self.NORMALIZE_STATE         = True # Normalize state on each timestep to avoid vanishing gradients
         self.MIN_Q                   = -500.0
-        self.MAX_Q                   = 15000.0
+        self.MAX_Q                   = 10000.0
         self.DONE_ON_FALL            = True # whether or not falling down ends the episode
         
         # Rendering parameters
@@ -508,7 +508,7 @@ class Environment:
         # Returns the reward for this timestep as a function of the state and action
         
         # The agent is (currently) rewarded for forward velocity.
-        reward = self.state[13]        
+        reward = self.state[27]        
         return reward
     
     
