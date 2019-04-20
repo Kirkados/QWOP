@@ -95,7 +95,7 @@ state = sp.Matrix([[xdotdot],
                   [y1rdotdot],
                   [theta1rdotdot],
                   [x2rdotdot],
-                  [y2r],
+                  [y2rdotdot],
                   [theta2rdotdot],
                   [x3rdotdot],
                   [y3rdotdot],
@@ -148,6 +148,90 @@ C = sp.Matrix([[	fFr+fFl	],
 
 Eqs = M*state - C
 
-#solution = sp.nonlinsolve(Eqs, [xdotdot, ydotdot, thetadotdot, theta1rdotdot, theta2rdotdot, theta3rdotdot, theta4rdotdot, theta1ldotdot, theta2ldotdot, theta3ldotdot, theta4ldotdot])
 
-print(sp.solve(Eqs[26],theta4ldotdot))
+e1 = Eqs[0:7] 
+e2 = Eqs[15:19]
+e3=e1+e2
+#print(e3)
+
+fr = Eqs[7:15]
+fl = Eqs[19:]
+
+#Eqs_subs = 
+
+#solution = sp.nonlinsolve(Eqs, [xdotdot, ydotdot, thetadotdot, theta1rdotdot, theta2rdotdot, theta3rdotdot, theta4rdotdot, theta1ldotdot, theta2ldotdot, theta3ldotdot, theta4ldotdot])
+#solve for X and Y (right)
+
+eq_x1rdotdot = sp.solve(fr[0],x1rdotdot)[0]
+eq_y1rdotdot = sp.solve(fr[1],y1rdotdot)[0]
+eq_x2rdotdot = sp.solve(fr[2].subs(x1rdotdot, eq_x1rdotdot),x2rdotdot)[0]
+eq_y2rdotdot = sp.solve(fr[3].subs(y1rdotdot, eq_y1rdotdot),y2rdotdot)[0]
+eq_x3rdotdot = sp.solve(fr[4],x3rdotdot)[0]
+eq_y3rdotdot = sp.solve(fr[5],y3rdotdot)[0]
+eq_x4rdotdot = sp.solve(fr[6].subs(x3rdotdot, eq_x3rdotdot),x4rdotdot)[0]
+eq_y4rdotdot = sp.solve(fr[7].subs(y3rdotdot, eq_y3rdotdot),y4rdotdot)[0]
+
+eq_x1ldotdot = sp.solve(fl[0],x1ldotdot)[0]
+eq_y1ldotdot = sp.solve(fl[1],y1ldotdot)[0]
+eq_x2ldotdot = sp.solve(fl[2].subs(x1ldotdot, eq_x1ldotdot),x2ldotdot)[0]
+eq_y2ldotdot = sp.solve(fl[3].subs(y1ldotdot, eq_y1ldotdot),y2ldotdot)[0]
+eq_x3ldotdot = sp.solve(fl[4],x3ldotdot)[0]
+eq_y3ldotdot = sp.solve(fl[5],y3ldotdot)[0]
+eq_x4ldotdot = sp.solve(fl[6].subs(x3ldotdot, eq_x3ldotdot),x4ldotdot)[0]
+eq_y4ldotdot = sp.solve(fl[7].subs(y3ldotdot, eq_y3ldotdot),y4ldotdot)[0]
+
+
+#eq1=Eqs[0].subs([(x1rdotdot, eq_x1rdotdot),(x2rdotdot, eq_x2rdotdot),(x3rdotdot, eq_x3rdotdot),(x4rdotdot, eq_x4rdotdot),(x1ldotdot, eq_x1ldotdot),(x2ldotdot, eq_x2ldotdot),(x3ldotdot, eq_x3ldotdot),(x4ldotdot, eq_x4ldotdot)])
+#eq2=Eqs[1].subs([(y1rdotdot, eq_y1rdotdot),(y2rdotdot, eq_y2rdotdot),(y3rdotdot, eq_y3rdotdot),(y4rdotdot, eq_y4rdotdot),(y1ldotdot, eq_y1ldotdot),(y2ldotdot, eq_y2ldotdot),(y3ldotdot, eq_y3ldotdot),(y4ldotdot, eq_y4ldotdot)])
+eq3=Eqs[2].subs([(x1rdotdot, eq_x1rdotdot),(x2rdotdot, eq_x2rdotdot),(x3rdotdot, eq_x3rdotdot),(x4rdotdot, eq_x4rdotdot),(x1ldotdot, eq_x1ldotdot),(x2ldotdot, eq_x2ldotdot),(x3ldotdot, eq_x3ldotdot),(x4ldotdot, eq_x4ldotdot),(y1rdotdot, eq_y1rdotdot),(y2rdotdot, eq_y2rdotdot),(y3rdotdot, eq_y3rdotdot),(y4rdotdot, eq_y4rdotdot),(y1ldotdot, eq_y1ldotdot),(y2ldotdot, eq_y2ldotdot),(y3ldotdot, eq_y3ldotdot),(y4ldotdot, eq_y4ldotdot)])
+#eq4=Eqs[3].subs([(x1rdotdot, eq_x1rdotdot),(x2rdotdot, eq_x2rdotdot),(y1rdotdot, eq_y1rdotdot),(y2rdotdot, eq_y2rdotdot)])
+eq5=Eqs[4].subs([(x2rdotdot, eq_x2rdotdot),(y2rdotdot, eq_y2rdotdot)])
+#eq6=Eqs[5].subs([(x3rdotdot, eq_x3rdotdot),(x4rdotdot, eq_x4rdotdot),(y3rdotdot, eq_y3rdotdot),(y4rdotdot, eq_y4rdotdot)])
+#eq7=Eqs[6].subs([(x4rdotdot, eq_x4rdotdot),(y4rdotdot, eq_y4rdotdot)])
+#eq8=Eqs[15].subs([(x1ldotdot, eq_x1ldotdot),(x2ldotdot, eq_x2ldotdot),(y1ldotdot, eq_y1ldotdot),(y2ldotdot, eq_y2ldotdot)])
+#eq9=Eqs[16].subs([(x2ldotdot, eq_x2ldotdot),(y2ldotdot, eq_y2ldotdot)])
+#eq10=Eqs[17].subs([(x3ldotdot, eq_x3ldotdot),(x4ldotdot, eq_x4ldotdot),(y3ldotdot, eq_y3ldotdot),(y4ldotdot, eq_y4ldotdot)])
+#eq11=Eqs[18].subs([(x4ldotdot, eq_x4ldotdot),(y4ldotdot, eq_y4ldotdot)])
+
+print(sp.collect(eq3, thetadotdot).coeff(thetadotdot,1))
+
+
+#print(sp.simplify(eq3))
+#Eqs_out = eq1+eq2+eq3+eq4+eq5+eq6+eq7+eq8+eq9+eq10+eq11
+
+
+
+
+
+
+
+
+
+
+
+
+#print(eq_x1rdotdot)
+#print(Eqs[0])
+#e=Eqs[0].subs([(x1rdotdot, eq_x1rdotdot)])
+#print(e)
+#print(sp.solve(Eqs[8],y1rdotdot)
+#print(sp.solve(Eqs[9],x2rdotdot)
+#print(sp.solve(Eqs[10],y2rdotdot)
+#print(sp.solve(Eqs[11],x3rdotdot)
+#print(sp.solve(Eqs[12],y3rdotdot)
+#print(sp.solve(Eqs[13],x4rdotdot)
+#print(sp.solve(Eqs[14],y4rdotdot)
+##solve for X and Y (left)
+#print(sp.solve(Eqs[19],x1ldotdot)
+#print(sp.solve(Eqs[20],y1ldotdot)
+#print(sp.solve(Eqs[21],x2ldotdot)
+#print(sp.solve(Eqs[22],y2ldotdot)
+#print(sp.solve(Eqs[23],x3ldotdot)
+#print(sp.solve(Eqs[24],y3ldotdot)
+#print(sp.solve(Eqs[25],x4ldotdot)
+#print(sp.solve(Eqs[26],y4ldotdot)
+
+
+
+
+#print(sp.solve(Eqs[26],theta4ldotdot))
