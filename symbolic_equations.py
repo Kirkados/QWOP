@@ -193,45 +193,17 @@ eq5=Eqs[4].subs([(x2rdotdot, eq_x2rdotdot),(y2rdotdot, eq_y2rdotdot)])
 #eq10=Eqs[17].subs([(x3ldotdot, eq_x3ldotdot),(x4ldotdot, eq_x4ldotdot),(y3ldotdot, eq_y3ldotdot),(y4ldotdot, eq_y4ldotdot)])
 #eq11=Eqs[18].subs([(x4ldotdot, eq_x4ldotdot),(y4ldotdot, eq_y4ldotdot)])
 
-print(sp.collect(eq3, thetadotdot).coeff(thetadotdot,1))
+#print(sp.collect(eq3, thetadotdot).coeff(thetadotdot,1))
 
+eq3_poly = sp.Poly(eq3, thetadotdot)
 
-#print(sp.simplify(eq3))
-#Eqs_out = eq1+eq2+eq3+eq4+eq5+eq6+eq7+eq8+eq9+eq10+eq11
+#print(eq3_poly.coeffs())
 
-
-
-
-
-
-
-
-
-
-
-
-#print(eq_x1rdotdot)
-#print(Eqs[0])
-#e=Eqs[0].subs([(x1rdotdot, eq_x1rdotdot)])
-#print(e)
-#print(sp.solve(Eqs[8],y1rdotdot)
-#print(sp.solve(Eqs[9],x2rdotdot)
-#print(sp.solve(Eqs[10],y2rdotdot)
-#print(sp.solve(Eqs[11],x3rdotdot)
-#print(sp.solve(Eqs[12],y3rdotdot)
-#print(sp.solve(Eqs[13],x4rdotdot)
-#print(sp.solve(Eqs[14],y4rdotdot)
-##solve for X and Y (left)
-#print(sp.solve(Eqs[19],x1ldotdot)
-#print(sp.solve(Eqs[20],y1ldotdot)
-#print(sp.solve(Eqs[21],x2ldotdot)
-#print(sp.solve(Eqs[22],y2ldotdot)
-#print(sp.solve(Eqs[23],x3ldotdot)
-#print(sp.solve(Eqs[24],y3ldotdot)
-#print(sp.solve(Eqs[25],x4ldotdot)
-#print(sp.solve(Eqs[26],y4ldotdot)
-
-
-
-
-#print(sp.solve(Eqs[26],theta4ldotdot))
+# Subbing in zeros for all other "dotdot" terms so I can extract the coefficient of each variable one by one
+substitutions = []
+for i in range(1):
+    for j in range(len(state)):
+        if i != j:
+            substitutions.append((state[j], 0))
+    print(substitutions)
+    print(sp.simplify(eq3.subs(substitutions)))
