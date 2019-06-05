@@ -419,17 +419,30 @@ def drawState(play_game, filename="", state_log=None, action_log=None, episode_n
     segment_count = 9
     segment_points = np.zeros((segment_count,3,2))
     #print(state)
+#    x,y,theta =       state[0:3]
+#    x1r,y1r,theta1r = state[3:6]
+#    x2r,y2r,theta2r = state[6:9]
+#    x3r,y3r,theta3r = state[9:12]
+#    x4r,y4r,theta4r = state[12:15]
+#    xfr,yfr =         state[15:17]
+#    x1l,y1l,theta1l = state[17:20]
+#    x2l,y2l,theta2l = state[20:23]
+#    x3l,y3l,theta3l = state[23:26]
+#    x4l,y4l,theta4l = state[26:29]
+#    xfl,yfl =         state[29:31]
+    
+    #unpack state
     x,y,theta = state[0:3]
     x1r,y1r,theta1r = state[3:6]
     x2r,y2r,theta2r = state[6:9]
     x3r,y3r,theta3r = state[9:12]
     x4r,y4r,theta4r = state[12:15]
-    xfr,yfr = state[15:17]
-    x1l,y1l,theta1l = state[17:20]
-    x2l,y2l,theta2l = state[20:23]
-    x3l,y3l,theta3l = state[23:26]
-    x4l,y4l,theta4l = state[26:29]
-    xfl,yfl = state[29:31]
+    #xfr,yfr = next_state[15:17]
+    x1l,y1l,theta1l = state[15:18]
+    x2l,y2l,theta2l = state[18:21]
+    x3l,y3l,theta3l = state[21:24]
+    x4l,y4l,theta4l = state[24:27]
+    #xfl,yfl = next_state[29:31]
     
     
     # DRAW INITIAL STATE 
@@ -465,13 +478,28 @@ def drawState(play_game, filename="", state_log=None, action_log=None, episode_n
     segment_points[8,:,:] = returnPointCoords(x4l,y4l,theta4l,l4,gamma4,x,x_0,y_0,hum_scale)
     
     
+    headCoords = np.array([[x-gamma*np.sin(theta),y+gamma*np.cos(theta)],[x-(gamma+env.NECK_LENGTH)*np.sin(theta),y+(gamma+env.NECK_LENGTH)*np.cos(theta)]])      
+    
+    #determine point coordinates for head and neck
+    headCoords[:,0]=(headCoords[:,0]-x)*hum_scale+x_0
+    headCoords[:,1]=y_0-(headCoords[:,1])*hum_scale
+
+
+    
+    
+    
     #Draw body
     for segment_id in range(segment_count):
         pygame.draw.line(screen, BODY, segment_points[segment_id,0,:], segment_points[segment_id,2,:], 10)
         pygame.draw.ellipse(screen, COG, [segment_points[segment_id,1,0]-5,segment_points[segment_id,1,1]-5,10,10], 2)
         pygame.draw.ellipse(screen, BODY, [segment_points[segment_id,0,0]-6,segment_points[segment_id,0,1]-6,12,12], 0)
         pygame.draw.ellipse(screen, BODY, [segment_points[segment_id,2,0]-6,segment_points[segment_id,2,1]-6,12,12], 0)
-           
+    
+    #draw head and neck
+    pygame.draw.line(screen, BODY, headCoords[0,:], headCoords[1,:], 10)
+    pygame.draw.ellipse(screen, BODY, [headCoords[1,0]-np.round(env.HEAD_DIAM/2*hum_scale),headCoords[1,1]-np.round(env.HEAD_DIAM/2*hum_scale),np.round(env.HEAD_DIAM*hum_scale),np.round(env.HEAD_DIAM*hum_scale)])
+
+       
     
     if play_game:
         text_begin = font_begin.render("PRESS [SPACE] TO PLAY", True, TEXT_BEGIN)
@@ -617,7 +645,7 @@ def drawState(play_game, filename="", state_log=None, action_log=None, episode_n
             #xfl,yfl = next_state[29:31]
 
             #Get point coordinates for each segment
-            segment_points[0,:,:] = returnPointCoords(x,  y,  theta,  l, gamma,  x,x_0,y_0,hum_scale)
+            segment_points[0,:,:] = returnPointCoords(x,  y,  theta,  l, gamma, x,x_0,y_0,hum_scale)
             segment_points[1,:,:] = returnPointCoords(x1r,y1r,theta1r,l1,gamma1,x,x_0,y_0,hum_scale)
             segment_points[2,:,:] = returnPointCoords(x2r,y2r,theta2r,l2,gamma2,x,x_0,y_0,hum_scale)
             segment_points[3,:,:] = returnPointCoords(x3r,y3r,theta3r,l3,gamma3,x,x_0,y_0,hum_scale)
@@ -626,6 +654,14 @@ def drawState(play_game, filename="", state_log=None, action_log=None, episode_n
             segment_points[6,:,:] = returnPointCoords(x2l,y2l,theta2l,l2,gamma2,x,x_0,y_0,hum_scale)
             segment_points[7,:,:] = returnPointCoords(x3l,y3l,theta3l,l3,gamma3,x,x_0,y_0,hum_scale)
             segment_points[8,:,:] = returnPointCoords(x4l,y4l,theta4l,l4,gamma4,x,x_0,y_0,hum_scale)
+
+            headCoords = np.array([[x-gamma*np.sin(theta),y+gamma*np.cos(theta)],[x-(gamma+env.NECK_LENGTH)*np.sin(theta),y+(gamma+env.NECK_LENGTH)*np.cos(theta)]])      
+    
+            #determine point coordinates for head and neck
+            headCoords[:,0]=(headCoords[:,0]-x)*hum_scale+x_0
+            headCoords[:,1]=y_0-(headCoords[:,1])*hum_scale
+
+
 
             # Determine location of painted lines based on X distance 
             line_points = drawDistLine(width,hum_scale,x)
@@ -703,7 +739,14 @@ def drawState(play_game, filename="", state_log=None, action_log=None, episode_n
                 pygame.draw.ellipse(screen, BODY, [segment_points[segment_id,0,0]-6,segment_points[segment_id,0,1]-6,12,12], 0)
                 pygame.draw.ellipse(screen, BODY, [segment_points[segment_id,2,0]-6,segment_points[segment_id,2,1]-6,12,12], 0)
                 #print(" ", segment_points[segment_id,0,:],segment_points[segment_id,2,:])
-            
+   
+                #draw head and neck
+                pygame.draw.line(screen, BODY, headCoords[0,:], headCoords[1,:], 10)
+                pygame.draw.ellipse(screen, BODY, [headCoords[1,0]-np.round(env.HEAD_DIAM/2*hum_scale),headCoords[1,1]-np.round(env.HEAD_DIAM/2*hum_scale),np.round(env.HEAD_DIAM*hum_scale),np.round(env.HEAD_DIAM*hum_scale)])
+
+
+
+         
             #check if node out-of-bounds. If so, call it quits 
             if np.any(segment_points[:,0,1]>height):
                 text_GO = font_gameover.render("GAME OVER!", True, TEXT_GAMEOVER)
