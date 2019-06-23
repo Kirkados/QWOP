@@ -1,0 +1,10 @@
+EQ 4
+----------------------------------------------------------------------
+
+I2*theta2rdotdot 
+- c2*(theta1rdot - theta2rdot) + g*gamma2*m2*sin(theta2r) 
++ gamma2*m2*(gamma*thetadot**2*sin(theta) - gamma*thetadotdot*cos(theta) - gamma2*theta2rdot**2*sin(theta2r) + gamma2*theta2rdotdot*cos(theta2r) - l1*theta1rdot**2*sin(theta1r) + l1*theta1rdotdot*cos(theta1r) + xdotdot)*cos(theta2r) 
++ gamma2*m2*(-gamma*thetadot**2*cos(theta) - gamma*thetadotdot*sin(theta) + gamma2*theta2rdot**2*cos(theta2r) + gamma2*theta2rdotdot*sin(theta2r) + l1*theta1rdot**2*cos(theta1r) + l1*theta1rdotdot*sin(theta1r) + ydotdot)*sin(theta2r) 
+- k2*(phi2r + theta1r - theta2r)
+----------------------------------------------------------------------
+[X Y THETA THETA_1R THETA_2R THETA_3R THETA_4R THETA_1L THETA_2L THETA_3L THETA_4L]

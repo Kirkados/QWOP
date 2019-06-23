@@ -1,0 +1,28 @@
+EQ 2
+----------------------------------------------------------------------
+
+I*thetadotdot 
++ c1*(-theta1ldot + thetadot) + c1*(-theta1rdot + thetadot) 
++ c3*(-theta3ldot + thetadot) + c3*(-theta3rdot + thetadot) 
+- fFl*(-gamma + l)*cos(theta) - fFr*(-gamma + l)*cos(theta) 
+- fNl*(-gamma + l)*sin(theta) - fNr*(-gamma + l)*sin(theta) 
+- 2*g*gamma*m1*sin(theta) - 2*g*gamma*m2*sin(theta) 
++ 2*g*m3*(-gamma + l)*sin(theta) + 2*g*m4*(-gamma + l)*sin(theta) 
+- gamma*m1*(gamma*thetadot**2*sin(theta) - gamma*thetadotdot*cos(theta) - gamma1*theta1ldot**2*sin(theta1l) + gamma1*theta1ldotdot*cos(theta1l) + xdotdot)*cos(theta) 
+- gamma*m1*(gamma*thetadot**2*sin(theta) - gamma*thetadotdot*cos(theta) - gamma1*theta1rdot**2*sin(theta1r) + gamma1*theta1rdotdot*cos(theta1r) + xdotdot)*cos(theta) 
+- gamma*m1*(-gamma*thetadot**2*cos(theta) - gamma*thetadotdot*sin(theta) + gamma1*theta1ldot**2*cos(theta1l) + gamma1*theta1ldotdot*sin(theta1l) + ydotdot)*sin(theta) - gamma*m1*(-gamma*thetadot**2*cos(theta) - gamma*thetadotdot*sin(theta) + gamma1*theta1rdot**2*cos(theta1r) + gamma1*theta1rdotdot*sin(theta1r) + ydotdot)*sin(theta) 
+- gamma*m2*(gamma*thetadot**2*sin(theta) - gamma*thetadotdot*cos(theta) - gamma2*theta2ldot**2*sin(theta2l) + gamma2*theta2ldotdot*cos(theta2l) - l1*theta1ldot**2*sin(theta1l) + l1*theta1ldotdot*cos(theta1l) + xdotdot)*cos(theta) 
+- gamma*m2*(gamma*thetadot**2*sin(theta) - gamma*thetadotdot*cos(theta) - gamma2*theta2rdot**2*sin(theta2r) + gamma2*theta2rdotdot*cos(theta2r) - l1*theta1rdot**2*sin(theta1r) + l1*theta1rdotdot*cos(theta1r) + xdotdot)*cos(theta) 
+- gamma*m2*(-gamma*thetadot**2*cos(theta) - gamma*thetadotdot*sin(theta) + gamma2*theta2ldot**2*cos(theta2l) + gamma2*theta2ldotdot*sin(theta2l) + l1*theta1ldot**2*cos(theta1l) + l1*theta1ldotdot*sin(theta1l) + ydotdot)*sin(theta) 
+- gamma*m2*(-gamma*thetadot**2*cos(theta) - gamma*thetadotdot*sin(theta) + gamma2*theta2rdot**2*cos(theta2r) + gamma2*theta2rdotdot*sin(theta2r) + l1*theta1rdot**2*cos(theta1r) + l1*theta1rdotdot*sin(theta1r) + ydotdot)*sin(theta) 
++ k1*(phi1l + theta - theta1l) + k1*(phi1r + theta - theta1r) + k3*(phi3l + theta - theta3l) + k3*(phi3r + theta - theta3r) 
++ m3*(-gamma + l)*(gamma*thetadot**2*sin(theta) - gamma*thetadotdot*cos(theta) - gamma3*theta3ldot**2*sin(theta3l) + gamma3*theta3ldotdot*cos(theta3l) - l*thetadot**2*sin(theta) + l*thetadotdot*cos(theta) + xdotdot)*cos(theta) 
++ m3*(-gamma + l)*(gamma*thetadot**2*sin(theta) - gamma*thetadotdot*cos(theta) - gamma3*theta3rdot**2*sin(theta3r) + gamma3*theta3rdotdot*cos(theta3r) - l*thetadot**2*sin(theta) + l*thetadotdot*cos(theta) + xdotdot)*cos(theta) 
++ m3*(-gamma + l)*(-gamma*thetadot**2*cos(theta) - gamma*thetadotdot*sin(theta) + gamma3*theta3ldot**2*cos(theta3l) + gamma3*theta3ldotdot*sin(theta3l) + l*thetadot**2*cos(theta) + l*thetadotdot*sin(theta) + ydotdot)*sin(theta) 
++ m3*(-gamma + l)*(-gamma*thetadot**2*cos(theta) - gamma*thetadotdot*sin(theta) + gamma3*theta3rdot**2*cos(theta3r) + gamma3*theta3rdotdot*sin(theta3r) + l*thetadot**2*cos(theta) + l*thetadotdot*sin(theta) + ydotdot)*sin(theta) 
++ m4*(-gamma + l)*(gamma*thetadot**2*sin(theta) - gamma*thetadotdot*cos(theta) - gamma4*theta4ldot**2*sin(theta4l) + gamma4*theta4ldotdot*cos(theta4l) - l*thetadot**2*sin(theta) + l*thetadotdot*cos(theta) - l3*theta3ldot**2*sin(theta3l) + l3*theta3ldotdot*cos(theta3l) + xdotdot)*cos(theta) 
++ m4*(-gamma + l)*(gamma*thetadot**2*sin(theta) - gamma*thetadotdot*cos(theta) - gamma4*theta4rdot**2*sin(theta4r) + gamma4*theta4rdotdot*cos(theta4r) - l*thetadot**2*sin(theta) + l*thetadotdot*cos(theta) - l3*theta3rdot**2*sin(theta3r) + l3*theta3rdotdot*cos(theta3r) + xdotdot)*cos(theta) 
++ m4*(-gamma + l)*(-gamma*thetadot**2*cos(theta) - gamma*thetadotdot*sin(theta) + gamma4*theta4ldot**2*cos(theta4l) + gamma4*theta4ldotdot*sin(theta4l) + l*thetadot**2*cos(theta) + l*thetadotdot*sin(theta) + l3*theta3ldot**2*cos(theta3l) + l3*theta3ldotdot*sin(theta3l) + ydotdot)*sin(theta) 
++ m4*(-gamma + l)*(-gamma*thetadot**2*cos(theta) - gamma*thetadotdot*sin(theta) + gamma4*theta4rdot**2*cos(theta4r) + gamma4*theta4rdotdot*sin(theta4r) + l*thetadot**2*cos(theta) + l*thetadotdot*sin(theta) + l3*theta3rdot**2*cos(theta3r) + l3*theta3rdotdot*sin(theta3r) + ydotdot)*sin(theta)
+----------------------------------------------------------------------
+[X Y THETA THETA_1R THETA_2R THETA_3R THETA_4R THETA_1L THETA_2L THETA_3L THETA_4L]

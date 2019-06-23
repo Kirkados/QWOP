@@ -1,0 +1,11 @@
+EQ 6
+----------------------------------------------------------------------
+
+I4*theta4rdotdot 
+- c4*(theta3rdot - theta4rdot) - fFr*l4*cos(theta4r) - fNr*l4*sin(theta4r) 
++ g*gamma4*m4*sin(theta4r) 
++ gamma4*m4*(gamma*thetadot**2*sin(theta) - gamma*thetadotdot*cos(theta) - gamma4*theta4rdot**2*sin(theta4r) + gamma4*theta4rdotdot*cos(theta4r) - l*thetadot**2*sin(theta) + l*thetadotdot*cos(theta) - l3*theta3rdot**2*sin(theta3r) + l3*theta3rdotdot*cos(theta3r) + xdotdot)*cos(theta4r) 
++ gamma4*m4*(-gamma*thetadot**2*cos(theta) - gamma*thetadotdot*sin(theta) + gamma4*theta4rdot**2*cos(theta4r) + gamma4*theta4rdotdot*sin(theta4r) + l*thetadot**2*cos(theta) + l*thetadotdot*sin(theta) + l3*theta3rdot**2*cos(theta3r) + l3*theta3rdotdot*sin(theta3r) + ydotdot)*sin(theta4r) 
+- k4*(phi4r + theta3r - theta4r)
+----------------------------------------------------------------------
+[X Y THETA THETA_1R THETA_2R THETA_3R THETA_4R THETA_1L THETA_2L THETA_3L THETA_4L]
