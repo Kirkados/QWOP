@@ -11,7 +11,7 @@ class Settings:
     ##### Run Settings #####
     ########################
     
-    RUN_NAME               = '11_states_try_1' # use just the name. If trying to restore from file, use name along with timestamp
+    RUN_NAME               = '11_states_long' # use just the name. If trying to restore from file, use name along with timestamp
     ENVIRONMENT            = 'qwop_full_11'
     RECORD_VIDEO           = True
     VIDEO_RECORD_FREQUENCY = 4 # Multiples of "CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES"
@@ -27,13 +27,13 @@ class Settings:
     #############################
     
     # Hyperparameters
-    NUMBER_OF_ACTORS        = 1
+    NUMBER_OF_ACTORS        = 2
     NUMBER_OF_EPISODES      = 1e5 # that each agent will perform
     MAX_TRAINING_ITERATIONS = 1e10
     CRITIC_LEARNING_RATE    = 0.0001
     TARGET_NETWORK_TAU      = 0.001
-    DISCOUNT_FACTOR         = 0.99
     N_STEP_RETURN           = 5
+    DISCOUNT_FACTOR         = (0.98)**(1/N_STEP_RETURN)
     NUMBER_OF_BINS          = 51 # Also known as the number of atoms
     L2_REGULARIZATION       = False # optional for training the critic
     L2_REG_PARAMETER        = 1e-6

@@ -63,7 +63,7 @@ class Environment:
                                                      5., 2.,      1.,      1.,       1.,     1.,      1.,      1.,      1.,      1.,       1.])
         self.NORMALIZE_STATE         = True # Normalize state on each timestep to avoid vanishing gradients
         self.MIN_Q                   = -500.0
-        self.MAX_Q                   = 10000.0
+        self.MAX_Q                   = 2000.0
         self.DONE_ON_FALL            = True # whether or not falling down ends the episode
         
         # Rendering parameters
@@ -525,7 +525,7 @@ class Environment:
         # Returns the reward for this timestep as a function of the state and action
         
         # The agent is (currently) rewarded for forward velocity.
-        reward = self.state[27]        
+        reward = self.state[11]        
         return reward
     
     
