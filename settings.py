@@ -27,7 +27,7 @@ class Settings:
     #############################
 
     # Hyperparameters
-    NUMBER_OF_ACTORS        = 2
+    NUMBER_OF_ACTORS        = 3
     NUMBER_OF_EPISODES      = 1e5 # that each agent will perform
     MAX_TRAINING_ITERATIONS = 1e10
     CRITIC_LEARNING_RATE    = 0.0001
