@@ -442,7 +442,8 @@ class Environment:
         segment_points[1,:,:] = self.returnPointCoords(x1r,y1r,theta1r,self.SEGMENT_LENGTH[1],self.SEGMENT_GAMMA_LENGTH[1],x,self.x_0,self.y_0,self.HUMAN_SCALE)
         segment_points[2,:,:] = self.returnPointCoords(x2r,y2r,theta2r,self.SEGMENT_LENGTH[2],self.SEGMENT_GAMMA_LENGTH[2],x,self.x_0,self.y_0,self.HUMAN_SCALE)
 
-        # KH Commenting out leg points to ensure knees aren't considered when checking if an episode is done
+        # KH Commenting out leg points to ensure knees aren't considered when checking if an episode is done. July 29, 2019
+        # Made a similar change in animator_full_11.py on line 800
         #segment_points[3,:,:] = self.returnPointCoords(x3r,y3r,theta3r,self.SEGMENT_LENGTH[3],self.SEGMENT_GAMMA_LENGTH[3],x,self.x_0,self.y_0,self.HUMAN_SCALE)
         #segment_points[4,:,:] = self.returnPointCoords(x4r,y4r,theta4r,self.SEGMENT_LENGTH[4],self.SEGMENT_GAMMA_LENGTH[4],x,self.x_0,self.y_0,self.HUMAN_SCALE)
         segment_points[5,:,:] = self.returnPointCoords(x1l,y1l,theta1l,self.SEGMENT_LENGTH[1],self.SEGMENT_GAMMA_LENGTH[1],x,self.x_0,self.y_0,self.HUMAN_SCALE)
