@@ -11,10 +11,10 @@ class Settings:
     ##### Run Settings #####
     ########################
 
-    RUN_NAME               = 'state_logging' # use just the name. If trying to restore from file, use name along with timestamp
+    RUN_NAME               = 'weighted_rotation' # use just the name. If trying to restore from file, use name along with timestamp
     ENVIRONMENT            = 'qwop_full_11'
     RECORD_VIDEO           = True
-    VIDEO_RECORD_FREQUENCY = 4 # Multiples of "CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES"
+    VIDEO_RECORD_FREQUENCY = 3 # Multiples of "CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES"
     NOISELESS_AT_TEST_TIME = True # Whether or not to test noise-free (Keep at True unless debugging)
     LEARN_FROM_PIXELS      = False # False = learn from state (fully observed); True = learn from pixels (partially observed)
     RESUME_TRAINING        = False # If True, be sure to set "RUN_NAME" to the previous run's filename
@@ -27,7 +27,7 @@ class Settings:
     #############################
 
     # Hyperparameters
-    NUMBER_OF_ACTORS        = 4
+    NUMBER_OF_ACTORS        = 2
     NUMBER_OF_EPISODES      = 1e5 # that each agent will perform
     MAX_TRAINING_ITERATIONS = 1e10
     CRITIC_LEARNING_RATE    = 0.0001

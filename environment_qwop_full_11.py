@@ -39,7 +39,7 @@ import numpy as np
 import multiprocessing
 import signal
 
-from scipy.integrate import odeint # Numerical integrator
+from scipy.integrate import odeint, solve_ivp # Numerical integrator
 
 class Environment:
     """
@@ -56,7 +56,7 @@ class Environment:
         self.STATE_SIZE              = self.TOTAL_STATE_SIZE - len(self.IRRELEVANT_STATES) # total number of relevant states
         self.ACTION_SIZE             = 9
         self.TIMESTEP                = 0.05 # [s]
-        self.MAX_NUMBER_OF_TIMESTEPS = 600 # per episode
+        self.MAX_NUMBER_OF_TIMESTEPS = 600 # [600] per episode
         self.NUM_FRAMES              = 100 # total animation is cut into this many frames
         self.RANDOMIZE               = False # whether or not to randomize the state & target location
         self.UPPER_STATE_BOUND       = np.array([np.inf, 4., 2*np.pi, 2*np.pi, 2*np.pi, 2*np.pi, 2*np.pi, 2*np.pi, 2*np.pi, 2*np.pi, 2*np.pi, \
@@ -114,7 +114,7 @@ class Environment:
         # Friction properties
         self.FLOOR_MU               = 0.3
         self.FLOOR_SPRING_STIFFNESS = 100000 #[N/m]
-        self.FLOOR_DAMPING_COEFFICIENT = 10000 # [Ns/m]
+        self.FLOOR_DAMPING_COEFFICIENT = 3300 # 10000 # [Ns/m]
         self.FLOOR_FRICTION_STIFFNESS = 100000 #[N/m]
         self.ATANDEL = 0.001
         self.ATANGAIN = 12.7
@@ -441,12 +441,14 @@ class Environment:
         segment_points[0,:,:] = self.returnPointCoords(  x,  y,  theta,self.SEGMENT_LENGTH[0],self.SEGMENT_GAMMA_LENGTH[0],x,self.x_0,self.y_0,self.HUMAN_SCALE)
         segment_points[1,:,:] = self.returnPointCoords(x1r,y1r,theta1r,self.SEGMENT_LENGTH[1],self.SEGMENT_GAMMA_LENGTH[1],x,self.x_0,self.y_0,self.HUMAN_SCALE)
         segment_points[2,:,:] = self.returnPointCoords(x2r,y2r,theta2r,self.SEGMENT_LENGTH[2],self.SEGMENT_GAMMA_LENGTH[2],x,self.x_0,self.y_0,self.HUMAN_SCALE)
-        segment_points[3,:,:] = self.returnPointCoords(x3r,y3r,theta3r,self.SEGMENT_LENGTH[3],self.SEGMENT_GAMMA_LENGTH[3],x,self.x_0,self.y_0,self.HUMAN_SCALE)
-        segment_points[4,:,:] = self.returnPointCoords(x4r,y4r,theta4r,self.SEGMENT_LENGTH[4],self.SEGMENT_GAMMA_LENGTH[4],x,self.x_0,self.y_0,self.HUMAN_SCALE)
+
+        # KH Commenting out leg points to ensure knees aren't considered when checking if an episode is done
+        #segment_points[3,:,:] = self.returnPointCoords(x3r,y3r,theta3r,self.SEGMENT_LENGTH[3],self.SEGMENT_GAMMA_LENGTH[3],x,self.x_0,self.y_0,self.HUMAN_SCALE)
+        #segment_points[4,:,:] = self.returnPointCoords(x4r,y4r,theta4r,self.SEGMENT_LENGTH[4],self.SEGMENT_GAMMA_LENGTH[4],x,self.x_0,self.y_0,self.HUMAN_SCALE)
         segment_points[5,:,:] = self.returnPointCoords(x1l,y1l,theta1l,self.SEGMENT_LENGTH[1],self.SEGMENT_GAMMA_LENGTH[1],x,self.x_0,self.y_0,self.HUMAN_SCALE)
         segment_points[6,:,:] = self.returnPointCoords(x2l,y2l,theta2l,self.SEGMENT_LENGTH[2],self.SEGMENT_GAMMA_LENGTH[2],x,self.x_0,self.y_0,self.HUMAN_SCALE)
-        segment_points[7,:,:] = self.returnPointCoords(x3l,y3l,theta3l,self.SEGMENT_LENGTH[3],self.SEGMENT_GAMMA_LENGTH[3],x,self.x_0,self.y_0,self.HUMAN_SCALE)
-        segment_points[8,:,:] = self.returnPointCoords(x4l,y4l,theta4l,self.SEGMENT_LENGTH[4],self.SEGMENT_GAMMA_LENGTH[4],x,self.x_0,self.y_0,self.HUMAN_SCALE)
+        #segment_points[7,:,:] = self.returnPointCoords(x3l,y3l,theta3l,self.SEGMENT_LENGTH[3],self.SEGMENT_GAMMA_LENGTH[3],x,self.x_0,self.y_0,self.HUMAN_SCALE)
+        #segment_points[8,:,:] = self.returnPointCoords(x4l,y4l,theta4l,self.SEGMENT_LENGTH[4],self.SEGMENT_GAMMA_LENGTH[4],x,self.x_0,self.y_0,self.HUMAN_SCALE)
 
         # Check if any node is out-of-bounds. If so, this episode is done
         if np.any(segment_points[:,0,1] > self.HEIGHT) and self.DONE_ON_FALL:
@@ -507,7 +509,10 @@ class Environment:
         ##### PROPAGATE DYNAMICS #####
         ##############################
         next_states, integrator_logs = odeint(equations_of_motion, self.state, [self.time, self.time + self.TIMESTEP], args = (parameters,), full_output = 1)
+        #time_out, next_states, _, _, _, _, _, status_out, message_out, success_out = solve_ivp(fun=lambda t, y: equations_of_motion(t, y, parameters), t_span = [self.time, self.time + self.TIMESTEP], y0 = self.state, method='BDF')
 
+        #print(time_out, next_states, status_out, message_out, success_out)
+        #raise SystemExit
         # Get this timestep's reward
         reward = self.reward_function(action)
 
@@ -518,14 +523,14 @@ class Environment:
         self.time += self.TIMESTEP # updating the stored time
 
         # Return the (state, reward, done)
-        return self.state, reward, done, integrator_logs
+        return self.state, reward, done, integrator_logs, (self.phi1r, self.phi2r, self.phi3r, self.phi4r, self.phi1l, self.phi2l, self.phi3l, self.phi4l)
 
 
     def reward_function(self, action):
         # Returns the reward for this timestep as a function of the state and action
 
-        # The agent is (currently) rewarded for forward velocity.
-        reward = self.state[11]
+        # The agent is (currently) rewarded for forward velocity and forward torso rotation
+        reward = self.state[11] - 0.75*self.state[13]
         return reward
 
 
@@ -570,10 +575,10 @@ class Environment:
                 ################################
                 ##### Step the environment #####
                 ################################
-                next_state, reward, done, integrator_logs = self.step(action)
+                next_state, reward, done, integrator_logs, joint_angles = self.step(action)
 
                 # Return the results
-                self.env_to_agent.put((next_state, reward, done, integrator_logs))
+                self.env_to_agent.put((next_state, reward, done, integrator_logs, joint_angles))
 
 
 
@@ -581,6 +586,7 @@ class Environment:
 
 
 def equations_of_motion(state, t, parameters):
+#def equations_of_motion(t, state, parameters):
     # From the state, it returns the first derivative of the state
 
     # Unpacking the state
@@ -636,8 +642,11 @@ def equations_of_motion(state, t, parameters):
     yfldot = y4ldot + (l4 - gamma4)*theta4ldot*np.sin(theta4l)
 
     # Calculating floor reaction forces
-    fNr = np.maximum(0,-FLOOR_SPRING_STIFFNESS*yfr - (FLOOR_DAMPING_COEFFICIENT*yfrdot if yfr <= 0 else 0))
-    fNl = np.maximum(0,-FLOOR_SPRING_STIFFNESS*yfl - (FLOOR_DAMPING_COEFFICIENT*yfldot if yfl <= 0 else 0))
+    #fNr = np.maximum(0,-FLOOR_SPRING_STIFFNESS*yfr - (FLOOR_DAMPING_COEFFICIENT*yfrdot if yfr <= 0 else 0))
+    fNr = - (FLOOR_SPRING_STIFFNESS*yfr if yfr <= 0 else 0 + FLOOR_DAMPING_COEFFICIENT*yfrdot if yfr <= 0 and yfrdot <= 0 else 0)
+    #fNl = np.maximum(0,-FLOOR_SPRING_STIFFNESS*yfl - (FLOOR_DAMPING_COEFFICIENT*yfldot if yfl <= 0 else 0))
+    fNl = - (FLOOR_SPRING_STIFFNESS*yfl if yfl <= 0 else 0 + FLOOR_DAMPING_COEFFICIENT*yfldot if yfl <= 0 and yfldot <= 0 else 0)
+
     fFr = (-FLOOR_MU*fNr*2/np.pi*np.arctan(xfrdot*ATANGAIN/ATANDEL))
     fFl = (-FLOOR_MU*fNl*2/np.pi*np.arctan(xfldot*ATANGAIN/ATANDEL))
 

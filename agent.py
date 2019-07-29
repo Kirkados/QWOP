@@ -150,6 +150,7 @@ class Agent:
                     state_log = []
                     action_log = []
                     integrator_logs_log = []
+                    joint_angles_log = []
                     state_log.append(state)
 
             else:
@@ -196,7 +197,7 @@ class Agent:
                 # Send the action to the environment process
                 self.agent_to_env.put(action)
                 # Receive results from stepped environment
-                next_state, reward, done, integrator_logs = self.env_to_agent.get()
+                next_state, reward, done, integrator_logs, joint_angles = self.env_to_agent.get()
 
                 # Add reward we just received to running total for this episode
                 episode_reward += reward
@@ -206,6 +207,7 @@ class Agent:
                     state_log.append(next_state)
                     action_log.append(action)
                     integrator_logs_log.append(integrator_logs)
+                    joint_angles_log.append(joint_angles)
 
                 # Normalize the state
                 if Settings.NORMALIZE_STATE:
@@ -276,6 +278,7 @@ class Agent:
                     full_array.append(this_line)
                 integration_data = np.asarray(full_array).reshape(len(full_array), -1)
                 trajectory_data = np.concatenate((state_log[1:], integration_data), axis = 1)
+                trajectory_data = np.concatenate((trajectory_data, joint_angles_log), axis = 1)
 
                 # Save a text file
                 os.makedirs(os.path.dirname(Settings.MODEL_SAVE_DIRECTORY + self.filename + '/trajectories/'), exist_ok=True)
