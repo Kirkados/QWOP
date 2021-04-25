@@ -22,6 +22,7 @@ for publishing their codes! The open-source mindset of AI research is fantastic.
 Results
 -----
 Incentivizing the agent to run down the track (positive rewards are given for forward velocity): https://youtu.be/OYBiUWuA4Ho
+
 Incentivizing the agent to run down the track AND perform front flips: https://youtu.be/16JEWNf6468
 
 
