@@ -29,7 +29,7 @@ Incentivizing the agent to run down the track AND perform front flips: https://y
 Usage
 -----
 To run the training algorithm, edit `settings.py` and `environment_qwop` as appropriate, and then run
-`python3 main.py` from a terminal. The code is CPU-intensive and takes days to train on a modern computer.
+`python3 main.py` from a terminal. The default parameters will cause the agent to run down the track, as shown in the above video. The code is CPU-intensive and takes days to train on a modern computer.
 In addition to python, the following python3 packages must be installed:
 + psutil `pip3 install psutil`
 + Tensorflow `pip3 install tensorflow` or `pip3 install tensorflow-gpu` for GPU compatibility (Additional steps required)
