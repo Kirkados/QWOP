@@ -16,6 +16,7 @@ Special thanks to:
 + [SuReLI]   (https://github.com/SuReLI)
 + [DeepMind] (https://github.com/deepmind)
 + [OpenAI]   (https://github.com/openai)
+
 for publishing their codes! The open-source mindset of AI research is fantastic.
 
 Usage
