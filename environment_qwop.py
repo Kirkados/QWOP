@@ -531,7 +531,10 @@ class Environment:
         # Returns the reward for this timestep as a function of the state and action
 
         # The agent is (currently) rewarded for forward velocity and forward torso rotation
-        reward = self.state[11] - 0.75*self.state[13]
+        #reward = self.state[11] - 0.75*self.state[13]
+        
+        # The agent is (currently) rewarded for forward velocity
+        reward = self.state[11]
         return reward
 
 

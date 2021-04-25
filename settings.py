@@ -11,8 +11,8 @@ class Settings:
     ##### Run Settings #####
     ########################
 
-    RUN_NAME               = 'weighted_rotation' # use just the name. If trying to restore from file, use name along with timestamp
-    ENVIRONMENT            = 'qwop_full_11'
+    RUN_NAME               = 'run_forwards' # use just the name. If trying to restore from file, use name along with timestamp
+    ENVIRONMENT            = 'qwop'
     RECORD_VIDEO           = True
     VIDEO_RECORD_FREQUENCY = 3 # Multiples of "CHECK_GREEDY_PERFORMANCE_EVERY_NUM_EPISODES"
     NOISELESS_AT_TEST_TIME = True # Whether or not to test noise-free (Keep at True unless debugging)
