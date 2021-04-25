@@ -695,8 +695,8 @@ def render(filename, state_log, action_log, episode_number):
         xdot, ydot, thetadot, theta1rdot, theta2rdot, theta3rdot, theta4rdot, theta1ldot, theta2ldot, theta3ldot, theta4ldot = state
         """
         # Stephane's Animating Code #
-        import animator_full_11
-        animator_full_11.drawState(play_game = False, filename = filename, state_log = state_log, action_log = action_log, episode_number = episode_number)
+        import animator
+        animator.drawState(play_game = False, filename = filename, state_log = state_log, action_log = action_log, episode_number = episode_number)
 
         #############################
 
